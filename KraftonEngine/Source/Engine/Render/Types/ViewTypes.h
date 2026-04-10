@@ -44,5 +44,6 @@ struct FViewportRenderOptions
 	int32 GridHalfLineCount = 100;
 	float CameraMoveSensitivity = 1.0f;
 	float CameraRotateSensitivity = 1.0f;
+	bool bFXAA = true;
 	ELevelViewportType ViewportType = ELevelViewportType::Perspective;
 };

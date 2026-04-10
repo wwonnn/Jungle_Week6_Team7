@@ -20,6 +20,8 @@ void FRenderBus::Clear()
 	ViewportRTV = nullptr;
 	ViewportDSV = nullptr;
 	ViewportStencilSRV = nullptr;
+	PostProcessRTV = nullptr;
+	BaseColorSRV = nullptr;
 }
 
 void FRenderBus::AddProxy(ERenderPass Pass, const FPrimitiveSceneProxy* Proxy)
@@ -86,6 +88,8 @@ void FRenderBus::SetViewportInfo(const FViewport* VP)
 	ViewportRTV = VP->GetRTV();
 	ViewportDSV = VP->GetDSV();
 	ViewportStencilSRV = VP->GetStencilSRV();
+	PostProcessRTV = VP->GetPostProcessRTV();
+	BaseColorSRV = VP->GetBaseSRV();
 }
 
 void FRenderBus::SetRenderSettings(const EViewMode NewViewMode, const FShowFlags NewShowFlags)
