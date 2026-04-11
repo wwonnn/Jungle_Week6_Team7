@@ -1,4 +1,5 @@
 ﻿#include "Editor/UI/EditorControlWidget.h"
+#include "Editor/Viewport/LevelEditorViewportClient.h"
 #include "Editor/EditorEngine.h"
 #include "Engine/Profiling/Timer.h"
 #include "Engine/Profiling/MemoryStats.h"
@@ -98,6 +99,23 @@ void FEditorControlWidget::Render(float DeltaTime)
 	if (ImGui::DragFloat3("Camera Rotation", CameraRotation, 0.1f))
 	{
 		Camera->SetRelativeRotation(FRotator(CameraRotation[1], CameraRotation[2], CamRot.Roll));
+	}
+
+	SEPARATOR();
+
+	// Rendering
+	bool bFXAA = true;
+	if (FLevelEditorViewportClient* ActiveVC = EditorEngine->GetActiveViewport())
+	{
+		bFXAA = ActiveVC->GetRenderOptions().bFXAA;
+	}
+
+	if (ImGui::Checkbox("Enable FXAA", &bFXAA))
+	{
+		for (FLevelEditorViewportClient* VC : EditorEngine->GetLevelViewportClients())
+		{
+			VC->GetRenderOptions().bFXAA = bFXAA;
+		}
 	}
 
 	ImGui::End();

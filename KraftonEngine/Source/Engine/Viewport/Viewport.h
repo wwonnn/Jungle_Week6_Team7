@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Render/Types/RenderTypes.h"
 
@@ -24,7 +24,7 @@ public:
 	void BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4] = nullptr);
 
 	// ViewportClient 참조
-	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }
+	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }       
 	FViewportClient* GetClient() const { return ViewportClient; }
 
 	// 크기
@@ -33,11 +33,16 @@ public:
 
 	// D3D 리소스 접근자
 	ID3D11RenderTargetView* GetRTV() const { return RTV; }
-	ID3D11ShaderResourceView* GetSRV() const { return SRV; }
+	ID3D11ShaderResourceView* GetSRV() const { return bHasPostProcessed ? PSRV : SRV; }
+	ID3D11ShaderResourceView* GetBaseSRV() const { return SRV; }
+	ID3D11RenderTargetView* GetPostProcessRTV() const { return PRTV; }
+
 	ID3D11ShaderResourceView* GetDepthSRV() const { return DepthSRV; }
 	ID3D11ShaderResourceView* GetStencilSRV() const { return StencilSRV; }
 	ID3D11DepthStencilView* GetDSV() const { return DSV; }
 	const D3D11_VIEWPORT& GetViewportRect() const { return ViewportRect; }
+
+	void SetHasPostProcessed(bool bInHasPP) { bHasPostProcessed = bInHasPP; }
 
 private:
 	bool CreateResources();
@@ -48,10 +53,17 @@ private:
 
 	ID3D11Device* Device = nullptr;
 
-	// 렌더 타깃
+	// 렌더 타깃 1 (기본)
 	ID3D11Texture2D* RTTexture = nullptr;
 	ID3D11RenderTargetView* RTV = nullptr;
-	ID3D11ShaderResourceView* SRV = nullptr;		// ImGui::Image() 출력용
+	ID3D11ShaderResourceView* SRV = nullptr;
+
+	// 렌더 타깃 2 (PostProcess 결과용)
+	ID3D11Texture2D* PSTexture = nullptr;
+	ID3D11RenderTargetView* PRTV = nullptr;
+	ID3D11ShaderResourceView* PSRV = nullptr;
+
+	bool bHasPostProcessed = false;
 
 	// 뎁스/스텐실 (TYPELESS 텍스처 → DSV + DepthSRV + StencilSRV 분리)
 	ID3D11Texture2D* DepthTexture = nullptr;

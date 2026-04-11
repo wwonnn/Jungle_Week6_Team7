@@ -60,6 +60,7 @@ void FObjViewerRenderPipeline::RenderPreviewViewport(FRenderer& Renderer)
 	ShowFlags.bBillboardText = false;
 	ShowFlags.bBoundingVolume = false;
 	Bus.SetRenderSettings(EViewMode::Lit, ShowFlags);
+	Bus.SetFXAAEnabled(true);
 	Bus.SetViewportInfo(VP);
 
 	// 월드 수집
@@ -68,4 +69,6 @@ void FObjViewerRenderPipeline::RenderPreviewViewport(FRenderer& Renderer)
 	// GPU 렌더
 	Renderer.PrepareBatchers(Bus);
 	Renderer.Render(Bus);
+
+	VP->SetHasPostProcessed(true);
 }

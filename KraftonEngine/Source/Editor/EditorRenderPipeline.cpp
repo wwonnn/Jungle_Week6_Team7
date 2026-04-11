@@ -95,6 +95,7 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 
 	Bus.SetCameraInfo(Camera);
 	Bus.SetRenderSettings(ViewMode, ShowFlags);
+	Bus.SetFXAAEnabled(Opts.bFXAA);
 	Bus.SetViewportInfo(VP);
 	Bus.SetViewportType(Opts.ViewportType);
 	Bus.SetOcclusionCulling(&GPUOcclusion);
@@ -146,6 +147,9 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 	{
 		SCOPE_STAT_CAT("Renderer.Render", "4_ExecutePass");
 		Renderer.Render(Bus);
+
+		// FXAA 패스가 실행되었음을 Viewport에 알림 (GetSRV가 PSRV를 반환하도록)
+		VP->SetHasPostProcessed(Opts.bFXAA);
 	}
 
 	// 5. GPU Occlusion — DSV 언바인딩 후 Hi-Z 생성 + Occlusion Test 디스패치

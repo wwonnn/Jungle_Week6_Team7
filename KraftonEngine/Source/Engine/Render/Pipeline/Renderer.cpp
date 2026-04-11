@@ -226,6 +226,10 @@ void FRenderer::Render(const FRenderBus& InRenderBus)
 		if (bHasBatcher && !bHasProxies && Batcher.IsEmpty && Batcher.IsEmpty()) continue;
 
 		const char* PassName = GetRenderPassName(CurPass);
+
+		// FXAA 패스 스킵 체크
+		if (CurPass == ERenderPass::FXAA && !InRenderBus.IsFXAAEnabled()) continue;
+
 		SCOPE_STAT_CAT(PassName, "4_ExecutePass");
 		GPU_SCOPE_STAT(PassName);
 
@@ -254,6 +258,7 @@ void FRenderer::InitializePassRenderStates()
 	S[(uint32)E::Translucent] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite,  EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::PostProcess] = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::FXAA] = { EDepthStencilState::NoDepth,       EBlendState::Opaque,     ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Editor] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
 	S[(uint32)E::Grid] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     false };
 	S[(uint32)E::GizmoOuter] = { EDepthStencilState::GizmoOutside, EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
@@ -317,13 +322,20 @@ void FRenderer::InitializePassBatchers()
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
 			DrawPostProcessOutline(Bus, Ctx);
 		},
-		nullptr  // PostProcess는 내���에서 SelectionMask 체크
+		nullptr  // PostProcess는 내에서 SelectionMask 체크
 	};
-}
 
-// ============================================================
-// LineBatcher DrawBatch 공통
-// ============================================================
+	PassBatchers[(uint32)ERenderPass::FXAA] = {
+		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
+			DrawFXAA(Bus, Ctx);
+		},
+		nullptr
+	};
+	}
+
+	// ============================================================
+	// LineBatcher DrawBatch 공통
+	// ============================================================
 void FRenderer::DrawLineBatcher(FLineBatcher& Batcher, ID3D11DeviceContext* Context)
 {
 	if (Batcher.GetLineCount() == 0) return;
@@ -733,4 +745,39 @@ void FRenderer::UpdateFrameBuffer(ID3D11DeviceContext* Context, const FRenderBus
 	ID3D11Buffer* b0 = Resources.FrameBuffer.GetBuffer();
 	Context->VSSetConstantBuffers(ECBSlot::Frame, 1, &b0);
 	Context->PSSetConstantBuffers(ECBSlot::Frame, 1, &b0);
+}
+
+// ============================================================
+// PostProcess FXAA — BaseColorSRV 읽어 안티앨리어싱 후 PostProcessRTV에 draw
+// ============================================================
+void FRenderer::DrawFXAA(const FRenderBus& Bus, ID3D11DeviceContext* Context)
+{
+	ID3D11ShaderResourceView* BaseColorSRV = Bus.GetBaseColorSRV();
+	ID3D11RenderTargetView* PostProcessRTV = Bus.GetPostProcessRTV();
+	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
+	if (!BaseColorSRV || !PostProcessRTV) return;
+
+	// FXAA는 별도의 RTV에 결과를 작성
+	Context->OMSetRenderTargets(1, &PostProcessRTV, nullptr);
+
+	// 1) BaseColorSRV (t0) 바인딩
+	Context->PSSetShaderResources(0, 1, &BaseColorSRV);
+	Context->PSSetSamplers(0, 1, &Resources.DefaultSampler);
+
+	// 2) FXAA 셰이더 바인딩
+	FShader* FXAAShader = FShaderManager::Get().GetShader(EShaderType::FXAA);
+	if (FXAAShader) FXAAShader->Bind(Context);
+
+	// 3) Fullscreen Triangle 드로우
+	Context->IASetInputLayout(nullptr);
+	Context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	Context->Draw(3, 0);
+	FDrawCallStats::Increment();
+
+	// 4) SRV 언바인딩
+	ID3D11ShaderResourceView* nullSRV = nullptr;
+	Context->PSSetShaderResources(0, 1, &nullSRV);
+
+	// 5) DSV 재바인딩
+	Context->OMSetRenderTargets(1, &PostProcessRTV, DSV);
 }
