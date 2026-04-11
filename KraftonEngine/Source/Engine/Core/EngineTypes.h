@@ -58,7 +58,7 @@ struct FBoundingBox
 	FVector GetExtent() const;
 
 	// 8개의 Corner 반환
-	void GetCorners(FVector (&OutCorners)[8]) const;
+	void GetCorners(FVector(&OutCorners)[8]) const;
 
 	// 유효 여부 (Min < Max)
 	bool IsValid() const;

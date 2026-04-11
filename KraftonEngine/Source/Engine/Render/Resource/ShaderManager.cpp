@@ -1,4 +1,4 @@
-#include "ShaderManager.h"
+﻿#include "ShaderManager.h"
 #include "Render/Types/VertexTypes.h"
 
 void FShaderManager::Initialize(ID3D11Device* InDevice)
@@ -33,6 +33,9 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 
 	Shaders[(uint32)EShaderType::Billboard].Create(InDevice, L"Shaders/ShaderBillboard.hlsl",
 		"VS", "PS", FTextureVertexInputLayout, ARRAYSIZE(FTextureVertexInputLayout));
+
+	Shaders[(uint32)EShaderType::MeshDecal].Create(InDevice, L"Shaders/MeshDecalShader.hlsl",
+		"VS", "PS", FVertexPNCTInputLayout, ARRAYSIZE(FVertexPNCTInputLayout));
 
 	bIsInitialized = true;
 }

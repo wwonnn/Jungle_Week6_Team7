@@ -312,6 +312,116 @@ bool FWorldPrimitivePickingBVH::Raycast(const FRay& Ray, FHitResult& OutHitResul
 	return OutActor != nullptr;
 }
 
+bool FWorldPrimitivePickingBVH::IntersectOBB(const FOBB& A, const FOBB& B)
+{
+	FVector Diff = (A.Center - B.Center);
+
+	//OBB의 각 축이 Vec위에서 어느정도의 길이를 가지는가
+	auto ProjectedScalar = [&](const FOBB& OBB, const FVector& Vec) -> float
+		{
+			float Result = std::abs(OBB.Axes[0].Dot(Vec)) * OBB.HalfExtent.X +
+				std::abs(OBB.Axes[1].Dot(Vec)) * OBB.HalfExtent.Y +
+				std::abs(OBB.Axes[2].Dot(Vec)) * OBB.HalfExtent.Z;
+			return Result;
+		};
+	//Vec축 위에서 OBB A와 B가 TotalLength보다 짧은가 긴가
+	auto IsSeperated = [&](const FOBB& A, const FOBB& B, const FVector& Vec) -> bool
+		{
+			float ScalarA = ProjectedScalar(A, Vec);
+			float ScalarB = ProjectedScalar(B, Vec);
+			float ProjectedLength = std::abs(Vec.Dot(Diff));
+			return (ScalarA + ScalarB < ProjectedLength);
+		};
+
+	for (int i = 0;i < 3;i++)
+	{
+		if (IsSeperated(A, B, A.Axes[i])) return false;
+	}
+	for (int i = 0;i < 3;i++)
+	{
+		if (IsSeperated(A, B, B.Axes[i])) return false;
+	}
+	for (int i = 0;i < 3;i++)
+	{
+		for (int j = 0;j < 3;j++)
+		{
+			FVector Crossed = A.Axes[i].Cross(B.Axes[j]);
+			if (Crossed.Dot(Crossed) < 1e-6f) continue;
+			if (IsSeperated(A, B, Crossed.Normalized())) return false;
+		}
+	}
+	return true;
+}
+
+TArray<UPrimitiveComponent*> FWorldPrimitivePickingBVH::QueryOBB(const FOBB& OBB)
+{
+	TArray<UPrimitiveComponent*> Result;
+
+	if (Nodes.empty())
+	{
+		return Result;
+	}
+
+	// 루트 노드와 먼저 교차 검사 — 교차하지 않으면 바로 반환
+	const FOBB RootOBB = FOBB::FromAABB(Nodes[0].Bounds);
+	if (!IntersectOBB(OBB, RootOBB))
+	{
+		return Result;
+	}
+
+	// 재귀 없이 로컬 스택으로 DFS 순회
+	int32 NodeStack[WorldBVHMaxTraversalStack];
+	int32 StackSize = 0;
+	NodeStack[StackSize++] = 0;
+
+	while (StackSize > 0)
+	{
+		const int32 NodeIndex = NodeStack[--StackSize];
+		const FNode& Node = Nodes[NodeIndex];
+
+		if (Node.IsLeaf())
+		{
+			// 리프 노드: 각 프리미티브의 AABB를 OBB로 변환 후 교차 검사
+			for (int32 PacketIndex = 0; PacketIndex < Node.PrimitivePacketCount; ++PacketIndex)
+			{
+				const FPrimitivePacket& Packet = PrimitivePackets[Node.FirstPrimitivePacket + PacketIndex];
+				for (int32 LocalIndex = 0; LocalIndex < Packet.PrimitiveCount; ++LocalIndex)
+				{
+					const int32 LeafIndex = Packet.PrimitiveIndices[LocalIndex];
+					const FLeaf& Leaf = Leaves[LeafIndex];
+
+					const FOBB PrimitiveOBB = FOBB::FromAABB(Leaf.Bounds);
+					if (IntersectOBB(OBB, PrimitiveOBB))
+					{
+						Result.push_back(Leaf.Primitive);
+					}
+				}
+			}
+		}
+		else
+		{
+			// 내부 노드: 자식 노드의 AABB를 OBB로 변환 후 교차 검사
+			for (int32 ChildIndex = 0; ChildIndex < Node.ChildCount; ++ChildIndex)
+			{
+				FBoundingBox ChildBounds;
+				ChildBounds.Min = FVector(Node.ChildMinX[ChildIndex], Node.ChildMinY[ChildIndex], Node.ChildMinZ[ChildIndex]);
+				ChildBounds.Max = FVector(Node.ChildMaxX[ChildIndex], Node.ChildMaxY[ChildIndex], Node.ChildMaxZ[ChildIndex]);
+
+				const FOBB ChildOBB = FOBB::FromAABB(ChildBounds);
+				if (IntersectOBB(OBB, ChildOBB))
+				{
+					if (StackSize < WorldBVHMaxTraversalStack)
+					{
+						NodeStack[StackSize++] = Node.Children[ChildIndex];
+					}
+				}
+			}
+		}
+	}
+
+	return Result;
+}
+
 int32 FWorldPrimitivePickingBVH::BuildRecursive(int32 Start, int32 End)
 {
 	const int32 NodeIndex = static_cast<int32>(Nodes.size());
@@ -482,11 +592,11 @@ int32 FWorldPrimitivePickingBVH::BuildRecursive(int32 Start, int32 End)
 
 		const float Scale = static_cast<float>(WorldBVHChildFanout) / (MaxCenter - MinCenter);
 		auto GetBucket = [BestAxis, MinCenter, Scale](const FLeaf& Leaf)
-		{
-			const float Center = GetAxisComponent(Leaf.Bounds.GetCenter(), BestAxis);
-			int32 Bucket = static_cast<int32>((Center - MinCenter) * Scale);
-			return std::clamp(Bucket, 0, WorldBVHChildFanout - 1);
-		};
+			{
+				const float Center = GetAxisComponent(Leaf.Bounds.GetCenter(), BestAxis);
+				int32 Bucket = static_cast<int32>((Center - MinCenter) * Scale);
+				return std::clamp(Bucket, 0, WorldBVHChildFanout - 1);
+			};
 
 		std::sort(
 			Leaves.begin() + Start,
@@ -540,32 +650,32 @@ int32 FWorldPrimitivePickingBVH::BuildRecursive(int32 Start, int32 End)
 		}
 		else
 		{
-		int32 RangeStart = Start;
-		while (RangeStart < End)
-		{
-			int32 RangeEnd = RangeStart + 1;
-			const int32 Bucket = GetBucket(Leaves[RangeStart]);
-			while (RangeEnd < End && GetBucket(Leaves[RangeEnd]) == Bucket)
+			int32 RangeStart = Start;
+			while (RangeStart < End)
 			{
-				++RangeEnd;
+				int32 RangeEnd = RangeStart + 1;
+				const int32 Bucket = GetBucket(Leaves[RangeStart]);
+				while (RangeEnd < End && GetBucket(Leaves[RangeEnd]) == Bucket)
+				{
+					++RangeEnd;
+				}
+
+				const int32 ChildIdx = BuildRecursive(RangeStart, RangeEnd);
+				const int32 LocalChildIdx = Nodes[NodeIndex].ChildCount;
+
+				Nodes[NodeIndex].Children[LocalChildIdx] = ChildIdx;
+
+				const FBoundingBox& ChildBounds = Nodes[ChildIdx].Bounds;
+				Nodes[NodeIndex].ChildMinX[LocalChildIdx] = ChildBounds.Min.X;
+				Nodes[NodeIndex].ChildMinY[LocalChildIdx] = ChildBounds.Min.Y;
+				Nodes[NodeIndex].ChildMinZ[LocalChildIdx] = ChildBounds.Min.Z;
+				Nodes[NodeIndex].ChildMaxX[LocalChildIdx] = ChildBounds.Max.X;
+				Nodes[NodeIndex].ChildMaxY[LocalChildIdx] = ChildBounds.Max.Y;
+				Nodes[NodeIndex].ChildMaxZ[LocalChildIdx] = ChildBounds.Max.Z;
+
+				Nodes[NodeIndex].ChildCount++;
+				RangeStart = RangeEnd;
 			}
-
-			const int32 ChildIdx = BuildRecursive(RangeStart, RangeEnd);
-			const int32 LocalChildIdx = Nodes[NodeIndex].ChildCount;
-
-			Nodes[NodeIndex].Children[LocalChildIdx] = ChildIdx;
-
-			const FBoundingBox& ChildBounds = Nodes[ChildIdx].Bounds;
-			Nodes[NodeIndex].ChildMinX[LocalChildIdx] = ChildBounds.Min.X;
-			Nodes[NodeIndex].ChildMinY[LocalChildIdx] = ChildBounds.Min.Y;
-			Nodes[NodeIndex].ChildMinZ[LocalChildIdx] = ChildBounds.Min.Z;
-			Nodes[NodeIndex].ChildMaxX[LocalChildIdx] = ChildBounds.Max.X;
-			Nodes[NodeIndex].ChildMaxY[LocalChildIdx] = ChildBounds.Max.Y;
-			Nodes[NodeIndex].ChildMaxZ[LocalChildIdx] = ChildBounds.Max.Z;
-
-			Nodes[NodeIndex].ChildCount++;
-			RangeStart = RangeEnd;
-		}
 		}
 	}
 

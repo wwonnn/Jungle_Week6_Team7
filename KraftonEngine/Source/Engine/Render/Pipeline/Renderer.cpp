@@ -259,6 +259,7 @@ void FRenderer::InitializePassRenderStates()
 	S[(uint32)E::OverlayFont] = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::SubUV] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::Billboard] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::MeshDecal] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 }
 
 // ============================================================
@@ -346,10 +347,10 @@ void FRenderer::ExecutePass(const TArray<const FPrimitiveSceneProxy*>& Proxies, 
 		{
 			const FPrimitiveSceneProxy& Proxy = *RawProxy;
 			if (!Proxy.MeshBuffer || !Proxy.MeshBuffer->IsValid()) continue;
-			BindShader(Proxy, Context, State);	
+			BindShader(Proxy, Context, State);
 			BindExtraCB(Proxy, Context);
-			
-			if(Proxy.SectionDraws.size() == 1)
+
+			if (Proxy.SectionDraws.size() == 1)
 				DrawSingleSection(Proxy, Context, State);
 			else if (!Proxy.SectionDraws.empty())
 				DrawSections(Proxy, Context, State);
@@ -370,14 +371,14 @@ void FRenderer::SortProxies(const TArray<const FPrimitiveSceneProxy*>& Proxies)
 	SCOPE_STAT_CAT("ExecutePass::Sort", "4_ExecutePass");
 
 	const auto ProxyLess = [](const FPrimitiveSceneProxy* A, const FPrimitiveSceneProxy* B)
-	{
-		if (A->SortKey != B->SortKey)
 		{
-			return A->SortKey < B->SortKey;
-		}
+			if (A->SortKey != B->SortKey)
+			{
+				return A->SortKey < B->SortKey;
+			}
 
-		return A->MaterialSortKey < B->MaterialSortKey;
-	};
+			return A->MaterialSortKey < B->MaterialSortKey;
+		};
 
 	// A: capacity 유지 — assign() 대신 clear() + insert()
 	SortedProxyBuffer.clear();
@@ -508,7 +509,7 @@ void FRenderer::DrawSections(const FPrimitiveSceneProxy& Proxy, ID3D11DeviceCont
 		Ctx->PSSetSamplers(0, 1, &Resources.DefaultSampler);
 		State.bSamplerBound = true;
 	}
-	
+
 	// Material CB 슬롯 바인딩 (1회)
 	FConstantBuffer* MaterialCB = FConstantBufferPool::Get().GetBuffer(ECBSlot::Material, sizeof(FMaterialConstants));
 	if (!State.bMaterialBound)
