@@ -9,6 +9,7 @@
 #include "Profiling/GPUProfiler.h"
 #include "Engine/Runtime/Engine.h"
 #include "Profiling/Timer.h"
+#include "Render/Proxy/FogSceneProxy.h"
 
 
 void FRenderer::Create(HWND hWindow)
@@ -312,8 +313,8 @@ void FRenderer::InitializePassBatchers()
 
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
-			DrawPostProcessOutline(Bus, Ctx);
 			DrawPostProcessFog(Bus, Ctx);
+			DrawPostProcessOutline(Bus, Ctx);
 		},
 		nullptr
 	};
@@ -703,10 +704,12 @@ void FRenderer::DrawPostProcessFog(const FRenderBus& Bus, ID3D11DeviceContext* C
 	Context->OMSetRenderTargets(1, &RTV, nullptr);
 
 	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
-	ID3D11ShaderResourceView* SceneColorSRV = Bus.GetViewportSRV();
-	ID3D11ShaderResourceView* PS_SRVs[] = { DepthSRV, SceneColorSRV };
-	Context->PSSetShaderResources(0, ARRAYSIZE(PS_SRVs), PS_SRVs);
+	Context->PSSetShaderResources(0, 1, &DepthSRV);
 	//셰이더 및 상수 버퍼 바인딩
+	// FFogSceneProxy인 경우 뷰포트 정보 업데이트 강제 호출
+	FFogSceneProxy* FogSceneProxy = (FFogSceneProxy*)FogProxy;
+	FogSceneProxy->UpdatePerViewport(Bus);
+
 	FogProxy->Shader->Bind(Context);
 	BindExtraCB(*FogProxy, Context);
 

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 //	Windows API Include
 #define NOMINMAX
@@ -32,12 +32,12 @@ enum class EMeshShape
 enum class ERenderPass : uint32
 {
 	Opaque,
-	Font,			// TextRenderComponent → FontBatcher 경유
-	SubUV,			// SubUVComponent     → SubUVBatcher 경유
-	Billboard,		// BillboardComponent → BillboardBatcher 경유
 	Translucent,
 	SelectionMask,
-	PostProcess,
+	PostProcess,    // Fog & Outline
+	Font,			// World Text
+	SubUV,			// Sprites/Particles
+	Billboard,		// Billboard Icons
 	Editor,
 	Grid,
 	GizmoOuter,
@@ -50,12 +50,12 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 {
 	static const char* Names[] = {
 		"RenderPass::Opaque",
-		"RenderPass::Font",
-		"RenderPass::SubUV",
-		"RenderPass::Billboard",
 		"RenderPass::Translucent",
 		"RenderPass::SelectionMask",
 		"RenderPass::PostProcess",
+		"RenderPass::Font",
+		"RenderPass::SubUV",
+		"RenderPass::Billboard",
 		"RenderPass::Editor",
 		"RenderPass::Grid",
 		"RenderPass::GizmoOuter",
