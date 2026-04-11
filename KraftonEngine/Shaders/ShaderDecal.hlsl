@@ -1,12 +1,6 @@
 #include "Common/Functions.hlsl"
 #include "Common/VertexLayouts.hlsl"
 
-cbuffer CBDecal : register(b0)
-{
-    float4x4 InvViewProj;   // NDC → World 역투영
-    float4x4 WorldToDecal;  // World → Decal Local (-1~1)
-};
-
 Texture2D SceneDepth : register(t0);        // Z-Buffer (SRV)
 Texture2D DecalAlbedo : register(t1);       // Decal 텍스처
 SamplerState PointSampler : register(s0);
@@ -38,20 +32,20 @@ float3 ReconstructWorldPos(float2 screenUV, float depth)
 }
 
 // Z-Buffer를 이용해 Screen -> Decal Local로 역변환
-float4 PS(PS_Input_PosW input)
+float4 PS(PS_Input_PosW input) : SV_TARGET
 {
     // 1. 현재 픽셀의 Screen UV 계산
     //    ClipPosW.xy / ClipPosW.w → NDC, 이를 0~1 UV로
     float2 screenUV;
     screenUV.x = (input.positionW.x / input.positionW.w) * 0.5f + 0.5f;
     screenUV.y = (input.positionW.y / input.positionW.w) * -0.5f + 0.5f;
-
+   
     // 2. Z-Buffer에서 Depth 샘플링
     float sceneDepth = SceneDepth.Sample(PointSampler, screenUV).r;
 
     // 3. Depth가 1.0이면 Sky/빈 공간 → 데칼 없음
     clip(sceneDepth < 1.0f ? 1 : -1);
-
+    
     // 4. Screen UV + Depth → World Position 복원
     float3 worldPos = ReconstructWorldPos(screenUV, sceneDepth);
 
@@ -76,6 +70,5 @@ float4 PS(PS_Input_PosW input)
 
     // 9. Alpha 기반 클리핑 (선택)
     clip(decalColor.a - 0.01f);
-
     return decalColor;
 }

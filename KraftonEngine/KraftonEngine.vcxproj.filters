@@ -529,6 +529,9 @@
     <ClCompile Include="Source\Engine\Component\DecalComponent.cpp">
       <Filter>Source\Engine\Component</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Render\Proxy\DecalSceneProxy.cpp">
+      <Filter>Source\Engine\Render\Proxy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Editor\EditorEngine.h">
@@ -980,6 +983,9 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Component\DecalComponent.h">
       <Filter>Source\Engine\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Render\Proxy\DecalSceneProxy.h">
+      <Filter>Source\Engine\Render\Proxy</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
