@@ -33,7 +33,6 @@ void FRenderer::Create(HWND hWindow)
 	InitializePassRenderStates();
 	InitializePassBatchers();
 
-	DecalAlbedoSRV = CreateCheckerboardSRV();
 	// GPU Profiler 초기화
 	FGPUProfiler::Get().Initialize(Device.GetDevice(), Device.GetDeviceContext());
 }
@@ -234,8 +233,10 @@ void FRenderer::Render(const FRenderBus& InRenderBus)
 
 		if (bHasBatcher)
 			PassBatchers[i].DrawBatch(CurPass, InRenderBus, Context);
+		else if (CurPass == ERenderPass::Decal)
+			ExecuteDecalPass(InRenderBus, InRenderBus.GetProxies(CurPass), Context);
 		else
-			ExecutePass(InRenderBus, InRenderBus.GetProxies(CurPass), Context);
+			ExecutePass(InRenderBus.GetProxies(CurPass), Context);
 	}
 }
 
@@ -336,7 +337,7 @@ void FRenderer::DrawLineBatcher(FLineBatcher& Batcher, ID3D11DeviceContext* Cont
 // ============================================================
 // 프록시 패스 실행기 — FPrimitiveSceneProxy* 순회
 // ============================================================
-void FRenderer::ExecutePass(const FRenderBus& Bus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context)
+void FRenderer::ExecutePass(const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context)
 {
 	SortProxies(Proxies);
 
@@ -349,16 +350,6 @@ void FRenderer::ExecutePass(const FRenderBus& Bus, const TArray<const FPrimitive
 			const FPrimitiveSceneProxy& Proxy = *RawProxy;
 			if (!Proxy.MeshBuffer || !Proxy.MeshBuffer->IsValid()) continue;
 
-			if (Proxy.Pass == ERenderPass::Decal)
-			{
-				// DSV 언바인딩 + DepthSRV 바인딩		
-				ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
-				ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
-				Context->OMSetRenderTargets(1, &RTV, nullptr);
-				Context->PSSetShaderResources(0, 1, &DepthSRV);
-				Context->PSSetShaderResources(1, 1, &DecalAlbedoSRV);
-			}
-
 			BindShader(Proxy, Context, State);	
 			BindExtraCB(Proxy, Context);
 			
@@ -368,22 +359,27 @@ void FRenderer::ExecutePass(const FRenderBus& Bus, const TArray<const FPrimitive
 				DrawSections(Proxy, Context, State);
 			else
 				DrawSimple(Proxy, Context, State);
-
-			if (Proxy.Pass == ERenderPass::Decal)
-			{
-				// Decal SRV 해제 + DSV 복구
-				ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
-				ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
-				ID3D11ShaderResourceView* NullSRV = nullptr;
-				Context->PSSetShaderResources(0, 1, &NullSRV);
-				Context->PSSetShaderResources(1, 1, &NullSRV);
-				Context->OMSetRenderTargets(1, &RTV, DSV);
-				State.LastSRV = nullptr;
-			}
 		}
 	}
-
 	CleanupSRV(Context, State);
+}
+
+void FRenderer::ExecuteDecalPass(const FRenderBus& InRenderBus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context)
+{
+	// DSV 언바인딩 + DepthSRV 바인딩		
+	ID3D11RenderTargetView* RTV = InRenderBus.GetViewportRTV();
+	ID3D11ShaderResourceView* DepthSRV = InRenderBus.GetViewportDepthSRV();
+	Context->OMSetRenderTargets(1, &RTV, nullptr);
+	Context->PSSetShaderResources(0, 1, &DepthSRV);
+
+	ExecutePass(InRenderBus.GetProxies(ERenderPass::Decal), Context);
+
+	// Decal SRV 해제 + DSV 복구
+	ID3D11DepthStencilView* DSV = InRenderBus.GetViewportDSV();
+	ID3D11ShaderResourceView* NullSRV = nullptr;
+	Context->PSSetShaderResources(0, 1, &NullSRV);
+	Context->PSSetShaderResources(1, 1, &NullSRV);
+	Context->OMSetRenderTargets(1, &RTV, DSV);
 }
 
 // ============================================================
@@ -599,14 +595,17 @@ void FRenderer::DrawSingleSection(const FPrimitiveSceneProxy& Proxy, ID3D11Devic
 	}
 
 	// SRV 변경 시에만 바인딩
-	if (Proxy.Pass != ERenderPass::Decal)
+	if (Section.DiffuseSRV != State.LastSRV)
 	{
-		if (Section.DiffuseSRV != State.LastSRV)
-		{
-			ID3D11ShaderResourceView* srv = Section.DiffuseSRV;
+		ID3D11ShaderResourceView* srv = Section.DiffuseSRV;
+
+		if (Proxy.Pass == ERenderPass::Decal)
+			// Decal은 0: DepthSRV 1: TextureSRV
+			Ctx->PSSetShaderResources(1, 1, &srv);
+		else
 			Ctx->PSSetShaderResources(0, 1, &srv);
-			State.LastSRV = Section.DiffuseSRV;
-		}
+
+		State.LastSRV = Section.DiffuseSRV;
 	}
 
 	// Material CB — SectionColor 또는 UVScroll 변경 시만 업데이트
@@ -709,48 +708,6 @@ void FRenderer::DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContex
 
 	// 7) DSV 재바인딩 (후속 패스에서 뎁스 사용)
 	Context->OMSetRenderTargets(1, &RTV, DSV);
-}
-
-ID3D11ShaderResourceView* FRenderer::CreateCheckerboardSRV()
-{
-	constexpr int Size = 8;
-	uint8 TexData[Size * Size * 4];
-
-	for (int y = 0; y < Size; y++)
-	{
-		for (int x = 0; x < Size; x++)
-		{
-			bool bWhite = (x + y) % 2 == 0;
-			int Idx = (y * Size + x) * 4;
-			TexData[Idx + 0] = bWhite ? 255 : 50;  // R
-			TexData[Idx + 1] = bWhite ? 255 : 50;  // G
-			TexData[Idx + 2] = bWhite ? 255 : 50;  // B
-			TexData[Idx + 3] = 255;                 // A
-		}
-	}
-
-	D3D11_TEXTURE2D_DESC Desc = {};
-	Desc.Width = Size;
-	Desc.Height = Size;
-	Desc.MipLevels = 1;
-	Desc.ArraySize = 1;
-	Desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	Desc.SampleDesc.Count = 1;
-	Desc.Usage = D3D11_USAGE_IMMUTABLE;
-	Desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-	D3D11_SUBRESOURCE_DATA InitData = {};
-	InitData.pSysMem = TexData;
-	InitData.SysMemPitch = Size * 4;
-
-	ID3D11Texture2D* Tex = nullptr;
-	Device.GetDevice()->CreateTexture2D(&Desc, &InitData, &Tex);
-
-	ID3D11ShaderResourceView* SRV = nullptr;
-	Device.GetDevice()->CreateShaderResourceView(Tex, nullptr, &SRV);
-
-	Tex->Release();
-	return SRV;
 }
 
 //	Present the rendered frame to the screen. 반드시 Render 이후에 호출되어야 함.
