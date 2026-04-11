@@ -66,6 +66,7 @@ public:
 	ID3D11RenderTargetView*  GetViewportRTV()        const { return ViewportRTV; }
 	ID3D11DepthStencilView*  GetViewportDSV()        const { return ViewportDSV; }
 	ID3D11ShaderResourceView* GetViewportStencilSRV() const { return ViewportStencilSRV; }
+	ID3D11ShaderResourceView* GetViewportDepthSRV() const { return ViewportDepthSRV; }
 
 	// PostProcess 전용 (FXAA 등)
 	ID3D11RenderTargetView*  GetPostProcessRTV()    const { return PostProcessRTV; }
@@ -112,6 +113,7 @@ private:
 	ID3D11RenderTargetView*   ViewportRTV        = nullptr;
 	ID3D11DepthStencilView*   ViewportDSV        = nullptr;
 	ID3D11ShaderResourceView* ViewportStencilSRV = nullptr;
+	ID3D11ShaderResourceView* ViewportDepthSRV = nullptr;
 
 	ID3D11RenderTargetView*   PostProcessRTV    = nullptr;
 	ID3D11ShaderResourceView* BaseColorSRV      = nullptr;
