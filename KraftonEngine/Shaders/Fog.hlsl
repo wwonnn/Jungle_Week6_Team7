@@ -10,7 +10,8 @@ cbuffer FogBuffer : register(b5)
     float FogCutoffDistance;
     
     float FogMaxOpacity;
-    float3 _Padding0;
+    float FogBaseHeight;
+    float2 _Padding0;
 
     float4x4 InvViewProj;
     float4 CameraPos;
@@ -67,11 +68,12 @@ float4 PS(PS_Input input) : SV_TARGET
         return float4(0, 0, 0, 0); 
     }
 
-    // 3. Exponential Height Fog 공식 (UE 방식)
+    // 3. Exponential Height Fog 공식 (UE 방식 - BaseHeight 적용)
     float falloff = max(0.0001f, FogHeightFalloff * 0.01f); 
     float density = FogDensity * 0.1f;
     
-    float cameraHeight = cameraPos.z;
+    // 포그 액터의 Z 높이를 기준으로 한 카메라의 상대적 높이
+    float cameraHeight = cameraPos.z - FogBaseHeight;
     float rayZ = rayDir.z * effectiveRayLength;
     
     float fogFactor = 0.0f;
@@ -92,6 +94,5 @@ float4 PS(PS_Input input) : SV_TARGET
     float opacity = 1.0f - exp(-max(0.0f, fogFactor));
     opacity = clamp(opacity, 0.0f, FogMaxOpacity);
 
-    // FogColor가 검은색이면 가까운 곳도 검게 보일 수 있으므로 확인 필요
     return float4(FogColor.rgb, opacity);
 }

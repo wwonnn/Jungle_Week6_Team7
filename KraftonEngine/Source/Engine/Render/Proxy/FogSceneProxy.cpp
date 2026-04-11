@@ -36,6 +36,7 @@ void FFogSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 	Fog.StartDistance = FogComp->GetStartDistance();
 	Fog.FogCutoffDistance = FogComp->GetFogCutoffDistance();
 	Fog.FogMaxOpacity = FogComp->GetFogMaxOpacity();
+	Fog.FogBaseHeight = FogComp->GetWorldLocation().Z;
 
 	Fog.InvViewProj = (Bus.GetView() * Bus.GetProj()).GetInverse();
 	Fog.CameraPos = FVector4(Bus.GetCameraPosition(), 1.0f);

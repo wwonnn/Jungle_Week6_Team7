@@ -222,7 +222,8 @@ struct FFogConstants
 	float FogCutoffDistance;
 
 	float FogMaxOpacity;
-	float Padding0[3];
+	float FogBaseHeight;
+	float Padding0[2];
 
 	FMatrix InvViewProj;
 	FVector4 CameraPos;
