@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Render/Types/RenderTypes.h"
 
@@ -24,7 +24,7 @@ public:
 	void BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4] = nullptr);
 
 	// ViewportClient 참조
-	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }
+	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }       
 	FViewportClient* GetClient() const { return ViewportClient; }
 
 	// 크기

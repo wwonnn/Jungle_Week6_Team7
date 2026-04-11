@@ -75,7 +75,7 @@ void UEngine::Tick(float DeltaTime)
 {
 	InputSystem::Get().Tick();
 	WorldTick(DeltaTime);
-	Render(DeltaTime);
+	Render(DeltaTime);   
 }
 
 void UEngine::Render(float DeltaTime)
