@@ -59,7 +59,8 @@ private:
 	void UpdateFrameBuffer(ID3D11DeviceContext* Context, const FRenderBus& InRenderBus);
 
 	// 프록시 패스 실행기 — FPrimitiveSceneProxy* 순회, 필드 직접 접근
-	void ExecutePass(const FRenderBus& Bus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
+	void ExecutePass(const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
+	void ExecuteDecalPass(const FRenderBus& InRenderBus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
 
 	// ExecutePass 내부 헬퍼
 	struct FDrawState
@@ -95,8 +96,6 @@ private:
 	// PostProcess Outline — StencilSRV 읽어 edge detection 후 fullscreen draw
 	void DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContext* Context);
 
-	// Decal Test Texture
-	ID3D11ShaderResourceView* CreateCheckerboardSRV();
 private:
 	FD3DDevice Device;
 	FRenderResources Resources;
@@ -114,6 +113,4 @@ private:
 
 	FPassRenderState    PassRenderStates[(uint32)ERenderPass::MAX];
 	FPassBatcherBinding PassBatchers[(uint32)ERenderPass::MAX];
-
-	ID3D11ShaderResourceView* DecalAlbedoSRV = nullptr;
 };

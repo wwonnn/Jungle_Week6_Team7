@@ -9,9 +9,11 @@ FDecalSceneProxy::FDecalSceneProxy(UDecalComponent* InComponent)
 	: FPrimitiveSceneProxy(InComponent)
 {
 	bPerViewportUpdate = true;
+	bSupportsOutline = false;
 
 	FMeshSectionDraw DecalSection;
 
+	DecalSection.DiffuseSRV = GetDecalComponent()->GetSRV();
 	DecalSection.DiffuseColor = { 1.f, 1.f, 1.f, 1.f }; // 텍스처 그대로
 	DecalSection.FirstIndex = 0;               
 	DecalSection.IndexCount = 36;               
@@ -23,6 +25,11 @@ FDecalSceneProxy::FDecalSceneProxy(UDecalComponent* InComponent)
 UDecalComponent* FDecalSceneProxy::GetDecalComponent() const
 {
 	return static_cast<UDecalComponent*>(Owner);
+}
+
+void FDecalSceneProxy::UpdateMaterial()
+{
+	SectionDraws[0].DiffuseSRV = GetDecalComponent()->GetSRV();
 }
 
 void FDecalSceneProxy::UpdateMesh()
@@ -40,7 +47,7 @@ void FDecalSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 		FConstantBufferPool::Get().GetBuffer(ECBSlot::Decal, sizeof(FDecalConstants)),
 		ECBSlot::Decal);
 
-	G.WorldToDecal = PerObjectConstants.Model.GetInverseFast();
+	G.WorldToDecal = PerObjectConstants.Model.GetInverse();
 	G.InvViewProj = (Bus.GetView() * Bus.GetProj()).GetInverse();
 }
 
