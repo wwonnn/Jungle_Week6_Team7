@@ -4,7 +4,9 @@
 #include "GameFramework/World.h"
 #include "Engine/Runtime/Engine.h"
 #include "Mesh/ObjManager.h"
+#include "Collision/RayUtils.h"
 #include "Render/Proxy/DecalMeshSceneProxy.h"
+#include "Render/Pipeline/RenderBus.h"
 #include "Engine/Texture/Texture2D.h"
 #include "Editor/UI/EditorConsoleWidget.h"
 #include <cstring>
@@ -13,6 +15,8 @@ IMPLEMENT_CLASS(UMeshDecalComponent, UPrimitiveComponent)
 namespace
 {
 	constexpr float MeshDecalSurfaceOffset = 0.001f;
+	constexpr float MeshDecalLocalHalfExtent = 0.5f;
+	const FVector MeshDecalLocalExtents = FVector(MeshDecalLocalHalfExtent, MeshDecalLocalHalfExtent, MeshDecalLocalHalfExtent);
 
 	FVector2 ComputeDecalProjectedUV(const FVector& DecalLocalPos, const FVector& HalfExtent)
 	{
@@ -38,6 +42,15 @@ namespace
 		AvgNormal.Normalize();
 		return AvgNormal.Dot(FVector(1.f, 0.f, 0.f)) <= ProjectionDotThreshold;
 	}
+
+	void AddBoxEdge(FRenderBus& RenderBus, const FVector& Start, const FVector& End, const FColor& Color)
+	{
+		FDebugLineEntry Entry = {};
+		Entry.Start = Start;
+		Entry.End = End;
+		Entry.Color = Color;
+		RenderBus.AddDebugLineEntry(std::move(Entry));
+	}
 }
 
 FPrimitiveSceneProxy* UMeshDecalComponent::CreateSceneProxy()
@@ -47,7 +60,7 @@ FPrimitiveSceneProxy* UMeshDecalComponent::CreateSceneProxy()
 
 UMeshDecalComponent::UMeshDecalComponent()
 {
-	LocalExtents = HalfExtent;
+	LocalExtents = MeshDecalLocalExtents;
 }
 
 void UMeshDecalComponent::RefreshMaterial()
@@ -78,7 +91,6 @@ void UMeshDecalComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Out
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
 	OutProps.push_back({ "Material", EPropertyType::MaterialSlot, &MaterialSlot });
-	OutProps.push_back({ "HalfExtent", EPropertyType::Vec3, &HalfExtent });
 }
 
 void UMeshDecalComponent::PostEditProperty(const char* PropertyName)
@@ -90,26 +102,105 @@ void UMeshDecalComponent::PostEditProperty(const char* PropertyName)
 		RefreshMaterial();
 		MarkProxyDirty(EDirtyFlag::Mesh);
 	}
-	else if (strcmp(PropertyName, "HalfExtent") == 0)
-	{
-		LocalExtents = HalfExtent;
-		MarkWorldBoundsDirty();
-		UpdateDecalMeshData();
-	}
 }
 
 void UMeshDecalComponent::PostDuplicate()
 {
 	UPrimitiveComponent::PostDuplicate();
-	LocalExtents = HalfExtent;
+	LocalExtents = MeshDecalLocalExtents;
 	RefreshMaterial();
 	UpdateDecalMeshData();
+}
+
+void UMeshDecalComponent::CollectEditorVisualizations(FRenderBus& RenderBus) const
+{
+	static constexpr int32 BoxEdges[][2] = {
+		{0, 1}, {1, 2}, {2, 3}, {3, 0},
+		{4, 5}, {5, 6}, {6, 7}, {7, 4},
+		{0, 4}, {1, 5}, {2, 6}, {3, 7}
+	};
+
+	const FVector LocalCorners[8] = {
+		FVector(-LocalExtents.X, -LocalExtents.Y, -LocalExtents.Z),
+		FVector(LocalExtents.X, -LocalExtents.Y, -LocalExtents.Z),
+		FVector(LocalExtents.X,  LocalExtents.Y, -LocalExtents.Z),
+		FVector(-LocalExtents.X,  LocalExtents.Y, -LocalExtents.Z),
+		FVector(-LocalExtents.X, -LocalExtents.Y,  LocalExtents.Z),
+		FVector(LocalExtents.X, -LocalExtents.Y,  LocalExtents.Z),
+		FVector(LocalExtents.X,  LocalExtents.Y,  LocalExtents.Z),
+		FVector(-LocalExtents.X,  LocalExtents.Y,  LocalExtents.Z),
+	};
+
+	FVector WorldCorners[8] = {};
+	const FMatrix WorldMatrix = GetWorldMatrix();
+	for (int32 CornerIndex = 0; CornerIndex < 8; ++CornerIndex)
+	{
+		WorldCorners[CornerIndex] = WorldMatrix.TransformPositionWithW(LocalCorners[CornerIndex]);
+	}
+
+	const FColor BoxColor(255, 180, 0, 255);
+	for (const int32* Edge : BoxEdges)
+	{
+		AddBoxEdge(RenderBus, WorldCorners[Edge[0]], WorldCorners[Edge[1]], BoxColor);
+	}
+}
+
+void UMeshDecalComponent::BeginPlay()
+{
+	UpdateDecalMeshData();
+	UPrimitiveComponent::BeginPlay();
 }
 
 void UMeshDecalComponent::OnTransformDirty()
 {
 	UPrimitiveComponent::OnTransformDirty();
 	UpdateDecalMeshData();
+}
+
+bool UMeshDecalComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult)
+{
+	FRay LocalRay = {};
+	LocalRay.Origin = GetWorldInverseMatrix().TransformPositionWithW(Ray.Origin);
+	LocalRay.Direction = GetWorldInverseMatrix().TransformVector(Ray.Direction);
+	LocalRay.Direction.Normalize();
+
+	float LocalTMin = 0.0f;
+	float LocalTMax = 0.0f;
+	const FVector BoxMin(-LocalExtents.X, -LocalExtents.Y, -LocalExtents.Z);
+	const FVector BoxMax(LocalExtents.X, LocalExtents.Y, LocalExtents.Z);
+	if (!FRayUtils::IntersectRayAABB(LocalRay, BoxMin, BoxMax, LocalTMin, LocalTMax))
+	{
+		return false;
+	}
+
+	const float LocalHitDistance = (LocalTMin >= 0.0f) ? LocalTMin : LocalTMax;
+	if (LocalHitDistance < 0.0f)
+	{
+		return false;
+	}
+
+	const FVector LocalHitPoint = LocalRay.Origin + LocalRay.Direction * LocalHitDistance;
+	FVector LocalNormal = FVector(0.0f, 0.0f, 0.0f);
+	constexpr float NormalEpsilon = 0.001f;
+
+	if (std::abs(LocalHitPoint.X - BoxMax.X) <= NormalEpsilon) LocalNormal = FVector(1.0f, 0.0f, 0.0f);
+	else if (std::abs(LocalHitPoint.X - BoxMin.X) <= NormalEpsilon) LocalNormal = FVector(-1.0f, 0.0f, 0.0f);
+	else if (std::abs(LocalHitPoint.Y - BoxMax.Y) <= NormalEpsilon) LocalNormal = FVector(0.0f, 1.0f, 0.0f);
+	else if (std::abs(LocalHitPoint.Y - BoxMin.Y) <= NormalEpsilon) LocalNormal = FVector(0.0f, -1.0f, 0.0f);
+	else if (std::abs(LocalHitPoint.Z - BoxMax.Z) <= NormalEpsilon) LocalNormal = FVector(0.0f, 0.0f, 1.0f);
+	else if (std::abs(LocalHitPoint.Z - BoxMin.Z) <= NormalEpsilon) LocalNormal = FVector(0.0f, 0.0f, -1.0f);
+
+	const FMatrix WorldMatrix = GetWorldMatrix();
+	const FVector WorldHitPoint = WorldMatrix.TransformPositionWithW(LocalHitPoint);
+	const FVector WorldNormal = WorldMatrix.TransformVector(LocalNormal).Normalized();
+
+	OutHitResult.HitComponent = this;
+	OutHitResult.Distance = FVector::Distance(Ray.Origin, WorldHitPoint);
+	OutHitResult.WorldHitLocation = WorldHitPoint;
+	OutHitResult.WorldNormal = WorldNormal;
+	OutHitResult.FaceIndex = -1;
+	OutHitResult.bHit = true;
+	return true;
 }
 
 
@@ -132,6 +223,8 @@ void UMeshDecalComponent::UpdateDecalMeshData()
 	FMatrix WorldToDecalLocal = GetWorldMatrix().GetInverse();
 
 	//SAT를 통해 후보가 될 Primitive들을 가져오기.
+	if (!GetOwner()) return;
+	if (!GetOwner()->GetWorld()) return;
 	TArray<UPrimitiveComponent*> Candidates = GetCandidates();
 	UE_LOG("MeshDecal Candidates: %d", static_cast<int>(Candidates.size()));
 
@@ -179,9 +272,9 @@ void UMeshDecalComponent::UpdateDecalMeshData()
 				continue;
 			}
 
-			FVertexPNCT PrimDecalVertex0 = MakeDecalVertex(PrimDecalPos0, PrimDecalNormal0, HalfExtent);
-			FVertexPNCT PrimDecalVertex1 = MakeDecalVertex(PrimDecalPos1, PrimDecalNormal1, HalfExtent);
-			FVertexPNCT PrimDecalVertex2 = MakeDecalVertex(PrimDecalPos2, PrimDecalNormal2, HalfExtent);
+			FVertexPNCT PrimDecalVertex0 = MakeDecalVertex(PrimDecalPos0, PrimDecalNormal0, MeshDecalLocalExtents);
+			FVertexPNCT PrimDecalVertex1 = MakeDecalVertex(PrimDecalPos1, PrimDecalNormal1, MeshDecalLocalExtents);
+			FVertexPNCT PrimDecalVertex2 = MakeDecalVertex(PrimDecalPos2, PrimDecalNormal2, MeshDecalLocalExtents);
 
 			TArray<FVertexPNCT> ClippedVertices;
 			ClipByDecalLocalOBB(ClippedVertices, PrimDecalVertex0, PrimDecalVertex1, PrimDecalVertex2);
@@ -241,14 +334,14 @@ void UMeshDecalComponent::ClipByDecalLocalOBB(TArray<FVertexPNCT>& OutClippedVer
 			InputVertices = TempVertices;
 		};
 
-	ClipPolygonByPlane(-HalfExtent.X, 0, true);
-	ClipPolygonByPlane(HalfExtent.X, 0, false);
+	ClipPolygonByPlane(-MeshDecalLocalHalfExtent, 0, true);
+	ClipPolygonByPlane(MeshDecalLocalHalfExtent, 0, false);
 
-	ClipPolygonByPlane(-HalfExtent.Y, 1, true);
-	ClipPolygonByPlane(HalfExtent.Y, 1, false);
+	ClipPolygonByPlane(-MeshDecalLocalHalfExtent, 1, true);
+	ClipPolygonByPlane(MeshDecalLocalHalfExtent, 1, false);
 
-	ClipPolygonByPlane(-HalfExtent.Z, 2, true);
-	ClipPolygonByPlane(HalfExtent.Z, 2, false);
+	ClipPolygonByPlane(-MeshDecalLocalHalfExtent, 2, true);
+	ClipPolygonByPlane(MeshDecalLocalHalfExtent, 2, false);
 
 	OutClippedVertices = InputVertices;
 }
@@ -278,7 +371,7 @@ void UMeshDecalComponent::ClipByAxis(float HExtent, uint32 AxisType,
 			Intersected.Position = Start.Position + (End.Position - Start.Position) * t;
 			Intersected.Position += Intersected.Normal * MeshDecalSurfaceOffset;
 			Intersected.Color = Start.Color + (End.Color - Start.Color) * t;
-			Intersected.UV = ComputeDecalProjectedUV(Intersected.Position - Intersected.Normal * MeshDecalSurfaceOffset, HalfExtent);
+			Intersected.UV = ComputeDecalProjectedUV(Intersected.Position - Intersected.Normal * MeshDecalSurfaceOffset, MeshDecalLocalExtents);
 			return Intersected;
 		};
 

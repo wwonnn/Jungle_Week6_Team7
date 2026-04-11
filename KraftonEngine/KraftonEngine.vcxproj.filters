@@ -524,6 +524,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Source\Engine\Component\MeshDecalComponent.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\DecalMeshSceneProxy.cpp" />
+    <ClCompile Include="Source\Engine\GameFramework\MeshDecalActor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Editor\EditorEngine.h">
@@ -973,6 +974,7 @@
     <ClInclude Include="Source\Engine\Component\MeshDecalComponent.h" />
     <ClInclude Include="Source\Engine\Collision\OBB.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\DecalMeshSceneProxy.h" />
+    <ClInclude Include="Source\Engine\GameFramework\MeshDecalActor.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KraftonEngine.rc" />

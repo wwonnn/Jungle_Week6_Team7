@@ -28,7 +28,7 @@ void UBillboardComponent::PostDuplicate()
 {
 	UPrimitiveComponent::PostDuplicate();
 	// 텍스처 SRV 재바인딩
-	SetTexture(TextureName);
+	//SetTexture(TextureName);
 }
 
 void UBillboardComponent::SetTexture(const FName& InTextureName)
@@ -64,7 +64,7 @@ void UBillboardComponent::PostEditProperty(const char* PropertyName)
 }
 
 void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
-	
+
 {
 	if (!GetOwner() || !GetOwner()->GetWorld()) return;
 

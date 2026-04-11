@@ -5,6 +5,7 @@
 #include "Viewport/Viewport.h"
 #include "Component/CameraComponent.h"
 #include "Component/GizmoComponent.h"
+#include "Component/MeshDecalComponent.h"
 #include "GameFramework/World.h"
 #include "Profiling/Stats.h"
 #include "Profiling/GPUProfiler.h"

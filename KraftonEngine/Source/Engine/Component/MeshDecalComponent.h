@@ -13,6 +13,7 @@ public:
 
 	virtual FMeshBuffer* GetMeshBuffer() const override { return const_cast<FMeshBuffer*>(&MeshBuffer); }
 	virtual const FMeshData* GetMeshData() const override { return nullptr; }
+	bool LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult) override;
 	UMaterial* GetMaterial() const { return Material; }
 
 	void UpdateDecalMeshData();
@@ -22,6 +23,8 @@ public:
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
 	void PostEditProperty(const char* PropertyName) override;
 	void PostDuplicate() override;
+	void CollectEditorVisualizations(FRenderBus& RenderBus) const override;
+	virtual void BeginPlay() override;
 
 private:
 	void RefreshMaterial();
@@ -30,7 +33,6 @@ private:
 	UMaterial* Material = nullptr;
 	TMeshData<FVertexPNCT> DecalMeshData;
 	FMeshBuffer MeshBuffer;
-	FVector HalfExtent = FVector(100.f, 100.f, 100.f);
 
 private:
 	TArray<UPrimitiveComponent*> GetCandidates() const;
