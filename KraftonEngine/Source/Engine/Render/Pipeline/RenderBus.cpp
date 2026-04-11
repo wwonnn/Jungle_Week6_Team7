@@ -1,4 +1,4 @@
-#include "RenderBus.h"
+﻿#include "RenderBus.h"
 #include "Component/CameraComponent.h"
 #include "Viewport/Viewport.h"
 
@@ -19,7 +19,9 @@ void FRenderBus::Clear()
 
 	ViewportRTV = nullptr;
 	ViewportDSV = nullptr;
+	ViewportSRV = nullptr;
 	ViewportStencilSRV = nullptr;
+	ViewportDepthSRV = nullptr;
 }
 
 void FRenderBus::AddProxy(ERenderPass Pass, const FPrimitiveSceneProxy* Proxy)
@@ -85,7 +87,9 @@ void FRenderBus::SetViewportInfo(const FViewport* VP)
 	viewportHeight = static_cast<float>(VP->GetHeight());
 	ViewportRTV = VP->GetRTV();
 	ViewportDSV = VP->GetDSV();
+	ViewportSRV = VP->GetSRV();
 	ViewportStencilSRV = VP->GetStencilSRV();
+	ViewportDepthSRV = VP->GetDepthSRV();
 }
 
 void FRenderBus::SetRenderSettings(const EViewMode NewViewMode, const FShowFlags NewShowFlags)

@@ -23,6 +23,7 @@ namespace ECBSlot
 	constexpr uint32 Gizmo = 2;     // b2: Gizmo state
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
+	constexpr uint32 Fog = 5;
 }
 
 //PerObject
@@ -172,7 +173,7 @@ struct FConstantBufferBinding
 	uint32 Size = 0;					// 업로드할 바이트 수
 	uint32 Slot = 0;					// VS/PS CB 슬롯
 
-	static constexpr size_t kMaxDataSize = 64;
+	static constexpr size_t kMaxDataSize = 256;
 	alignas(16) uint8 Data[kMaxDataSize] = {};
 
 	// Buffer/Size/Slot
@@ -211,3 +212,18 @@ struct FMeshSectionDraw
 	bool bIsUVScroll = false;
 };
 
+struct FFogConstants
+{
+	FVector4 FogColor;
+
+	float FogDensity;
+	float FogHeightFalloff;
+	float StartDistance;
+	float FogCutoffDistance;
+
+	float FogMaxOpacity;
+	float Padding0[3];
+
+	FMatrix InvViewProj;
+	FVector4 CameraPos;
+};

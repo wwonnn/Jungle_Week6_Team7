@@ -313,10 +313,11 @@ void FRenderer::InitializePassBatchers()
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
 			DrawPostProcessOutline(Bus, Ctx);
+			DrawPostProcessFog(Bus, Ctx);
 		},
-		nullptr  // PostProcess는 내���에서 SelectionMask 체크
+		nullptr
 	};
-}
+	}
 
 // ============================================================
 // LineBatcher DrawBatch 공통
@@ -680,6 +681,46 @@ void FRenderer::DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContex
 	Context->PSSetShaderResources(0, 1, &nullSRV);
 
 	// 7) DSV 재바인딩 (후속 패스에서 뎁스 사용)
+	Context->OMSetRenderTargets(1, &RTV, DSV);
+}
+
+void FRenderer::DrawPostProcessFog(const FRenderBus& Bus, ID3D11DeviceContext* Context)
+{
+	const auto& PostProcessProxies = Bus.GetProxies(ERenderPass::PostProcess);
+	if (PostProcessProxies.empty()) return;
+	const FPrimitiveSceneProxy* FogProxy = nullptr;
+	for (const auto* Proxy : PostProcessProxies)
+	{
+		if (Proxy->Shader == FShaderManager::Get().GetShader(EShaderType::Fog))
+		{
+			FogProxy = Proxy;
+			break;
+		}
+	}
+	if (!FogProxy) return;
+	//DSV 언바인딩
+	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	Context->OMSetRenderTargets(1, &RTV, nullptr);
+
+	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
+	ID3D11ShaderResourceView* SceneColorSRV = Bus.GetViewportSRV();
+	ID3D11ShaderResourceView* PS_SRVs[] = { DepthSRV, SceneColorSRV };
+	Context->PSSetShaderResources(0, ARRAYSIZE(PS_SRVs), PS_SRVs);
+	//셰이더 및 상수 버퍼 바인딩
+	FogProxy->Shader->Bind(Context);
+	BindExtraCB(*FogProxy, Context);
+
+	//Fullscreen Quad 드로우
+	Context->IASetInputLayout(nullptr);
+	Context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	Context->Draw(3, 0);
+	FDrawCallStats::Increment();
+
+	//SRV 해제 및 DSV 복구
+	ID3D11ShaderResourceView* nullSRV = nullptr;
+	Context->PSSetShaderResources(0, 1, &nullSRV);
+
+	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
 	Context->OMSetRenderTargets(1, &RTV, DSV);
 }
 
