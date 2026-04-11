@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/WindowsApplication.h"
 #include "Engine/Profiling/Timer.h"
 
-class FEngineLoop
+class FEngineLoop  
 {
 public:
 	bool Init(HINSTANCE hInstance, int nShowCmd);

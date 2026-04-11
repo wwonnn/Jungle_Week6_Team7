@@ -52,6 +52,8 @@ public:
 	bool  IsOrtho()        const { return bIsOrtho; }
 	bool  IsFixedOrtho()   const { return bIsOrtho && ViewportType != ELevelViewportType::Perspective && ViewportType != ELevelViewportType::FreeOrthographic; }
 	float GetOrthoWidth()  const { return OrthoWidth; }
+	bool  IsFXAAEnabled()  const { return bFXAAEnabled; }
+	void  SetFXAAEnabled(bool bInEnabled) { bFXAAEnabled = bInEnabled; }
 	ELevelViewportType GetViewportType() const { return ViewportType; }
 	void SetViewportType(ELevelViewportType InType) { ViewportType = InType; }
 	EViewMode GetViewMode() const { return ViewMode; }
@@ -65,6 +67,10 @@ public:
 	ID3D11DepthStencilView*  GetViewportDSV()        const { return ViewportDSV; }
 	ID3D11ShaderResourceView* GetViewportStencilSRV() const { return ViewportStencilSRV; }
 	ID3D11ShaderResourceView* GetViewportDepthSRV() const { return ViewportDepthSRV; }
+
+	// PostProcess 전용 (FXAA 등)
+	ID3D11RenderTargetView*  GetPostProcessRTV()    const { return PostProcessRTV; }
+	ID3D11ShaderResourceView* GetBaseColorSRV()      const { return BaseColorSRV; }
 
 	// GPU Occlusion Culling — set by render pipeline, read by collector
 	void SetOcclusionCulling(FGPUOcclusionCulling* InOcclusion) { OcclusionCulling = InOcclusion; }
@@ -99,7 +105,8 @@ private:
 	float viewportHeight = 0.0f;
 
 	bool  bIsOrtho = false;
-	float OrthoWidth = 10.0f;
+	float  OrthoWidth = 10.0f;
+	bool   bFXAAEnabled = false;
 	ELevelViewportType ViewportType = ELevelViewportType::Perspective;
 
 	// PostProcess용 뷰포트 D3D 리소스 (프레임 내 유효)
@@ -107,6 +114,9 @@ private:
 	ID3D11DepthStencilView*   ViewportDSV        = nullptr;
 	ID3D11ShaderResourceView* ViewportStencilSRV = nullptr;
 	ID3D11ShaderResourceView* ViewportDepthSRV = nullptr;
+
+	ID3D11RenderTargetView*   PostProcessRTV    = nullptr;
+	ID3D11ShaderResourceView* BaseColorSRV      = nullptr;
 
 	// GPU Occlusion
 	FGPUOcclusionCulling* OcclusionCulling = nullptr;

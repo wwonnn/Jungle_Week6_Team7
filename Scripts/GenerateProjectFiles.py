@@ -322,9 +322,8 @@ def generate_vcxproj(files: dict[str, list[str]]):
             elem = ET.SubElement(ig, "FxCompile", Include=f)
             # Exclude shaders from build (compiled at runtime)
             for cfg, plat in CONFIGURATIONS:
-                if plat == "x64":
-                    cond = f"'$(Configuration)|$(Platform)'=='{cfg}|{plat}'"
-                    ET.SubElement(elem, "ExcludedFromBuild", Condition=cond).text = "true"
+                cond = f"'$(Configuration)|$(Platform)'=='{cfg}|{plat}'"
+                ET.SubElement(elem, "ExcludedFromBuild", Condition=cond).text = "true"
 
     # ResourceCompile items (.rc)
     if files["ResourceCompile"]:
