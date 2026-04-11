@@ -2,6 +2,8 @@
 
 #include "Component/PrimitiveComponent.h"
 
+class FPrimitiveSceneProxy;
+
 class UDecalComponent : public UPrimitiveComponent
 {
 public:
@@ -9,5 +11,8 @@ public:
 
 	UDecalComponent() = default;
 	~UDecalComponent() override = default;
+
+	FMeshBuffer* GetMeshBuffer() const override;
+	FPrimitiveSceneProxy* CreateSceneProxy() override;
 };
 

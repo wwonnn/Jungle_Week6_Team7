@@ -23,6 +23,7 @@ namespace ECBSlot
 	constexpr uint32 Gizmo = 2;     // b2: Gizmo state
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
+	constexpr uint32 Decal = 5;    // b5: Decal properties
 }
 
 //PerObject
@@ -36,6 +37,12 @@ struct FPerObjectConstants
 	{
 		return { WorldMatrix, FVector4(1.0f, 1.0f, 1.0f, 1.0f) };
 	}
+};
+
+struct FDecalConstants
+{
+	FMatrix InvViewProj;
+	FMatrix WorldToDecal;
 };
 
 struct FFrameConstants
@@ -172,8 +179,8 @@ struct FConstantBufferBinding
 	uint32 Size = 0;					// 업로드할 바이트 수
 	uint32 Slot = 0;					// VS/PS CB 슬롯
 
-	static constexpr size_t kMaxDataSize = 64;
-	alignas(16) uint8 Data[kMaxDataSize] = {};
+	static constexpr size_t kMaxDataSize = 128;
+	alignas(32) uint8 Data[kMaxDataSize] = {};
 
 	// Buffer/Size/Slot
 	template<typename T>
