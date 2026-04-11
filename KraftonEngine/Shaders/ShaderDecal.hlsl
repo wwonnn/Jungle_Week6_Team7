@@ -62,13 +62,21 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     //    decalLocal.y → U, decalLocal.z → V
     //    로컬 좌표 -1~1 → UV 0~1
     float2 decalUV;
-    decalUV.x = decalLocal.y * 0.5f + 0.5f; // Y → U
-    decalUV.y = decalLocal.z * -0.5f + 0.5f; // Z → V (Z-up이므로 위가 0)
-
+    decalUV.x = decalLocal.y * 1.0f + 0.5f; // Y → U
+    decalUV.y = decalLocal.z * -1.0f + 0.5f; // Z → V (Z-up이므로 위가 0)
+    
     // 8. Decal 텍스처 샘플링
     float4 decalColor = DecalAlbedo.Sample(LinearSampler, decalUV);
+    
+    // 9. 아랫면 제거
+    float bottomFade = decalLocal.z * 1.0f + 0.5f; // -1~1 → 0(아래)~1(위)
+    float bottomAlpha = smoothstep(0.0f, 0.2f, bottomFade);
+    
+    // 10. 최종 알파에 적용
+    decalColor.a *= bottomAlpha;
 
-    // 9. Alpha 기반 클리핑 (선택)
+    // 11. Alpha 기반 클리핑 (선택)
     clip(decalColor.a - 0.01f);
+    
     return decalColor;
 }
