@@ -12,8 +12,7 @@ FBillboardSceneProxy::FBillboardSceneProxy(UBillboardComponent* InComponent)
 {
 	bPerViewportUpdate = true;
 	bShowAABB = false;
-	// 텍스처가 세팅돼 있으면 SubUV batcher 경로를 사용한다 (1x1 atlas로 단일 텍스처 렌더링).
-	// 텍스처가 없으면 기존 Primitive 셰이더 경로 유지.
+	// 텍스처가 있으면 Batcher 경로, 없으면 기본 Primitive 경로
 	bBatcherRendered = (InComponent && InComponent->GetTexture() != nullptr);
 }
 
@@ -23,7 +22,7 @@ UBillboardComponent* FBillboardSceneProxy::GetBillboardComponent() const
 }
 
 // ============================================================
-// UpdateMesh — Quad 메시 캐싱 + 텍스처 유무에 따라 batcher/Primitive 경로 결정
+// UpdateMesh — SelectionMask를 위한 셰이더 및 섹션 설정
 // ============================================================
 void FBillboardSceneProxy::UpdateMesh()
 {
@@ -35,10 +34,21 @@ void FBillboardSceneProxy::UpdateMesh()
 
 	if (bHasTexture)
 	{
-		// BillboardBatcher 가 자체 셰이더를 사용 — Shader 는 SelectionMask 아웃라인용으로
-		// Primitive 를 캐싱해 둔다 (Quad 메시는 FVertex 레이아웃).
-		Shader = FShaderManager::Get().GetShader(EShaderType::Primitive);
-		Pass = ERenderPass::Billboard;
+		// 1. SelectionMask(아웃라인) 시 알파 컷오프를 지원하는 Billboard 셰이더 사용
+		Shader = FShaderManager::Get().GetShader(EShaderType::Billboard);
+		
+		// 2. 렌더 패스는 Billboard로 설정 (기즈모 위 렌더링)
+		Pass = ERenderPass::Billboard; 
+
+		// 3. SelectionMask 패스에서 텍스처 바인딩을 위한 정보 설정
+		SectionDraws.clear();
+		FMeshSectionDraw DecalSection;
+		DecalSection.DiffuseSRV = Comp->GetTexture()->SRV;
+		DecalSection.DiffuseColor = { 1.f, 1.f, 1.f, 1.f };
+		DecalSection.FirstIndex = 0;
+		DecalSection.IndexCount = 6; // Quad(2 Triangles)
+		DecalSection.bIsUVScroll = false;
+		SectionDraws.push_back(DecalSection);
 	}
 	else
 	{
@@ -48,9 +58,6 @@ void FBillboardSceneProxy::UpdateMesh()
 	UpdateSortKey();
 }
 
-// ============================================================
-// CollectEntries — 텍스처가 있을 때만 Billboard batcher에 엔트리 제출
-// ============================================================
 void FBillboardSceneProxy::CollectEntries(FRenderBus& Bus)
 {
 	UBillboardComponent* Comp = GetBillboardComponent();
@@ -67,16 +74,13 @@ void FBillboardSceneProxy::CollectEntries(FRenderBus& Bus)
 	Bus.AddBillboardEntry(std::move(Entry));
 }
 
-// ============================================================
-// UpdatePerViewport — 뷰포트 카메라 기반 빌보드 행렬 갱신
-// ============================================================
 void FBillboardSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 {
 	UBillboardComponent* Comp = GetBillboardComponent();
 	bVisible = Comp->IsVisible();
 	if (!bVisible) return;
 
-	// Bus 카메라 벡터로 per-view 빌보드 행렬 계산
+	// 카메라 방향으로 향하는 월드 행렬 계산
 	FVector BillboardForward = Bus.GetCameraForward() * -1.0f;
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(BillboardForward, Bus.GetCameraRight() * -1.0f, Bus.GetCameraUp());
