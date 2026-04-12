@@ -313,8 +313,8 @@ void FRenderer::InitializePassBatchers()
 
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
-			DrawPostProcessFog(Bus, Ctx);
 			DrawPostProcessOutline(Bus, Ctx);
+			DrawPostProcessFog(Bus, Ctx);
 		},
 		nullptr
 	};

@@ -44,7 +44,7 @@ float4 PS(PS_Input input) : SV_TARGET
     ndc_xy.y = -ndc_xy.y;
     
     float4 clipPos = float4(ndc_xy, depth, 1.0f);
-    float4 worldPos = mul(InvViewProj, clipPos);
+    float4 worldPos = mul(clipPos, InvViewProj);
     worldPos.xyz /= worldPos.w;
     
     float3 cameraPos = CameraPos.xyz;
@@ -57,6 +57,7 @@ float4 PS(PS_Input input) : SV_TARGET
         return float4(0, 0, 0, 0);
     }
 
+    // Skybox (depth >= 1.0f) 일 때만 FogCutoffDistance를 적용하고, 일반 메쉬는 실제 거리(rayLength)를 사용합니다.
     float currentRayLength = (depth >= 1.0f) ? FogCutoffDistance : rayLength;
     float effectiveRayLength = max(0.0f, currentRayLength - StartDistance);
     
@@ -66,39 +67,31 @@ float4 PS(PS_Input input) : SV_TARGET
     }
 
     // 3. Unreal Engine 방식의 완전한 지수 높이 안개 적분
-    float falloff = max(0.0001f, FogHeightFalloff); 
-    float density = FogDensity; 
+    float falloff = max(0.00001f, FogHeightFalloff * 0.001f); // 언리얼 스케일 보정
+    float density = FogDensity * 0.001f; // 언리얼 스케일 보정 (1000으로 나눔)
 
-    float h_c = cameraPos.z - FogBaseHeight;
-    // 대상점의 높이를 계산 (StartDistance를 고려한 실제 안개 시작점부터의 오프셋)
+    // 안개 시작점의 높이 (StartDistance 고려)
     float3 startPos = cameraPos + rayDir * StartDistance;
-    float3 endPos = cameraPos + rayDir * currentRayLength;
-    
     float h_s = startPos.z - FogBaseHeight;
-    float h_e = endPos.z - FogBaseHeight;
     
-    float fogFactor = 0.0f;
-    
-    // 수직 변화량
-    float slope = rayDir.z;
+    // 시작점에서의 안개 밀도
+    float RayOriginTerms = density * exp2(clamp(-falloff * h_s, -127.0f, 127.0f));
 
-    if (abs(slope) > 0.001f)
+    // Ray 방향에 따른 전체 높이 변화율 (언리얼은 여기에 거리(Length)를 곱하지 않음!)
+    float FalloffTerm = falloff * rayDir.z;
+    
+    // 언리얼 엔진 CalculateLineIntegralShared 와 동일한 로직
+    // exp2 적분 근사치 (극한값 ln(2) 대신 1.0f를 쓰는 언리얼 방식 유지)
+    float LineIntegral = 1.0f;
+    if (abs(FalloffTerm) > 0.0001f)
     {
-        // 적분 공식: (Density/Falloff) * (exp(-Falloff * h_start) - exp(-Falloff * h_end)) / slope
-        // float의 지수 연산 한계(exp(88)까지 가능)를 고려하여 clamp 범위를 넓힙니다.
-        float exp_s = exp(clamp(-falloff * h_s, -80.0f, 80.0f));
-        float exp_e = exp(clamp(-falloff * h_e, -80.0f, 80.0f));
-        
-        fogFactor = (density / (falloff * slope)) * (exp_s - exp_e);
+        LineIntegral = (1.0f - exp2(clamp(-FalloffTerm, -127.0f, 127.0f))) / FalloffTerm;
     }
-    else
-    {
-        // 수평인 경우: 거리에 따른 단순 감쇠
-        fogFactor = density * exp(clamp(-falloff * h_s, -80.0f, 80.0f)) * effectiveRayLength;
-    }
+
+    float fogFactor = max(0.0f, RayOriginTerms * LineIntegral * effectiveRayLength);
 
     // 4. 최종 투명도
-    float opacity = 1.0f - exp(-max(0.0f, fogFactor));
+    float opacity = 1.0f - exp2(-fogFactor);
     opacity = clamp(opacity, 0.0f, FogMaxOpacity);
 
     return float4(FogColor.rgb, opacity);
