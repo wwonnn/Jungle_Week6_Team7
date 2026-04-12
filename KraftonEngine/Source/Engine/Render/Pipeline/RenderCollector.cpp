@@ -5,6 +5,7 @@
 #include "Editor/EditorEngine.h"
 #include "Render/Proxy/FScene.h"
 #include "Render/Proxy/PrimitiveSceneProxy.h"
+#include "Render/Proxy/DecalSceneProxy.h"
 #include "Render/DebugDraw/DebugDrawQueue.h"
 #include "Render/Culling/GPUOcclusionCulling.h"
 #include "Render/Pipeline/LODContext.h"
@@ -142,6 +143,7 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 
 	for (FPrimitiveSceneProxy* Proxy : Proxies)
 	{
+		if (dynamic_cast<FDecalSceneProxy*>(Proxy) != nullptr && !RenderBus.GetShowFlags().bDecal) continue;
 
 		// LOD 갱신 — WorldTick에서 이동, 단일 순회에 병합
 		if (LODCtx.bValid && LODCtx.ShouldRefreshLOD(Proxy->ProxyId, Proxy->LastLODUpdateFrame))
