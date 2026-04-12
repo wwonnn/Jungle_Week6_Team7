@@ -5,10 +5,10 @@ IMPLEMENT_CLASS(UExponentialHeightFogComponent, UPrimitiveComponent)
 UExponentialHeightFogComponent::UExponentialHeightFogComponent()
 {
 	FogInscatteringColor = FVector4(0.5f, 0.6f, 0.7f, 1.0f);
-	FogDensity = 0.002f;
-	FogHeightFalloff = 0.0f;
+	FogDensity = 0.02f;
+	FogHeightFalloff = 0.1f;
 	FogStartDistance = 0.0f;
-	FogCutoffDistance = 10000.0f;
+	FogCutoffDistance = 100000.0f;
 	FogMaxOpacity = 1.0f;
 
 }

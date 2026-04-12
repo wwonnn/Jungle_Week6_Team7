@@ -313,8 +313,8 @@ void FRenderer::InitializePassBatchers()
 
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
-			DrawPostProcessOutline(Bus, Ctx);
 			DrawPostProcessFog(Bus, Ctx);
+			DrawPostProcessOutline(Bus, Ctx);
 		},
 		nullptr
 	};
@@ -707,7 +707,7 @@ void FRenderer::DrawPostProcessFog(const FRenderBus& Bus, ID3D11DeviceContext* C
 	Context->PSSetShaderResources(0, 1, &DepthSRV);
 	//셰이더 및 상수 버퍼 바인딩
 	// FFogSceneProxy인 경우 뷰포트 정보 업데이트 강제 호출
-	FFogSceneProxy* FogSceneProxy = (FFogSceneProxy*)FogProxy;
+	FPrimitiveSceneProxy* FogSceneProxy = const_cast<FPrimitiveSceneProxy*>(FogProxy);
 	FogSceneProxy->UpdatePerViewport(Bus);
 
 	FogProxy->Shader->Bind(Context);

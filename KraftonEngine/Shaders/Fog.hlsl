@@ -77,11 +77,10 @@ float4 PS(PS_Input input) : SV_TARGET
     // 시작점에서의 안개 밀도
     float RayOriginTerms = density * exp2(clamp(-falloff * h_s, -127.0f, 127.0f));
 
-    // Ray 방향에 따른 전체 높이 변화율 (언리얼은 여기에 거리(Length)를 곱하지 않음!)
-    float FalloffTerm = falloff * rayDir.z;
+    // Ray 방향에 따른 전체 높이 변화율 (정확한 적분을 위해 거리를 곱함)
+    float FalloffTerm = falloff * rayDir.z * effectiveRayLength;
     
     // 언리얼 엔진 CalculateLineIntegralShared 와 동일한 로직
-    // exp2 적분 근사치 (극한값 ln(2) 대신 1.0f를 쓰는 언리얼 방식 유지)
     float LineIntegral = 1.0f;
     if (abs(FalloffTerm) > 0.0001f)
     {

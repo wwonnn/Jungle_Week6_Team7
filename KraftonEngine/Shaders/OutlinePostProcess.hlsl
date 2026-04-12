@@ -31,8 +31,8 @@ float4 PS(PS_Input input) : SV_TARGET
     // 중심 스텐실 값
     uint center = StencilTex.Load(int3(coord, 0)).g;
 
-    // 선택된 오브젝트 영역 밖이면 스킵
-    if (center == 0)
+    // 선택된 오브젝트 영역 내부면 스킵 (아웃라인은 외곽에만 그림)
+    if (center != 0)
         discard;
 
     // 상하좌우 이웃 샘플링
@@ -41,8 +41,8 @@ float4 PS(PS_Input input) : SV_TARGET
     uint left = StencilTex.Load(int3(coord + int2(-offset, 0), 0)).g;
     uint right = StencilTex.Load(int3(coord + int2(offset, 0), 0)).g;
 
-    // 이웃 중 하나라도 0이면 → 경계(edge)
-    if (up != 0 && down != 0 && left != 0 && right != 0)
+    // 이웃 중 하나라도 0이 아니면(메쉬가 있으면) -> 경계(edge)
+    if (up == 0 && down == 0 && left == 0 && right == 0)
         discard;
 
     return OutlineColor;

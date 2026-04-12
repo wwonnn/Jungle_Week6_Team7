@@ -30,7 +30,7 @@ void FExponentialHeightFogSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 		FConstantBufferPool::Get().GetBuffer(ECBSlot::Fog, sizeof(FFogConstants)),
 		ECBSlot::Fog);
 
-	Fog.FogInscatteringColor = FogComp->GetFogInscatteringColor();
+	Fog.FogColor = FogComp->GetFogInscatteringColor();
 	Fog.FogDensity = FogComp->GetFogDensity();
 	Fog.FogHeightFalloff = FogComp->GetFogHeightFalloff();
 	Fog.StartDistance = FogComp->GetStartDistance();
