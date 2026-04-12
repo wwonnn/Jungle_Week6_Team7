@@ -17,7 +17,6 @@ cbuffer FogBuffer : register(b5)
     float4 CameraPos;
 };
 
-// t0: SceneDepth (0: Near, 1: Far)
 Texture2D<float> SceneDepthTex : register(t0);
 SamplerState LinearSampler : register(s0);
 
@@ -45,7 +44,7 @@ float4 PS(PS_Input input) : SV_TARGET
     ndc_xy.y = -ndc_xy.y;
     
     float4 clipPos = float4(ndc_xy, depth, 1.0f);
-    float4 worldPos = mul(clipPos, InvViewProj);
+    float4 worldPos = mul(InvViewProj, clipPos);
     worldPos.xyz /= worldPos.w;
     
     float3 cameraPos = CameraPos.xyz;
@@ -53,9 +52,7 @@ float4 PS(PS_Input input) : SV_TARGET
     float rayLength = length(rayVec);
     float3 rayDir = rayVec / max(rayLength, 0.0001f);
 
-    // 2. 안개 적용 거리 계산
-    // 아주 가까운 거리(예: 10 units) 이하이거나 depth가 0에 가까우면 안개 생략
-    if (rayLength < 10.0f || depth < 0.00001f)
+    if (rayLength < 0.1f || depth < 0.00001f)
     {
         return float4(0, 0, 0, 0);
     }
@@ -68,29 +65,39 @@ float4 PS(PS_Input input) : SV_TARGET
         return float4(0, 0, 0, 0); 
     }
 
-    // 3. Exponential Height Fog 공식 (UE 방식 - BaseHeight 적용)
-    float falloff = max(0.0001f, FogHeightFalloff * 0.01f); 
-    float density = FogDensity * 0.1f;
+    // 3. Unreal Engine 방식의 완전한 지수 높이 안개 적분
+    float falloff = max(0.0001f, FogHeightFalloff); 
+    float density = FogDensity; 
+
+    float h_c = cameraPos.z - FogBaseHeight;
+    // 대상점의 높이를 계산 (StartDistance를 고려한 실제 안개 시작점부터의 오프셋)
+    float3 startPos = cameraPos + rayDir * StartDistance;
+    float3 endPos = cameraPos + rayDir * currentRayLength;
     
-    // 포그 액터의 Z 높이를 기준으로 한 카메라의 상대적 높이
-    float cameraHeight = cameraPos.z - FogBaseHeight;
-    float rayZ = rayDir.z * effectiveRayLength;
+    float h_s = startPos.z - FogBaseHeight;
+    float h_e = endPos.z - FogBaseHeight;
     
     float fogFactor = 0.0f;
-    // 지수값 제한으로 NaN/Inf 방지
-    float exponent = clamp(falloff * rayZ, -20.0f, 20.0f);
-    float heightExp = clamp(-falloff * cameraHeight, -20.0f, 20.0f);
     
-    if (abs(rayZ) > 0.001f)
+    // 수직 변화량
+    float slope = rayDir.z;
+
+    if (abs(slope) > 0.001f)
     {
-        fogFactor = (density / falloff) * exp(heightExp) * (1.0f - exp(-exponent)) / rayDir.z;
+        // 적분 공식: (Density/Falloff) * (exp(-Falloff * h_start) - exp(-Falloff * h_end)) / slope
+        // float의 지수 연산 한계(exp(88)까지 가능)를 고려하여 clamp 범위를 넓힙니다.
+        float exp_s = exp(clamp(-falloff * h_s, -80.0f, 80.0f));
+        float exp_e = exp(clamp(-falloff * h_e, -80.0f, 80.0f));
+        
+        fogFactor = (density / (falloff * slope)) * (exp_s - exp_e);
     }
     else
     {
-        fogFactor = density * exp(heightExp) * effectiveRayLength;
+        // 수평인 경우: 거리에 따른 단순 감쇠
+        fogFactor = density * exp(clamp(-falloff * h_s, -80.0f, 80.0f)) * effectiveRayLength;
     }
 
-    // 4. 최종 투명도 및 블렌딩
+    // 4. 최종 투명도
     float opacity = 1.0f - exp(-max(0.0f, fogFactor));
     opacity = clamp(opacity, 0.0f, FogMaxOpacity);
 

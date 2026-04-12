@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Archive.h"
 #include "Core/CoreTypes.h"
@@ -25,7 +25,7 @@ public:
 		bIsLoading = !bInIsSaving;
 		Buffer = InBuffer;
 	}
-
+	  
 	const TArray<uint8>& GetBuffer() const { return Buffer; }
 
 	void Serialize(void* Data, size_t Num) override
