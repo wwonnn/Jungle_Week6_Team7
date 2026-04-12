@@ -37,15 +37,15 @@ enum class ERenderPass : uint32
 	Font,
 	SubUV,
 	Translucent,
-	SelectionMask,	// 스텐실 쓰기
-	PostProcess,	// 아웃라인 그리기
-	FXAA,			// 안티앨리어싱
-	Editor,			// 에디터 라인
-	Grid,			// 그리드
-	GizmoOuter,		// 기즈모 외곽
-	GizmoInner,		// 기즈모 내부
-	Billboard,		// 아이콘 (기즈모보다 나중에 그려서 최상단 보장)
-	OverlayFont,	// 스크린 텍스트
+	SelectionMask,
+	PostProcess,
+	FXAA,
+	Editor,
+	Grid,
+	Billboard,		// 아이콘 (그리드 위, 기즈모 아래)
+	GizmoOuter,
+	GizmoInner,
+	OverlayFont,
 	MAX
 };
 
@@ -62,9 +62,9 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::FXAA",
 		"RenderPass::Editor",
 		"RenderPass::Grid",
+		"RenderPass::Billboard",
 		"RenderPass::GizmoOuter",
 		"RenderPass::GizmoInner",
-		"RenderPass::Billboard",
 		"RenderPass::OverlayFont",
 	};
 	static_assert(ARRAYSIZE(Names) == (uint32)ERenderPass::MAX, "Names must match ERenderPass entries");
