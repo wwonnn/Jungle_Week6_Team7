@@ -55,7 +55,7 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     // 6. Decal OBB 범위 체크 (-1 ~ 1)
     //    범위 밖이면 clip으로 픽셀 버림
     float3 absLocal = abs(decalLocal.xyz);
-    clip(all(absLocal <= 1.0f) ? 1 : -1);
+    clip(all(absLocal <= 0.5f) ? 1 : -1);
 
     // 7. Z-up, X축 Projection
     //    X축으로 Projection: YZ 평면이 텍스처 UV
@@ -68,37 +68,31 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     // 8. Decal 텍스처 샘플링
     float4 decalColor = DecalAlbedo.Sample(LinearSampler, decalUV);
     
-    // 9. 아랫면 제거
-    float bottomFade = decalLocal.z * 1.0f + 0.5f; // -1~1 → 0(아래)~1(위)
-    float bottomAlpha = smoothstep(0.0f, 0.2f, bottomFade);
-    
     // ============================================================
     // Fade In / Out
     // TODO: Offset들 Editor에서 조절 가능하게
     // ============================================================
-    // 10. Edge Fade (Decal Cube의 가장자리에서 투명하게)
-    const float fadeStart = 0.3f; // 튜닝 가능
-    const float fadeEnd = 1.0f;
+    // 9. Edge Fade (Decal Cube의 가장자리에서 투명하게)
+    const float fadeStart = 0.4f; // 튜닝 가능
+    const float fadeEnd = 0.5f;
     
     float fadeX = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.x);
     float fadeY = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.y);
     float fadeZ = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.z);
     float edgeFade = fadeX * fadeY * fadeZ;
     
-    // 11. Spot Fade (중앙은 선명, 가장자리는 투명)
+    // 10. Spot Fade (중앙은 선명, 가장자리는 투명)
     float2 uvCenter = decalUV - 0.5f; 
     float dist = length(uvCenter); 
 
-    const float fadeRadius = 0.2f; // 중앙 이 반경까지는 선명
-    const float fadeEdge = 0.5f; // 이 반경 이후 완전 투명
-
-    float spotFade = 1.0f - smoothstep(fadeRadius, fadeEdge, dist);
-    spotFade = pow(spotFade, 2.0f);
+    float spotFade = 1.0f - smoothstep(FadeInner, FadeOuter, dist);
+    //spotFade = pow(spotFade, 2.0f);
    
-    // 12. 최종 알파에 적용
-    decalColor.a *= bottomAlpha * edgeFade * spotFade;
+    // 11. 최종 알파에 적용
+    decalColor.a *= spotFade;
+    //decalColor.a *= edgeFade * spotFade;
 
-    // 13. Alpha 기반 클리핑 (선택)
+    // 12. Alpha 기반 클리핑 (선택)
     clip(decalColor.a - 0.01f);
     
     return decalColor;
