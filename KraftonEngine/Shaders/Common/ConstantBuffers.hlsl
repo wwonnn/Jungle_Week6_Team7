@@ -54,6 +54,9 @@ cbuffer DecalBuffer : register(b5)
 {
     float4x4 InvViewProj; // NDC → World 역투영
     float4x4 WorldToDecal; // World → Decal Local (-1~1)
+    
+    float FadeInner;    // Spot Fade 시작
+    float FadeOuter;    // Spot Fade 끝
 };
 
 #endif // CONSTANT_BUFFERS_HLSL
