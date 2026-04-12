@@ -43,6 +43,9 @@ struct FDecalConstants
 {
 	FMatrix InvViewProj;
 	FMatrix WorldToDecal;
+
+	float FadeInner;
+	float FadeOuter;
 };
 
 struct FFrameConstants
@@ -179,8 +182,8 @@ struct FConstantBufferBinding
 	uint32 Size = 0;					// 업로드할 바이트 수
 	uint32 Slot = 0;					// VS/PS CB 슬롯
 
-	static constexpr size_t kMaxDataSize = 128;
-	alignas(32) uint8 Data[kMaxDataSize] = {};
+	static constexpr size_t kMaxDataSize = 256;
+	alignas(64) uint8 Data[kMaxDataSize] = {};
 
 	// Buffer/Size/Slot
 	template<typename T>

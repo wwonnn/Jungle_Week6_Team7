@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Component/PrimitiveComponent.h"
+#include "Render/Proxy/DecalSceneProxy.h"
 #include "Core/ResourceTypes.h"
 #include "Object/FName.h"
 
@@ -18,6 +19,7 @@ public:
 	FPrimitiveSceneProxy* CreateSceneProxy() override;
 
 	void SetTexture(const FName& InTextureName);
+	void SetFadeConstants(FDecalConstants& OutDecalConstants) const;
 	ID3D11ShaderResourceView* GetSRV() const;
 
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
@@ -26,5 +28,9 @@ public:
 private:
 	FName TextureName = "Pawn";
 	FTextureResource* CachedTexture = nullptr;
+
+	bool bHasFade = false;
+	float FadeInner = 0.2f;
+	float FadeOuter = 0.6f;
 };
 

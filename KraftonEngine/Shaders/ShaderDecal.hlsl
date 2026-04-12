@@ -85,10 +85,7 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     float2 uvCenter = decalUV - 0.5f; 
     float dist = length(uvCenter); 
 
-    const float fadeRadius = 0.2f; // 중앙 이 반경까지는 선명
-    const float fadeEdge = 0.9f; // 이 반경 이후 완전 투명
-
-    float spotFade = 1.0f - smoothstep(fadeRadius, fadeEdge, dist);
+    float spotFade = 1.0f - smoothstep(FadeInner, FadeOuter, dist);
     //spotFade = pow(spotFade, 2.0f);
    
     // 11. 최종 알파에 적용
