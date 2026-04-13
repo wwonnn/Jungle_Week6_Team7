@@ -3,6 +3,8 @@
 #include "Render/Resource/ShaderManager.h"
 #include "Render/Pipeline/RenderBus.h"
 #include "Render/Pipeline/RenderConstants.h"
+#include "Engine/Runtime/Engine.h"
+#include "Editor/EditorEngine.h"
 #include <algorithm>
 
 // ============================================================
@@ -83,6 +85,16 @@ void FBillboardSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 {
 	UBillboardComponent* Comp = GetBillboardComponent();
 	bVisible = Comp->IsVisible();
+	
+	// PIE 모드일 경우 에디터 아이콘(빌보드)을 숨깁니다.
+	if (UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine))
+	{
+		if (EditorEngine->IsPlayingInEditor())
+		{
+			bVisible = false;
+		}
+	}
+
 	if (!bVisible) return;
 
 	// ==========================================================
