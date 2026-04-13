@@ -71,3 +71,46 @@ void UDecalComponent::PostEditProperty(const char* PropertyName)
 		SetTexture(TextureName);
 	}
 }
+
+uint64 UDecalComponent::CalculateOBBScreenPixels(const FMatrix& ViewProj, float ViewportWidth, float ViewportHeight)
+{
+	FVector Corners[8];
+	WorldOBB.GetCorners(Corners);
+
+	float NDCMinX = FLT_MAX, NDCMinY = FLT_MAX;
+	float NDCMaxX = -FLT_MAX, NDCMaxY = -FLT_MAX;
+
+	for (int i = 0; i < 8; ++i)
+	{
+		// World → Clip Space
+		FVector4 Clip = ViewProj.TransformPositionWithW(Corners[i]);
+
+		// 카메라 뒤에 있으면 스킵
+		if (Clip.W <= 0.1f) continue;
+
+		// ÷w → NDC
+		float InvW = 1.f / Clip.W;
+		float NDCx = Clip.X * InvW;
+		float NDCy = -Clip.Y * InvW;; // Y 반전 (DX UV 방향)
+
+		NDCMinX = std::min(NDCMinX, NDCx);
+		NDCMinY = std::min(NDCMinY, NDCy);
+		NDCMaxX = std::max(NDCMaxX, NDCx);
+		NDCMaxY = std::max(NDCMaxY, NDCy);
+	}
+
+	// 화면 밖 클램핑
+	NDCMinX = std::max(NDCMinX, -1.0f);
+	NDCMinY = std::max(NDCMinY, -1.0f);
+	NDCMaxX = std::min(NDCMaxX, 1.0f);
+	NDCMaxY = std::min(NDCMaxY, 1.0f);
+
+	if (NDCMaxX <= NDCMinX || NDCMaxY <= NDCMinY)
+		return 0; // 화면 밖
+
+	// NDC → Screen 픽셀
+	float Width = (NDCMaxX - NDCMinX) * 0.5f * ViewportWidth;
+	float Height = (NDCMaxY - NDCMinY) * 0.5f * ViewportHeight;
+
+	return static_cast<UINT64>(Width * Height);
+}

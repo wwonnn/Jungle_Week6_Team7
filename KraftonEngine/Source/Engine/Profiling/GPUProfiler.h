@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreTypes.h"
 #include "Core/Singleton.h"
@@ -31,6 +31,10 @@ public:
 	uint32 BeginTimestamp(const char* Name, const char* Category = "Default");
 	void EndTimestamp(uint32 Index);
 
+	void BeginOcclusionQuery();
+	void EndOcclusionQuery();
+	UINT64 GetProjectedPixels() const;
+
 	void TakeSnapshot();
 	const TArray<FStatEntry>& GetGPUSnapshot() const { return Snapshot; }
 
@@ -49,10 +53,19 @@ private:
 		const char* Category = "Default";
 	};
 
+	// Decal 픽셀 통과 측정
+	struct FOcclusionFrameData
+	{
+		ID3D11Query* OcclusionQuery = nullptr;
+		UINT64 ProjectedPixels = 0;
+		bool bActive = false;
+	};
+
 	struct FFrameData
 	{
 		ID3D11Query* DisjointQuery = nullptr;
 		FTimestampPair Timestamps[MAX_TIMESTAMPS];
+		FOcclusionFrameData Occlusion;
 		uint32 UsedCount = 0;
 		bool bActive = false;	// Begin()~GetData() 사이이면 true
 	};
@@ -64,7 +77,9 @@ private:
 	ID3D11DeviceContext* Context = nullptr;
 	bool bInitialized = false;
 	bool bFrameActive = false;	// 현재 프레임에서 Begin()이 호출됐는지
+	bool bOcclusionActive = false;
 
+	void CollectOcclusionData();
 	void CollectPreviousFrame();
 
 	TMap<const char*, FStatAccum> GPUStats;

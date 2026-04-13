@@ -3,6 +3,11 @@
 #include "Editor/EditorEngine.h"
 #include "Engine/Profiling/Timer.h"
 #include "Engine/Profiling/MemoryStats.h"
+#include "Engine/Profiling/GPUProfiler.h"
+#include "Engine/Object/ObjectIterator.h"
+#include "Engine/Component/DecalComponent.h"
+#include "Editor/Viewport/LevelEditorViewportClient.h"
+#include "Engine/Viewport/Viewport.h"
 #include <cstdio>
 
 void FOverlayStatSystem::AppendLine(TArray<FOverlayStatLine>& OutLines, float Y, const FString& Text) const
@@ -18,6 +23,26 @@ void FOverlayStatSystem::RecordPickingAttempt(double ElapsedMs)
 	LastPickingTimeMs = ElapsedMs;
 	AccumulatedPickingTimeMs += ElapsedMs;
 	++PickingAttemptCount;
+}
+
+void FOverlayStatSystem::RecordDecalPixelCount(const UEditorEngine& Editor) const
+{
+	DecalPixelCount = 0;
+	DecalComponentCount = 0;
+
+	for (TObjectIterator<UDecalComponent> It; It; ++It)
+	{
+		UDecalComponent* Decal = *It;
+
+		if (Decal)
+		{
+			DecalComponentCount++;
+			DecalPixelCount += Decal->CalculateOBBScreenPixels(
+				Editor.GetCamera()->GetViewProjectionMatrix(),
+				static_cast<float>(Editor.GetActiveViewport()->GetViewport()->GetWidth()),
+				static_cast<float>(Editor.GetActiveViewport()->GetViewport()->GetHeight()));
+		}
+	}
 }
 
 TArray<FOverlayStatGroup> FOverlayStatSystem::BuildGroups(const UEditorEngine& Editor) const
@@ -132,6 +157,10 @@ void FOverlayStatSystem::BuildLines(const UEditorEngine& Editor, TArray<FOverlay
 	{
 		EstimatedLineCount += 6;
 	}
+	if (bShowDecal)
+	{
+		EstimatedLineCount += 3;
+	}
 	OutLines.reserve(EstimatedLineCount);
 
 	float CurrentY = Layout.StartY;
@@ -185,6 +214,36 @@ void FOverlayStatSystem::BuildLines(const UEditorEngine& Editor, TArray<FOverlay
 		for (int32 Index = 0; Index < MemoryLineCount; ++Index)
 		{
 			snprintf(Buffer, sizeof(Buffer), "%s : %.2f KB", Labels[Index], ValuesKB[Index]);
+			AppendLine(OutLines, CurrentY, FString(Buffer));
+			CurrentY += Layout.LineHeight;
+		}
+		CurrentY += Layout.GroupSpacing;
+	}
+
+	if (bShowDecal)
+	{
+		RecordDecalPixelCount(Editor);
+
+		constexpr int32 DecalLineCount = 3;
+		char Buffer[128] = {};
+		const double ValuesKB[DecalLineCount] = {
+			static_cast<double>(DecalComponentCount),
+			static_cast<double>(DecalPixelCount),
+			static_cast<double>(FGPUProfiler::Get().GetProjectedPixels()),
+		};
+
+		const char* Labels[DecalLineCount] = {
+			"Decal Count",
+			"Decal Total Pixel",
+			"Projected Pixel",
+		};
+
+		for (int32 Index = 0; Index < DecalLineCount; ++Index)
+		{
+			if (Index == 0)
+				snprintf(Buffer, sizeof(Buffer), "%s : %.2f", Labels[Index], ValuesKB[Index]);
+			else
+				snprintf(Buffer, sizeof(Buffer), "%s : %.2f px", Labels[Index], ValuesKB[Index]);
 			AppendLine(OutLines, CurrentY, FString(Buffer));
 			CurrentY += Layout.LineHeight;
 		}

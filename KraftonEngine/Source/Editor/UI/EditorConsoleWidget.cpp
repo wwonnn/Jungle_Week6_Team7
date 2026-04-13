@@ -38,7 +38,7 @@ void FEditorConsoleWidget::Initialize(UEditorEngine* InEditorEngine)
 
 			FOverlayStatSystem& StatSystem = EditorEngine->GetOverlayStatSystem();
 			const FString& SubCommand = Args[1];
-
+			
 			if (SubCommand == "fps")
 			{
 				StatSystem.ShowFPS(true);
@@ -48,6 +48,11 @@ void FEditorConsoleWidget::Initialize(UEditorEngine* InEditorEngine)
 			{
 				StatSystem.ShowMemory(true);
 				AddLog("Overlay stat enabled: memory\n");
+			}
+			else if (SubCommand == "decal")
+			{
+				StatSystem.ShowDecal(true);
+				AddLog("Overlay stat enabled: decal\n");
 			}
 			else if (SubCommand == "none")
 			{

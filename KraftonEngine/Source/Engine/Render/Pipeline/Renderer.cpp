@@ -245,7 +245,10 @@ void FRenderer::Render(const FRenderBus& InRenderBus)
 		if (bHasBatcher)
 			PassBatchers[i].DrawBatch(CurPass, InRenderBus, Context);
 		else if (CurPass == ERenderPass::Decal)
+		{
+			SCOPE_STAT_CAT("ExecuteDecalPass", "4_ExecutePass");
 			ExecuteDecalPass(InRenderBus, InRenderBus.GetProxies(CurPass), Context);
+		}
 		else
 			ExecutePass(InRenderBus.GetProxies(CurPass), Context);
 	}
@@ -399,7 +402,12 @@ void FRenderer::ExecuteDecalPass(const FRenderBus& InRenderBus, const TArray<con
 	Context->OMSetRenderTargets(1, &RTV, nullptr);
 	Context->PSSetShaderResources(0, 1, &DepthSRV);
 
+	FGPUProfiler::Get().BeginOcclusionQuery();
+
 	ExecutePass(InRenderBus.GetProxies(ERenderPass::Decal), Context);
+
+	FGPUProfiler::Get().EndOcclusionQuery();
+	
 
 	// Decal SRV 해제 + DSV 복구
 	ID3D11DepthStencilView* DSV = InRenderBus.GetViewportDSV();
