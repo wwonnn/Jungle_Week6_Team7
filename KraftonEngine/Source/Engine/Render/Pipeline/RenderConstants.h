@@ -95,6 +95,20 @@ struct FAABBConstants
 	FColor Color;
 };
 
+struct FOBBConstants
+{
+	FVector Center;
+	float Padding0;
+
+	FVector Axes[3];
+	float Padding1;
+
+	FVector Extents;
+	float Padding2;
+
+	FColor Color;
+};
+
 struct FGridConstants
 {
 	float GridSpacing;
@@ -152,6 +166,11 @@ struct FBillboardEntry
 struct FAABBEntry
 {
 	FAABBConstants AABB;
+};
+
+struct FOBBEntry
+{
+	FOBBConstants OBB;
 };
 
 struct FGridEntry

@@ -14,6 +14,7 @@ void FRenderBus::Clear()
 	SubUVEntries.clear();
 	BillboardEntries.clear();
 	AABBEntries.clear();
+	OBBEntries.clear();
 	GridEntries.clear();
 	DebugLineEntries.clear();
 
@@ -57,6 +58,11 @@ void FRenderBus::AddBillboardEntry(FBillboardEntry&& Entry)
 void FRenderBus::AddAABBEntry(FAABBEntry&& Entry)
 {
 	AABBEntries.push_back(std::move(Entry));
+}
+
+void FRenderBus::AddOBBEntry(FOBBEntry&& Entry)
+{
+	OBBEntries.push_back(std::move(Entry));
 }
 
 void FRenderBus::AddGridEntry(FGridEntry&& Entry)
