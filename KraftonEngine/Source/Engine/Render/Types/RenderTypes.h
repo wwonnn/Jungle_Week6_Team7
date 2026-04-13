@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 //	Windows API Include
 #define NOMINMAX
@@ -16,6 +16,7 @@
 
 #pragma comment(lib, "dxgi")
 #include "Core/CoreTypes.h"
+#include "Math/Vector.h"
 
 //	Mesh Shape Enum — MeshBufferManager 조회용 (순수 기하 형상)
 enum class EMeshShape
@@ -33,15 +34,15 @@ enum class ERenderPass : uint32
 {
 	Opaque,
 	Decal,
-	Font,			// TextRenderComponent → FontBatcher 경유
-	SubUV,			// SubUVComponent     → SubUVBatcher 경유
-	Billboard,		// BillboardComponent → BillboardBatcher 경유
+	Font,
+	SubUV,
 	Translucent,
 	SelectionMask,
-	Editor,
-	Grid,
 	PostProcess,
 	FXAA,
+	Editor,
+	Grid,
+	Billboard,		// 아이콘 (그리드 위, 기즈모 아래)
 	GizmoOuter,
 	GizmoInner,
 	OverlayFont,
@@ -55,13 +56,13 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::Decal",
 		"RenderPass::Font",
 		"RenderPass::SubUV",
-		"RenderPass::Billboard",
 		"RenderPass::Translucent",
 		"RenderPass::SelectionMask",
-		"RenderPass::Editor",
-		"RenderPass::Grid",
 		"RenderPass::PostProcess",
 		"RenderPass::FXAA",
+		"RenderPass::Editor",
+		"RenderPass::Grid",
+		"RenderPass::Billboard",
 		"RenderPass::GizmoOuter",
 		"RenderPass::GizmoInner",
 		"RenderPass::OverlayFont",
