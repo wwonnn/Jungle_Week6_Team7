@@ -18,6 +18,9 @@ public:
 	FMeshBuffer* GetMeshBuffer() const override;
 	FPrimitiveSceneProxy* CreateSceneProxy() override;
 
+	void Serialize(FArchive& Ar) override;
+	void PostDuplicate() override;
+
 	void SetTexture(const FName& InTextureName);
 	void SetFadeConstants(FDecalConstants& OutDecalConstants) const;
 	ID3D11ShaderResourceView* GetSRV() const;
