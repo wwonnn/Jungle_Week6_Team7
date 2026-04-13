@@ -728,6 +728,15 @@ void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Contex
 	FogConstants.InvViewProj = ViewProj.GetInverse();
 	FogConstants.CameraWorldPos = Bus.GetCameraPosition();
 
+	// Proj 행렬에서 near/far 추출: linearZ = P[3][2] / (depth - P[2][2])
+	const FMatrix& P = Bus.GetProj();
+	float p22 = P.M[2][2];
+	float p32 = P.M[3][2];
+	if (p22 != 0.0f)
+		FogConstants.NearPlane = p32 / (-p22);    // depth=0 → near
+	if (p22 != 1.0f)
+		FogConstants.FarPlane = p32 / (1.0f - p22); // depth=1 → far
+
 	FogCB->Update(Context, &FogConstants, sizeof(FogConstants));
 	ID3D11Buffer* cb = FogCB->GetBuffer();
 	Context->PSSetConstantBuffers(ECBSlot::Fog, 1, &cb);
