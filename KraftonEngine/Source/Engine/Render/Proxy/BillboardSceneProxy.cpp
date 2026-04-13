@@ -3,6 +3,7 @@
 #include "Render/Resource/ShaderManager.h"
 #include "Render/Pipeline/RenderBus.h"
 #include "Render/Pipeline/RenderConstants.h"
+#include <algorithm>
 
 // ============================================================
 // FBillboardSceneProxy
@@ -67,10 +68,14 @@ void FBillboardSceneProxy::CollectEntries(FRenderBus& Bus)
 	if (!Texture || !Texture->IsLoaded()) return;
 
 	FBillboardEntry Entry = {};
+	// UpdatePerViewport에서 거리 보정이 완료된 행렬을 사용
 	Entry.PerObject = PerObjectConstants;
 	Entry.Billboard.Texture = Texture;
+	
+	// BillboardBatcher 내부의 WorldScale 곱셈을 고려하여 원본 크기만 전달
 	Entry.Billboard.Width   = Comp->GetWidth();
 	Entry.Billboard.Height  = Comp->GetHeight();
+	
 	Bus.AddBillboardEntry(std::move(Entry));
 }
 
@@ -81,40 +86,46 @@ void FBillboardSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 	if (!bVisible) return;
 
 	// ==========================================================
-	// 1. 카메라와의 거리 기반 스케일(DistanceScale) 계산
+	// 카메라 정보 및 거리 계산
 	// ==========================================================
-	// (주의: 엔진에 구현된 카메라 위치 함수명에 맞춰 GetCameraPosition()을 수정하세요)
 	const FVector CameraPos = Bus.GetCameraPosition();
 	const FVector BillboardPos = Comp->GetWorldLocation();
 	const float Distance = (BillboardPos - CameraPos).Length();
 
-	const float ThresholdDistance = 1000.0f; // 이 거리 안으로 들어오면 작아지기 시작
-	float DistanceScale = 1.0f;
+	// 비율을 계산하는 내부 임계점
+	const float BaseWorldScale = 1.0f;
+
+	// 화면 크기 축소가 시작되는 타이밍 
+	const float ScreenScaleFactor = 0.05f;
+
+	const float MasterIconScale = 5.0f;
+
+	float DistanceScale = BaseWorldScale;
 
 	if (!Bus.IsOrtho())
 	{
-		// 카메라가 가까워질수록 DistanceScale이 1.0에서 0.01까지 줄어듦
-		if (Distance < ThresholdDistance)
-		{
-			DistanceScale = std::max(0.01f, Distance / ThresholdDistance);
-		}
+		float LimitScale = Distance * ScreenScaleFactor;
+
+		// 0.0 ~ 1.0 사이에서 작동하는 완벽한 베이스 비율 계산
+		float BaseRatio = std::min(BaseWorldScale, LimitScale);
+		BaseRatio = std::max(0.0001f, BaseRatio);
+
+		DistanceScale = BaseRatio * MasterIconScale;
 	}
 	else
 	{
-		// 직교 투영(Orthographic) 모드일 때의 화면 크기 유지 보정
-		DistanceScale = Bus.GetOrthoWidth() * 0.01f;
+		DistanceScale = Bus.GetOrthoWidth() * 0.001f * BaseWorldScale * MasterIconScale;
 	}
 
 	// ==========================================================
-	// 2. 원본 로직 유지: 카메라 페이싱 회전 & 행렬 합성
+	// 회전 계산 및 최종 월드 행렬 생성
 	// ==========================================================
 	FVector BillboardForward = Bus.GetCameraForward() * -1.0f;
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(BillboardForward, Bus.GetCameraRight() * -1.0f, Bus.GetCameraUp());
 
-	// 컴포넌트의 원본 스케일에 방금 구한 거리 스케일을 곱해줍니다!
-	const float IconSizeMultiplier = 100.0f;
-	FVector FinalScale = Comp->GetWorldScale() * DistanceScale * IconSizeMultiplier;
+	// 완성된 스케일을 컴포넌트의 월드 스케일에 반영
+	FVector FinalScale = Comp->GetWorldScale() * DistanceScale;
 
 	FMatrix BillboardMatrix = FMatrix::MakeScaleMatrix(FinalScale)
 		* RotMatrix * FMatrix::MakeTranslationMatrix(BillboardPos);
