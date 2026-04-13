@@ -59,7 +59,8 @@ cbuffer DecalBuffer : register(b5)
     
     float FadeInner;    // Spot Fade 시작
     float FadeOuter;    // Spot Fade 끝
-    float2 _decalPad;
+    int   bUseFade;     // Fade 효과 활성화 여부
+    float3 _decalPad;
 };
 
 // b5: Height Fog parameters

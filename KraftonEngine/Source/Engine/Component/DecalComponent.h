@@ -22,6 +22,7 @@ public:
 	void PostDuplicate() override;
 
 	void SetTexture(const FName& InTextureName);
+	void SetFade(bool bEnable, float Inner = 0.2f, float Outer = 0.6f);
 	void SetFadeConstants(FDecalConstants& OutDecalConstants) const;
 	ID3D11ShaderResourceView* GetSRV() const;
 
@@ -31,7 +32,7 @@ public:
 	uint64 CalculateOBBScreenPixels(const FMatrix& ViewProj, float ViewportWidth,float ViewportHeight);
 
 private:
-	FName TextureName = "Pawn";
+	FName TextureName = "None";
 	FTextureResource* CachedTexture = nullptr;
 
 	bool bHasFade = false;

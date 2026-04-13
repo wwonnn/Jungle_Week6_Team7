@@ -8,6 +8,7 @@
 #include "Component/GizmoComponent.h"
 #include "GameFramework/StaticMeshActor.h"
 #include "GameFramework/DecalActor.h"
+#include "GameFramework/SpotLightActor.h"
 #include "GameFramework/ExponentialHeightFogActor.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
@@ -65,7 +66,15 @@ void FEditorControlWidget::Render(float DeltaTime)
 				World->InsertActorToOctree(Actor);
 				break;
 			}
-			case 3: // ExponentialHeightFog
+			case 3: // SpotLight
+			{
+				ASpotLightActor* Actor = World->SpawnActor<ASpotLightActor>();
+				Actor->SetActorLocation(CurSpawnPoint);
+				Actor->InitDefaultComponents();
+				World->InsertActorToOctree(Actor);
+				break;
+			}
+			case 4: // ExponentialHeightFog
 			{
 				AExponentialHeightFogActor* Actor = World->SpawnActor<AExponentialHeightFogActor>();
 				Actor->SetActorLocation(CurSpawnPoint);

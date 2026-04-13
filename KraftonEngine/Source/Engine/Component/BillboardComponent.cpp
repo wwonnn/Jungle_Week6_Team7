@@ -105,11 +105,9 @@ bool UBillboardComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHit
 	}
 
 	// 3. 실제 화면에 그려지는 크기 (BillboardBatcher의 0.25 계수 반영)
-	// Batcher: HalfW = Width * Scale.Y * 0.25f
-	// 전체 Width = 2 * HalfW = Width * Scale.Y * 0.5f
-	FVector WorldScale = GetWorldScale();
-	float VisualWidth = Width * WorldScale.Y * DistanceScale * 0.5f;
-	float VisualHeight = Height * WorldScale.Z * DistanceScale * 0.5f;
+	// 아이콘은 부모의 스케일을 무시하고 항상 1.0 비율로 유지합니다.
+	float VisualWidth = Width * DistanceScale * 0.5f;
+	float VisualHeight = Height * DistanceScale * 0.5f;
 
 	// 4. Batcher가 정점을 뻗는 실제 축 (카메라의 Right, Up)
 	FVector Right = ActiveCamera->GetRightVector();
@@ -162,7 +160,8 @@ void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(Forward, Right, Up);
 
-	CachedWorldMatrix = FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
+	// 부모의 스케일을 무시하고 (1,1,1) 사용
+	CachedWorldMatrix = RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
 
 	UpdateWorldAABB();
 	UpdateWorldOBB();
@@ -185,5 +184,6 @@ FMatrix UBillboardComponent::ComputeBillboardMatrix(const FVector& CameraForward
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(Forward, Right, Up);
 
-	return FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(GetWorldLocation());
+	// 부모의 스케일을 무시하고 (1,1,1) 사용
+	return RotMatrix * FMatrix::MakeTranslationMatrix(GetWorldLocation());
 }
