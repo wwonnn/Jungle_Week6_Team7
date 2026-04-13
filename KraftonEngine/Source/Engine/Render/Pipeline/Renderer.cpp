@@ -771,7 +771,6 @@ void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Contex
 
 	// CPU에서 행렬 계산 — 셰이더 내 수동 역행렬 제거
 	FMatrix ViewProj = Bus.GetView() * Bus.GetProj();
-	FogConstants.InvViewProj = ViewProj.GetInverse();
 	FogConstants.CameraWorldPos = Bus.GetCameraPosition();
 
 	// Proj 행렬에서 near/far 추출: linearZ = P[3][2] / (depth - P[2][2])
@@ -779,9 +778,9 @@ void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Contex
 	float p22 = P.M[2][2];
 	float p32 = P.M[3][2];
 	if (p22 != 0.0f)
-		FogConstants.NearPlane = p32 / (-p22);    // depth=0 → near
+		FogConstants.NearPlane = p32 / (-p22);    // depth=0  near
 	if (p22 != 1.0f)
-		FogConstants.FarPlane = p32 / (1.0f - p22); // depth=1 → far
+		FogConstants.FarPlane = p32 / (1.0f - p22); // depth=1  far
 
 	FogCB->Update(Context, &FogConstants, sizeof(FogConstants));
 	ID3D11Buffer* cb = FogCB->GetBuffer();
@@ -812,6 +811,8 @@ void FRenderer::UpdateFrameBuffer(ID3D11DeviceContext* Context, const FRenderBus
 	FFrameConstants frameConstantData = {};
 	frameConstantData.View = InRenderBus.GetView();
 	frameConstantData.Projection = InRenderBus.GetProj();
+	frameConstantData.ViewProjection = frameConstantData.View * frameConstantData.Projection;
+	frameConstantData.InvViewProj = frameConstantData.ViewProjection.GetInverse();
 	frameConstantData.bIsWireframe = (InRenderBus.GetViewMode() == EViewMode::Wireframe);
 	frameConstantData.WireframeColor = InRenderBus.GetWireframeColor();
 

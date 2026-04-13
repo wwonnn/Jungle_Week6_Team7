@@ -42,17 +42,19 @@ struct FPerObjectConstants
 
 struct FDecalConstants
 {
-	FMatrix InvViewProj;
 	FMatrix WorldToDecal;
 
 	float FadeInner;
 	float FadeOuter;
+	float _pad[2];
 };
 
 struct FFrameConstants
 {
 	FMatrix View;
 	FMatrix Projection;
+	FMatrix ViewProjection;
+	FMatrix InvViewProj;
 	float bIsWireframe;
 	FVector WireframeColor;
 	float Time;
@@ -89,8 +91,6 @@ struct FOutlinePostProcessConstants
 struct FHeightFogConstants
 {
 	// ── GPU가 필요한 행렬 (CPU에서 미리 계산) ──
-	FMatrix InvViewProj;                // View*Proj의 역행렬
-
 	FVector CameraWorldPos;             // 카메라 월드 위치
 	float FogDensity = 0.02f;
 

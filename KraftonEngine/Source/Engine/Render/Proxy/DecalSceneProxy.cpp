@@ -48,7 +48,6 @@ void FDecalSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 		ECBSlot::Decal);
 
 	G.WorldToDecal = PerObjectConstants.Model.GetInverse();
-	G.InvViewProj = (Bus.GetView() * Bus.GetProj()).GetInverse();
 	GetDecalComponent()->SetFadeConstants(G);
 }
 

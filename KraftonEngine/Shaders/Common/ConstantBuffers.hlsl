@@ -8,6 +8,8 @@ cbuffer FrameBuffer : register(b0)
 {
     float4x4 View;
     float4x4 Projection;
+    float4x4 ViewProjection;
+    float4x4 InvViewProj;
     float bIsWireframe;
     float3 WireframeRGB;
     float Time;
@@ -53,18 +55,16 @@ cbuffer MaterialBuffer : register(b4)
 // b5: Decal 
 cbuffer DecalBuffer : register(b5)
 {
-    float4x4 InvViewProj;
     float4x4 WorldToDecal; // World → Decal Local (-1~1)
     
     float FadeInner;    // Spot Fade 시작
     float FadeOuter;    // Spot Fade 끝
+    float2 _decalPad;
 };
 
 // b5: Height Fog parameters
 cbuffer HeightFogCB : register(b6)
 {
-    float4x4 InvViewProj;
-
     float3 CameraWorldPos;
     float FogDensity;
 
