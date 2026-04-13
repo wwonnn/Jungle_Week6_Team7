@@ -27,13 +27,14 @@ public:
 
 	FVector GetVectorForAxis(int32 Axis) const;
 	void RenderGizmo() {}
-	void SetTarget(AActor* NewTarget);
+	void SetTarget(USceneComponent* NewTargetComponent);
 	void SetSelectedActors(const TArray<AActor*>* InSelectedActors) { AllSelectedActors = InSelectedActors; }
 	void SetHolding(bool bHold);
 	inline bool IsHolding() const { return bIsHolding; }
 	inline bool IsHovered() const { return SelectedAxis != -1; }
-	inline bool HasTarget() const { return TargetActor != nullptr; }
-	inline AActor* GetTarget() const { return TargetActor; }
+	inline bool HasTarget() const { return TargetComponent != nullptr; }
+	inline AActor* GetTargetActor() const { return TargetActor; }
+	inline USceneComponent* GetTargetComponent() const { return TargetComponent; }
 	inline int32 GetSelectedAxis() const { return SelectedAxis; }
 
 	inline void SetPressedOnHandle(bool bPressed) { bPressedOnHandle = bPressed; }
@@ -89,6 +90,7 @@ private:
 
 private:
 	AActor* TargetActor = nullptr;
+	USceneComponent* TargetComponent = nullptr;
 	const TArray<AActor*>* AllSelectedActors = nullptr;
 	EGizmoMode CurMode = EGizmoMode::Translate;
 	FVector LastIntersectionLocation;
