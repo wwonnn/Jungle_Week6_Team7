@@ -1,5 +1,7 @@
 #include "Common/ConstantBuffers.hlsl"
 
+#pragma pack_matrix(row_major)
+
 cbuffer FogBuffer : register(b5)
 {
     float4 FogColor;
@@ -61,7 +63,7 @@ float4 PS(PS_Input input) : SV_TARGET
 
     // depth가 1.0(배경)인 경우 FogCutoffDistance를 사용하고, 그 외에는 복원된 실제 거리(rayLength)를 사용합니다.
     // FarZ가 현실적인 값이 되면 rayLength와 FogCutoffDistance 사이의 간격이 줄어들어 자연스럽게 연결됩니다.
-    float currentRayLength = (depth >= 0.9999f) ? FogCutoffDistance : rayLength;
+    float currentRayLength = (depth >= 1.0f) ? FogCutoffDistance : rayLength;
     float effectiveRayLength = max(0.0f, currentRayLength - StartDistance);
     
     if (effectiveRayLength <= 0.0f)

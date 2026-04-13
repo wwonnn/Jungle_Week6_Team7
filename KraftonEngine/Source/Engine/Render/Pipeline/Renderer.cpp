@@ -689,6 +689,7 @@ void FRenderer::DrawPostProcessFog(const FRenderBus& Bus, ID3D11DeviceContext* C
 {
 	const auto& PostProcessProxies = Bus.GetProxies(ERenderPass::PostProcess);
 	if (PostProcessProxies.empty()) return;
+
 	const FPrimitiveSceneProxy* FogProxy = nullptr;
 	for (const auto* Proxy : PostProcessProxies)
 	{
@@ -699,27 +700,30 @@ void FRenderer::DrawPostProcessFog(const FRenderBus& Bus, ID3D11DeviceContext* C
 		}
 	}
 	if (!FogProxy) return;
-	//DSV 언바인딩
+
+	// 1. 최신 뷰포트 정보로 프록시 데이터 갱신 (const_cast 사용해 강제 업데이트)
+	FPrimitiveSceneProxy* MutableFogProxy = const_cast<FPrimitiveSceneProxy*>(FogProxy);
+	MutableFogProxy->UpdatePerViewport(Bus);
+
+	// 2. DSV 언바인딩 (DepthSRV 읽기를 위해 필수)
 	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
 	Context->OMSetRenderTargets(1, &RTV, nullptr);
 
+	// 3. 깊이 텍스처 바인딩 (t0)
 	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
 	Context->PSSetShaderResources(0, 1, &DepthSRV);
-	//셰이더 및 상수 버퍼 바인딩
-	// FFogSceneProxy인 경우 뷰포트 정보 업데이트 강제 호출
-	FPrimitiveSceneProxy* FogSceneProxy = const_cast<FPrimitiveSceneProxy*>(FogProxy);
-	FogSceneProxy->UpdatePerViewport(Bus);
 
+	// 4. 셰이더 및 상수 버퍼 바인딩 (b5)
 	FogProxy->Shader->Bind(Context);
 	BindExtraCB(*FogProxy, Context);
 
-	//Fullscreen Quad 드로우
+	// 5. Fullscreen Triangle 드로우
 	Context->IASetInputLayout(nullptr);
 	Context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
 	Context->Draw(3, 0);
 	FDrawCallStats::Increment();
 
-	//SRV 해제 및 DSV 복구
+	// 6. 리소스 해제 및 DSV 복구
 	ID3D11ShaderResourceView* nullSRV = nullptr;
 	Context->PSSetShaderResources(0, 1, &nullSRV);
 

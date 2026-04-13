@@ -41,3 +41,4 @@ void FExponentialHeightFogSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 	Fog.InvViewProj = (Bus.GetView() * Bus.GetProj()).GetInverse();
 	Fog.CameraPos = FVector4(Bus.GetCameraPosition(), 1.0f);
 }
+  
