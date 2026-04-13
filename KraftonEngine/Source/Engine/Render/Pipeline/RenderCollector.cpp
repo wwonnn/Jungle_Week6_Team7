@@ -1,6 +1,7 @@
 ﻿#include "RenderCollector.h"
 
 #include "GameFramework/World.h"
+#include "GameFramework/AActor.h"
 #include "Editor/Subsystem/OverlayStatSystem.h"
 #include "Editor/EditorEngine.h"
 #include "Render/Proxy/FScene.h"
@@ -8,6 +9,7 @@
 #include "Render/DebugDraw/DebugDrawQueue.h"
 #include "Render/Culling/GPUOcclusionCulling.h"
 #include "Render/Pipeline/LODContext.h"
+#include "Component/HeightFogComponent.h"
 #include "Profiling/Stats.h"
 #include <Collision/Octree.h>
 
@@ -44,6 +46,50 @@ void FRenderCollector::CollectOverlayText(const FOverlayStatSystem& OverlaySyste
 		Entry.Font.ScreenPosition = Line.ScreenPosition;
 
 		RenderBus.AddOverlayFontEntry(std::move(Entry));
+	}
+}
+
+void FRenderCollector::CollectFog(UWorld* World, FRenderBus& RenderBus)
+{
+	if (!World) return;
+
+	const bool bSceneDepthMode = (RenderBus.GetViewMode() == EViewMode::SceneDepth);
+	const bool bFogEnabled = RenderBus.GetShowFlags().bFog;
+
+	if (!bSceneDepthMode && !bFogEnabled) return;
+
+	// 첫 번째 HeightFogComponent를 찾아 포그 파라미터 설정
+	if (bFogEnabled)
+	{
+		for (AActor* Actor : World->GetActors())
+		{
+			if (!Actor) continue;
+			for (UActorComponent* Comp : Actor->GetComponents())
+			{
+				UHeightFogComponent* FogComp = Cast<UHeightFogComponent>(Comp);
+				if (!FogComp) continue;
+
+				FHeightFogConstants Params;
+				Params.FogInscatteringColor = FogComp->GetFogInscatteringColor();
+				Params.FogDensity = FogComp->GetFogDensity();
+				Params.FogHeightFalloff = FogComp->GetFogHeightFalloff();
+				Params.FogStartDistance = FogComp->GetStartDistance();
+				Params.FogCutoffDistance = FogComp->GetFogCutoffDistance();
+				Params.FogMaxOpacity = FogComp->GetFogMaxOpacity();
+				Params.FogHeight = FogComp->GetWorldLocation().Z;
+				Params.bSceneDepthMode = bSceneDepthMode ? 1 : 0;
+				RenderBus.SetFogParams(Params);
+				return;
+			}
+		}
+	}
+
+	// HeightFogComponent가 없어도 SceneDepth 모드는 동작해야 함
+	if (bSceneDepthMode)
+	{
+		FHeightFogConstants Params;
+		Params.bSceneDepthMode = 1;
+		RenderBus.SetFogParams(Params);
 	}
 }
 

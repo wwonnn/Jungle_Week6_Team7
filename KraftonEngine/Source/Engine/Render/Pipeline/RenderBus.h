@@ -64,6 +64,12 @@ public:
 	ID3D11RenderTargetView*  GetViewportRTV()        const { return ViewportRTV; }
 	ID3D11DepthStencilView*  GetViewportDSV()        const { return ViewportDSV; }
 	ID3D11ShaderResourceView* GetViewportStencilSRV() const { return ViewportStencilSRV; }
+	ID3D11ShaderResourceView* GetViewportDepthSRV()   const { return ViewportDepthSRV; }
+
+	// Height Fog
+	void SetFogParams(const FHeightFogConstants& InFog) { FogParams = InFog; bHasFog = true; }
+	const FHeightFogConstants& GetFogParams() const { return FogParams; }
+	bool HasFog() const { return bHasFog; }
 
 	// GPU Occlusion Culling — set by render pipeline, read by collector
 	void SetOcclusionCulling(FGPUOcclusionCulling* InOcclusion) { OcclusionCulling = InOcclusion; }
@@ -105,6 +111,11 @@ private:
 	ID3D11RenderTargetView*   ViewportRTV        = nullptr;
 	ID3D11DepthStencilView*   ViewportDSV        = nullptr;
 	ID3D11ShaderResourceView* ViewportStencilSRV = nullptr;
+	ID3D11ShaderResourceView* ViewportDepthSRV   = nullptr;
+
+	// Height Fog
+	FHeightFogConstants FogParams;
+	bool bHasFog = false;
 
 	// GPU Occlusion
 	FGPUOcclusionCulling* OcclusionCulling = nullptr;

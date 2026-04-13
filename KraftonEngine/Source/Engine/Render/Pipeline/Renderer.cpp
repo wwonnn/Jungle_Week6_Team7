@@ -249,6 +249,7 @@ void FRenderer::InitializePassRenderStates()
 	//                              DepthStencil                    Blend                Rasterizer                   Topology                                WireframeAware
 	S[(uint32)E::Opaque] = { EDepthStencilState::Default,      EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::Translucent] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Fog]         = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite,  EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::PostProcess] = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Editor] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
@@ -310,11 +311,18 @@ void FRenderer::InitializePassBatchers()
 		[this]() { return BillboardBatcher.GetSpriteCount() == 0; }
 	};
 
+	PassBatchers[(uint32)ERenderPass::Fog] = {
+		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
+			DrawHeightFog(Bus, Ctx);
+		},
+		nullptr  // Fog는 내부에서 HasFog / SceneDepth 체크
+	};
+
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
 			DrawPostProcessOutline(Bus, Ctx);
 		},
-		nullptr  // PostProcess는 내���에서 SelectionMask 체크
+		nullptr  // PostProcess는 내부에서 SelectionMask 체크
 	};
 }
 
@@ -680,6 +688,61 @@ void FRenderer::DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContex
 	Context->PSSetShaderResources(0, 1, &nullSRV);
 
 	// 7) DSV 재바인딩 (후속 패스에서 뎁스 사용)
+	Context->OMSetRenderTargets(1, &RTV, DSV);
+}
+
+// ============================================================
+// Height Fog — DSV unbind → DepthSRV bind → Fog CB → Fullscreen Draw
+// SceneDepth 모드일 때는 깊이 시각화
+// ============================================================
+void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Context)
+{
+	// SceneDepth 모드이거나 Fog 데이터가 있을 때만 실행
+	bool bSceneDepthMode = (Bus.GetViewMode() == EViewMode::SceneDepth);
+	if (!bSceneDepthMode && !Bus.HasFog()) return;
+	if (!bSceneDepthMode && !Bus.GetShowFlags().bFog) return;
+
+	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
+	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
+	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	if (!DepthSRV || !RTV) return;
+
+	// 1) DSV 언바인딩 (DepthSRV와 동시 바인딩 불가)
+	Context->OMSetRenderTargets(1, &RTV, nullptr);
+
+	// 2) DepthSRV → PS t0 바인딩
+	Context->PSSetShaderResources(0, 1, &DepthSRV);
+
+	// 3) HeightFog 셰이더 바인딩
+	FShader* FogShader = FShaderManager::Get().GetShader(EShaderType::HeightFog);
+	if (FogShader) FogShader->Bind(Context);
+
+	// 4) Fog CB (b5) 업데이트 — InvViewProj와 CameraWorldPos는 CPU에서 계산
+	FConstantBuffer* FogCB = FConstantBufferPool::Get().GetBuffer(ECBSlot::Fog, sizeof(FHeightFogConstants));
+	FHeightFogConstants FogConstants = Bus.HasFog() ? Bus.GetFogParams() : FHeightFogConstants{};
+	if (bSceneDepthMode)
+		FogConstants.bSceneDepthMode = 1;
+
+	// CPU에서 행렬 계산 — 셰이더 내 수동 역행렬 제거
+	FMatrix ViewProj = Bus.GetView() * Bus.GetProj();
+	FogConstants.InvViewProj = ViewProj.GetInverse();
+	FogConstants.CameraWorldPos = Bus.GetCameraPosition();
+
+	FogCB->Update(Context, &FogConstants, sizeof(FogConstants));
+	ID3D11Buffer* cb = FogCB->GetBuffer();
+	Context->PSSetConstantBuffers(ECBSlot::Fog, 1, &cb);
+
+	// 5) Fullscreen Triangle 드로우
+	Context->IASetInputLayout(nullptr);
+	Context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	Context->Draw(3, 0);
+	FDrawCallStats::Increment();
+
+	// 6) DepthSRV 언바인딩
+	ID3D11ShaderResourceView* nullSRV = nullptr;
+	Context->PSSetShaderResources(0, 1, &nullSRV);
+
+	// 7) DSV 재바인딩
 	Context->OMSetRenderTargets(1, &RTV, DSV);
 }
 

@@ -104,6 +104,7 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 	{
 		SCOPE_STAT_CAT("Collector", "3_Collect");
 		Collector.CollectWorld(World, Bus);
+		Collector.CollectFog(World, Bus);
 
 		if (UGizmoComponent* Gizmo = Editor->GetGizmo())
 			Gizmo->UpdateAxisMask(Opts.ViewportType);

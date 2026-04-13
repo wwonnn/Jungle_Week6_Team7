@@ -49,4 +49,25 @@ cbuffer MaterialBuffer : register(b4)
     float4 SectionColor;
 }
 
+// b5: Height Fog parameters
+cbuffer HeightFogCB : register(b5)
+{
+    float4x4 InvViewProj;           // CPU에서 계산한 (View*Proj)^-1
+
+    float3 CameraWorldPos;
+    float FogDensity;
+
+    float4 FogInscatteringColor;
+
+    float FogHeightFalloff;
+    float FogStartDistance;
+    float FogCutoffDistance;
+    float FogMaxOpacity;
+
+    float FogHeight;
+    uint bSceneDepthMode;
+    float FogNearPlane;
+    float FogFarPlane;
+}
+
 #endif // CONSTANT_BUFFERS_HLSL

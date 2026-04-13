@@ -95,6 +95,9 @@ private:
 	// PostProcess Outline — StencilSRV 읽어 edge detection 후 fullscreen draw
 	void DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContext* Context);
 
+	// Height Fog — DepthSRV 읽어 exponential height fog + SceneDepth 시각화
+	void DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Context);
+
 private:
 	FD3DDevice Device;
 	FRenderResources Resources;

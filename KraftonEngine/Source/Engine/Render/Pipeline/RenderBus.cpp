@@ -20,6 +20,10 @@ void FRenderBus::Clear()
 	ViewportRTV = nullptr;
 	ViewportDSV = nullptr;
 	ViewportStencilSRV = nullptr;
+	ViewportDepthSRV = nullptr;
+
+	bHasFog = false;
+	FogParams = {};
 }
 
 void FRenderBus::AddProxy(ERenderPass Pass, const FPrimitiveSceneProxy* Proxy)
@@ -86,6 +90,7 @@ void FRenderBus::SetViewportInfo(const FViewport* VP)
 	ViewportRTV = VP->GetRTV();
 	ViewportDSV = VP->GetDSV();
 	ViewportStencilSRV = VP->GetStencilSRV();
+	ViewportDepthSRV = VP->GetDepthSRV();
 }
 
 void FRenderBus::SetRenderSettings(const EViewMode NewViewMode, const FShowFlags NewShowFlags)

@@ -23,6 +23,7 @@ namespace ECBSlot
 	constexpr uint32 Gizmo = 2;     // b2: Gizmo state
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
+	constexpr uint32 Fog = 5;         // b5: Height Fog parameters
 }
 
 //PerObject
@@ -72,6 +73,28 @@ struct FOutlinePostProcessConstants
 	FVector4 OutlineColor = FVector4(1.0f, 0.5f, 0.0f, 1.0f);
 	float OutlineThickness = 1.0f;
 	float Padding[3] = {};
+};
+
+// Height Fog CB (b5) — HLSL HeightFogCB와 1:1 대응
+struct FHeightFogConstants
+{
+	// ── GPU가 필요한 행렬 (CPU에서 미리 계산) ──
+	FMatrix InvViewProj;                // View*Proj의 역행렬
+
+	FVector CameraWorldPos;             // 카메라 월드 위치
+	float FogDensity = 0.02f;
+
+	FVector4 FogInscatteringColor = FVector4(0.45f, 0.55f, 0.7f, 1.0f);
+
+	float FogHeightFalloff = 0.2f;
+	float FogStartDistance = 0.0f;
+	float FogCutoffDistance = 0.0f;
+	float FogMaxOpacity = 1.0f;
+
+	float FogHeight = 0.0f;            // 포그 컴포넌트의 월드 Z 위치
+	uint32 bSceneDepthMode = 0;        // 1이면 SceneDepth 시각화 모드
+	float NearPlane = 0.1f;
+	float FarPlane = 1000.0f;
 };
 
 struct FAABBConstants
