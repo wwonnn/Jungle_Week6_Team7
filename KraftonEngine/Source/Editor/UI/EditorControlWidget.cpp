@@ -6,7 +6,7 @@
 #include "Component/CameraComponent.h"
 #include "Component/GizmoComponent.h"
 #include "GameFramework/StaticMeshActor.h"
-#include "GameFramework/PostProcessActor.h"
+#include "GameFramework/ExponentialHeightFog.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
 
@@ -55,9 +55,9 @@ void FEditorControlWidget::Render(float DeltaTime)
 				World->InsertActorToOctree(Actor);
 				break;
 			}
-			case 2: // Height Fog <-- 포그 액터 스폰 추가
+			case 2: // Height Fog
 			{
-				APostProcessActor* Actor = World->SpawnActor<APostProcessActor>();
+				AExponentialHeightFog* Actor = World->SpawnActor<AExponentialHeightFog>();
 				Actor->InitDefaultComponents();
 				Actor->SetActorLocation(CurSpawnPoint);
 				World->InsertActorToOctree(Actor);

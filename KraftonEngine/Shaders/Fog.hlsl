@@ -68,7 +68,7 @@ float4 PS(PS_Input input) : SV_TARGET
 
     // 3. Unreal Engine 방식의 완전한 지수 높이 안개 적분
     float falloff = max(0.00001f, FogHeightFalloff * 0.001f); // 언리얼 스케일 보정
-    float density = FogDensity * 0.001f; // 밀도 스케일 수정 (너무 옅어지는 문제 해결)
+    float density = FogDensity * 0.001f; // 밀도 스케일 수정 (너무 진해지는 문제 해결)
 
     // 안개 시작점의 높이 (StartDistance 고려)
     float3 startPos = cameraPos + rayDir * StartDistance;

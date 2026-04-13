@@ -1,6 +1,6 @@
 {
   "Actors" : [{
-      "ClassName" : "APostProcessActor",
+      "ClassName" : "AExponentialHeightFog",
       "NonSceneComponents" : [],
       "RootComponent" : {
         "Children" : [{
@@ -17,9 +17,10 @@
               "bTickEnable" : true
             }
           }],
-        "ClassName" : "UPrimitiveComponent",
+        "ClassName" : "UExponentialHeightFogComponent",
         "Properties" : {
           "Cutoff Distance" : 10000.000000,
+          "Fog Color" : [0.500000, 0.600000, 0.700000, 1.000000],
           "Fog Density" : 0.020000,
           "Height Falloff" : 0.200000,
           "Location" : [0.000000, 0.000000, 0.000000],
@@ -86,7 +87,7 @@
   "Name" : "Default",
   "PerspectiveCamera" : {
     "FOV" : 1.570796,
-    "FarClip" : 100.000000,
+    "FarClip" : 100000.000000,
     "Location" : [-16.955898, 24.443115, 5.600885],
     "NearClip" : 0.100000,
     "Rotation" : [0.000000, 34.678955, -96.879013]

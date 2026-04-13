@@ -9,7 +9,7 @@
 #include "Profiling/GPUProfiler.h"
 #include "Engine/Runtime/Engine.h"
 #include "Profiling/Timer.h"
-#include "Render/Proxy/FogSceneProxy.h"
+#include "Render/Proxy/ExponentialHeightFogSceneProxy.h"
 
 
 void FRenderer::Create(HWND hWindow)
