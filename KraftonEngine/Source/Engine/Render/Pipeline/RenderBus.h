@@ -29,6 +29,7 @@ public:
 	void AddOBBEntry(FOBBEntry&& Entry);
 	void AddGridEntry(FGridEntry&& Entry);
 	void AddDebugLineEntry(FDebugLineEntry&& Entry);
+	void AddFireBallEntry(FFireBallEntry& Entry);
 
 	const TArray<FFontEntry>& GetFontEntries() const { return FontEntries; }
 	const TArray<FFontEntry>& GetOverlayFontEntries() const { return OverlayFontEntries; }
@@ -38,6 +39,7 @@ public:
 	const TArray<FOBBEntry>& GetOBBEntries() const { return OBBEntries; }
 	const TArray<FGridEntry>& GetGridEntries() const { return GridEntries; }
 	const TArray<FDebugLineEntry>& GetDebugLineEntries() const { return DebugLineEntries; }
+	const TArray<FFireBallEntry>& GetFireBallEntries() const { return FireBallEntries; }
 
 	// Getter,Setter
 	void SetCameraInfo(const UCameraComponent* Camera);
@@ -65,14 +67,27 @@ public:
 
 	const float GetViewportWidth() const { return viewportWidth; }
 	const float GetViewportHeight() const { return viewportHeight; }
-	ID3D11RenderTargetView*  GetViewportRTV()        const { return ViewportRTV; }
-	ID3D11DepthStencilView*  GetViewportDSV()        const { return ViewportDSV; }
+	ID3D11RenderTargetView* GetViewportRTV()        const { return ViewportRTV; }
+	ID3D11DepthStencilView* GetViewportDSV()        const { return ViewportDSV; }
 	ID3D11ShaderResourceView* GetViewportStencilSRV() const { return ViewportStencilSRV; }
 	ID3D11ShaderResourceView* GetViewportDepthSRV() const { return ViewportDepthSRV; }
 
 	// PostProcess 전용 (FXAA 등)
-	ID3D11RenderTargetView*  GetPostProcessRTV()    const { return PostProcessRTV; }
-	ID3D11ShaderResourceView* GetBaseColorSRV()      const { return BaseColorSRV; }
+	ID3D11RenderTargetView* GetPostProcessRTV1()    const { return PostProcessRTV1; }
+	ID3D11RenderTargetView* GetPostProcessRTV2()    const { return PostProcessRTV2; }
+	ID3D11ShaderResourceView* GetPostProcessSRV1()    const { return PostProcessSRV1; }
+	ID3D11ShaderResourceView* GetPostProcessSRV2()    const { return PostProcessSRV2; }
+	ID3D11ShaderResourceView* GetBaseSRV()      const { return BaseSRV; }
+	ID3D11RenderTargetView* GetCurrentRTV() const { return CurrentRTV; }
+	ID3D11ShaderResourceView* GetCurrentSRV() const { return CurrentSRV; }
+	bool HasPostProcessOutput() const { return bHasPostProcessOutput; }
+	void SetCurrentPostProcessTarget(ID3D11RenderTargetView* InRTV, ID3D11ShaderResourceView* InSRV)
+	{
+		CurrentRTV = InRTV;
+		CurrentSRV = InSRV;
+		bHasPostProcessOutput = (InSRV != nullptr && InSRV != BaseSRV);
+	}
+
 
 	// GPU Occlusion Culling — set by render pipeline, read by collector
 	void SetOcclusionCulling(FGPUOcclusionCulling* InOcclusion) { OcclusionCulling = InOcclusion; }
@@ -97,6 +112,9 @@ private:
 	TArray<FGridEntry>  GridEntries;
 	TArray<FDebugLineEntry> DebugLineEntries;
 
+	// ConstantBuffer Batch용
+	TArray<FFireBallEntry> FireBallEntries;
+
 	FMatrix View;
 	FMatrix Proj;
 	FVector CameraPosition;
@@ -113,13 +131,20 @@ private:
 	ELevelViewportType ViewportType = ELevelViewportType::Perspective;
 
 	// PostProcess용 뷰포트 D3D 리소스 (프레임 내 유효)
-	ID3D11RenderTargetView*   ViewportRTV        = nullptr;
-	ID3D11DepthStencilView*   ViewportDSV        = nullptr;
+	ID3D11RenderTargetView* ViewportRTV = nullptr;
+	ID3D11DepthStencilView* ViewportDSV = nullptr;
 	ID3D11ShaderResourceView* ViewportStencilSRV = nullptr;
 	ID3D11ShaderResourceView* ViewportDepthSRV = nullptr;
+	ID3D11ShaderResourceView* BaseSRV = nullptr;
 
-	ID3D11RenderTargetView*   PostProcessRTV    = nullptr;
-	ID3D11ShaderResourceView* BaseColorSRV      = nullptr;
+	ID3D11RenderTargetView* PostProcessRTV1 = nullptr;
+	ID3D11ShaderResourceView* PostProcessSRV1 = nullptr;
+	ID3D11RenderTargetView* PostProcessRTV2 = nullptr;
+	ID3D11ShaderResourceView* PostProcessSRV2 = nullptr;
+	ID3D11RenderTargetView* CurrentRTV = nullptr;
+	ID3D11ShaderResourceView* CurrentSRV = nullptr;
+	bool bHasPostProcessOutput = false;
+
 
 	// GPU Occlusion
 	FGPUOcclusionCulling* OcclusionCulling = nullptr;

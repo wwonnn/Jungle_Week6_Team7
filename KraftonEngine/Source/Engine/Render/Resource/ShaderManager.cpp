@@ -41,6 +41,9 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	Shaders[(uint32)EShaderType::Decal].Create(InDevice, L"Shaders/ShaderDecal.hlsl",
 		"VS", "PS", FVertexInputLayout, ARRAYSIZE(FVertexInputLayout));
 
+	Shaders[(uint32)EShaderType::FireBall].Create(InDevice, L"Shaders/ShaderFireBall.hlsl",
+		"VS", "PS", FVertexInputLayout, 0);
+
 	bIsInitialized = true;
 }
 

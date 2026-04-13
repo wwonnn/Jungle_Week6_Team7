@@ -148,8 +148,8 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 		SCOPE_STAT_CAT("Renderer.Render", "4_ExecutePass");
 		Renderer.Render(Bus);
 
-		// FXAA 패스가 실행되었음을 Viewport에 알림 (GetSRV가 PSRV를 반환하도록)
-		VP->SetHasPostProcessed(Opts.bFXAA);
+		VP->SetCurrentRenderTarget(Bus.GetCurrentRTV(), Bus.GetCurrentSRV());
+		VP->SetHasPostProcessed(Bus.HasPostProcessOutput());
 	}
 
 	// 5. GPU Occlusion — DSV 언바인딩 후 Hi-Z 생성 + Occlusion Test 디스패치
@@ -158,7 +158,7 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 		SCOPE_STAT_CAT("GPUOcclusion", "4_ExecutePass");
 
 		// DSV 언바인딩 (DepthSRV 읽기와 동시 바인딩 불가)
-		ID3D11RenderTargetView* rtv = VP->GetRTV();
+		ID3D11RenderTargetView* rtv = VP->GetBaseRTV();
 		Ctx->OMSetRenderTargets(1, &rtv, nullptr);
 
 		GPUOcclusion.DispatchOcclusionTest(

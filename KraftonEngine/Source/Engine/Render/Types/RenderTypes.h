@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 //	Windows API Include
 #define NOMINMAX
@@ -39,6 +39,7 @@ enum class ERenderPass : uint32
 	Translucent,
 	SelectionMask,
 	PostProcess,
+	FireBall,
 	FXAA,
 	Editor,
 	Grid,
@@ -59,6 +60,7 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::Translucent",
 		"RenderPass::SelectionMask",
 		"RenderPass::PostProcess",
+		"RenderPass::FireBall",
 		"RenderPass::FXAA",
 		"RenderPass::Editor",
 		"RenderPass::Grid",

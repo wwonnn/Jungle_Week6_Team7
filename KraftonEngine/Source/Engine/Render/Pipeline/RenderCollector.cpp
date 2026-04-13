@@ -9,6 +9,7 @@
 #include "Render/DebugDraw/DebugDrawQueue.h"
 #include "Render/Culling/GPUOcclusionCulling.h"
 #include "Render/Pipeline/LODContext.h"
+#include "Component/FireBallComponent.h"
 #include "Profiling/Stats.h"
 #include <Collision/Octree.h>
 
@@ -18,6 +19,7 @@ void FRenderCollector::CollectWorld(UWorld* World, FRenderBus& RenderBus)
 
 	// Dirty 프록시 갱신 후 visible 리스트만 순회
 	World->GetScene().UpdateDirtyProxies();
+	CollectFireBall(World, RenderBus);
 	CollectVisibleProxies(World->GetVisibleProxies(), RenderBus);
 }
 
@@ -117,6 +119,28 @@ void FRenderCollector::CollectOctreeDebug(const FOctree* Node, FRenderBus& Rende
 	for (const FOctree* Child : Node->GetChildren())
 	{
 		CollectOctreeDebug(Child, RenderBus, Depth + 1);
+	}
+}
+
+void FRenderCollector::CollectFireBall(UWorld* World, FRenderBus& RenderBus)
+{
+	TArray<AActor*> Actors = World->GetActors();
+	for (AActor* Actor : Actors)
+	{
+		TArray<UActorComponent*> ACs = Actor->GetComponents();
+		for (UActorComponent* AC : ACs)
+		{
+			if (UFireBallComponent* FC = Cast<UFireBallComponent>(AC))
+			{
+				FFireBallEntry Entry;
+				Entry.Intensity = FC->GetIntensity();
+				Entry.Radius = FC->GetRadius();
+				Entry.RadiusFallOff = FC->GetRadiusFallOff();
+				Entry.Color = FC->GetColor();
+				Entry.Center = FC->GetWorldLocation();
+				RenderBus.AddFireBallEntry(Entry);
+			}
+		}
 	}
 }
 
