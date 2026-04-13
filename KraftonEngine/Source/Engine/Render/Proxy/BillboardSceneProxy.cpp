@@ -1,4 +1,4 @@
-#include "Render/Proxy/BillboardSceneProxy.h"
+﻿#include "Render/Proxy/BillboardSceneProxy.h"
 #include "Component/BillboardComponent.h"
 #include "Render/Resource/ShaderManager.h"
 #include "Render/Pipeline/RenderBus.h"
@@ -80,12 +80,44 @@ void FBillboardSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 	bVisible = Comp->IsVisible();
 	if (!bVisible) return;
 
-	// 카메라 방향으로 향하는 월드 행렬 계산
+	// ==========================================================
+	// 1. 카메라와의 거리 기반 스케일(DistanceScale) 계산
+	// ==========================================================
+	// (주의: 엔진에 구현된 카메라 위치 함수명에 맞춰 GetCameraPosition()을 수정하세요)
+	const FVector CameraPos = Bus.GetCameraPosition();
+	const FVector BillboardPos = Comp->GetWorldLocation();
+	const float Distance = (BillboardPos - CameraPos).Length();
+
+	const float ThresholdDistance = 1000.0f; // 이 거리 안으로 들어오면 작아지기 시작
+	float DistanceScale = 1.0f;
+
+	if (!Bus.IsOrtho())
+	{
+		// 카메라가 가까워질수록 DistanceScale이 1.0에서 0.01까지 줄어듦
+		if (Distance < ThresholdDistance)
+		{
+			DistanceScale = std::max(0.01f, Distance / ThresholdDistance);
+		}
+	}
+	else
+	{
+		// 직교 투영(Orthographic) 모드일 때의 화면 크기 유지 보정
+		DistanceScale = Bus.GetOrthoWidth() * 0.01f;
+	}
+
+	// ==========================================================
+	// 2. 원본 로직 유지: 카메라 페이싱 회전 & 행렬 합성
+	// ==========================================================
 	FVector BillboardForward = Bus.GetCameraForward() * -1.0f;
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(BillboardForward, Bus.GetCameraRight() * -1.0f, Bus.GetCameraUp());
-	FMatrix BillboardMatrix = FMatrix::MakeScaleMatrix(Comp->GetWorldScale())
-		* RotMatrix * FMatrix::MakeTranslationMatrix(Comp->GetWorldLocation());
+
+	// 컴포넌트의 원본 스케일에 방금 구한 거리 스케일을 곱해줍니다!
+	const float IconSizeMultiplier = 100.0f;
+	FVector FinalScale = Comp->GetWorldScale() * DistanceScale * IconSizeMultiplier;
+
+	FMatrix BillboardMatrix = FMatrix::MakeScaleMatrix(FinalScale)
+		* RotMatrix * FMatrix::MakeTranslationMatrix(BillboardPos);
 
 	PerObjectConstants = FPerObjectConstants::FromWorldMatrix(BillboardMatrix);
 	MarkPerObjectCBDirty();
