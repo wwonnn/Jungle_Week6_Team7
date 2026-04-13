@@ -1,12 +1,19 @@
-#include "DecalMeshSceneProxy.h"
+﻿#include "DecalMeshSceneProxy.h"
 #include "Component/MeshDecalComponent.h"
 #include "Materials/Material.h"
 #include "Texture/Texture2D.h"
 #include "Render/Resource/ShaderManager.h"
+#include "Render/Resource/ConstantBufferPool.h"
 
 FDecalMeshSceneProxy::FDecalMeshSceneProxy(UMeshDecalComponent* InComponent) : FPrimitiveSceneProxy(InComponent)
 {
+	auto& CB = ExtraCB.Bind<FMeshDecalConstants>(
+		FConstantBufferPool::Get().GetBuffer(ECBSlot::MeshDecal, sizeof(FMeshDecalConstants)),
+		ECBSlot::MeshDecal);
+	CB.Opacity = Cast<UMeshDecalComponent>(Owner)->GetOpacity();
 }
+
+
 
 UMeshDecalComponent* FDecalMeshSceneProxy::GetDecalComponent() const
 {
@@ -64,4 +71,10 @@ void FDecalMeshSceneProxy::UpdateTransform()
 {
 	UpdateMesh();
 	FPrimitiveSceneProxy::UpdateTransform();
+}
+
+void FDecalMeshSceneProxy::UpdateOpacity()
+{
+	ExtraCB.As<FMeshDecalConstants>().Opacity =
+		Cast<UMeshDecalComponent>(Owner)->GetOpacity();
 }

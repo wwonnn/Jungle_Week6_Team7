@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Render/Proxy/PrimitiveSceneProxy.h"
+#include "Render/Pipeline/RenderConstants.h"
 
 class UMeshDecalComponent;
 
@@ -12,7 +13,9 @@ public:
 	virtual void UpdateMesh() override;
 	virtual void UpdateVisibility() override;
 	virtual void UpdateTransform() override;
+	void UpdateOpacity();
 
 private:
 	UMeshDecalComponent* GetDecalComponent() const;
+	FMeshDecalConstants Const;
 };

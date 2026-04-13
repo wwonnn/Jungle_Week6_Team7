@@ -25,14 +25,19 @@ public:
 	void PostDuplicate() override;
 	void CollectEditorVisualizations(FRenderBus& RenderBus) const override;
 	virtual void BeginPlay() override;
+	float GetOpacity() const { return Opacity; }
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction) override;
+	void Serialize(FArchive& Ar) override;
 
 private:
 	void RefreshMaterial();
-
 	FMaterialSlot MaterialSlot;
 	UMaterial* Material = nullptr;
 	TMeshData<FVertexPNCT> DecalMeshData;
 	FMeshBuffer MeshBuffer;
+	float OpacityRate = 1.f;
+	float Opacity = 1.f;
 
 private:
 	TArray<UPrimitiveComponent*> GetCandidates() const;

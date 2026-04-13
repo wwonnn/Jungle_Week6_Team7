@@ -49,4 +49,10 @@ cbuffer MaterialBuffer : register(b4)
     float4 SectionColor;
 }
 
+cbuffer MeshDecalBuffer : register(b5)
+{
+    float DecalOpacity;
+    float3 _Padding;
+}
+
 #endif // CONSTANT_BUFFERS_HLSL

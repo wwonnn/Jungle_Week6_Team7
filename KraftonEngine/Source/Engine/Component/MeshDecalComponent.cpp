@@ -16,6 +16,7 @@ namespace
 {
 	constexpr float MeshDecalSurfaceOffset = 0.001f;
 	constexpr float MeshDecalLocalHalfExtent = 0.5f;
+
 	const FVector MeshDecalLocalExtents = FVector(MeshDecalLocalHalfExtent, MeshDecalLocalHalfExtent, MeshDecalLocalHalfExtent);
 
 	FVector2 ComputeDecalProjectedUV(const FVector& DecalLocalPos, const FVector& HalfExtent)
@@ -37,9 +38,10 @@ namespace
 
 	bool IsDecalFacingTriangle(const FVector& N0, const FVector& N1, const FVector& N2)
 	{
-		constexpr float ProjectionDotThreshold = -0.2f;
-		FVector AvgNormal = (N0.Normalized() + N1.Normalized() + N2.Normalized()) / 3.0f;
-		AvgNormal.Normalize();
+		constexpr float ProjectionDotThreshold = 0.1f;
+		FVector A = N1 - N0;
+		FVector B = N2 - N0;
+		FVector AvgNormal = A.Cross(B).Normalized();
 		return AvgNormal.Dot(FVector(1.f, 0.f, 0.f)) <= ProjectionDotThreshold;
 	}
 
@@ -55,7 +57,8 @@ namespace
 
 FPrimitiveSceneProxy* UMeshDecalComponent::CreateSceneProxy()
 {
-	return new FDecalMeshSceneProxy(this);
+	SceneProxy = new FDecalMeshSceneProxy(this);
+	return SceneProxy;
 }
 
 UMeshDecalComponent::UMeshDecalComponent()
@@ -91,6 +94,14 @@ void UMeshDecalComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Out
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
 	OutProps.push_back({ "Material", EPropertyType::MaterialSlot, &MaterialSlot });
+	FPropertyDescriptor Desc;
+	Desc.Name = "OpacityRate";
+	Desc.Type = EPropertyType::Float;
+	Desc.ValuePtr = &OpacityRate;
+	Desc.Min = 0.1f;
+	Desc.Max = 1.f;
+	Desc.Speed = 0.01f;
+	OutProps.push_back(Desc);
 }
 
 void UMeshDecalComponent::PostEditProperty(const char* PropertyName)
@@ -151,6 +162,26 @@ void UMeshDecalComponent::BeginPlay()
 	UPrimitiveComponent::BeginPlay();
 }
 
+void UMeshDecalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
+{
+	Opacity = std::max(0.f, Opacity - DeltaTime * OpacityRate);
+	SceneProxy->MarkPerObjectCBDirty();
+	static_cast<FDecalMeshSceneProxy*>(SceneProxy)->UpdateOpacity();
+}
+
+static FArchive& operator<<(FArchive& Ar, FMaterialSlot& Slot)
+{
+	Ar << Slot.Path;
+	Ar << Slot.bUVScroll;
+	return Ar;
+}
+
+void UMeshDecalComponent::Serialize(FArchive& Ar)
+{
+	Ar << MaterialSlot;
+	Ar << Opacity;
+}
+
 void UMeshDecalComponent::OnTransformDirty()
 {
 	UPrimitiveComponent::OnTransformDirty();
@@ -202,7 +233,6 @@ bool UMeshDecalComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHit
 	OutHitResult.bHit = true;
 	return true;
 }
-
 
 TArray<UPrimitiveComponent*> UMeshDecalComponent::GetCandidates() const
 {
@@ -267,7 +297,7 @@ void UMeshDecalComponent::UpdateDecalMeshData()
 			FVector PrimDecalNormal1 = WorldToDecalLocal.TransformVector(PrimNormal1);
 			FVector PrimDecalNormal2 = WorldToDecalLocal.TransformVector(PrimNormal2);
 
-			if (!IsDecalFacingTriangle(PrimDecalNormal0, PrimDecalNormal1, PrimDecalNormal2))
+			if (!IsDecalFacingTriangle(PrimDecalPos0, PrimDecalPos1, PrimDecalPos2))
 			{
 				continue;
 			}

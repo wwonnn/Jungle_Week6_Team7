@@ -23,6 +23,7 @@ namespace ECBSlot
 	constexpr uint32 Gizmo = 2;     // b2: Gizmo state
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
+	constexpr uint32 MeshDecal = 5; //b5 : Mesh Decal
 }
 
 //PerObject
@@ -113,8 +114,14 @@ struct FSubUVConstants
 struct FBillboardConstants
 {
 	const FTextureResource* Texture = nullptr;
-	float Width  = 1.0f;
+	float Width = 1.0f;
 	float Height = 1.0f;
+};
+
+struct FMeshDecalConstants
+{
+	float Opacity = 1.0f;
+	float _Offset[3];
 };
 
 // ============================================================

@@ -35,7 +35,7 @@ float4 PS(PS_Input_Full input) : SV_TARGET
     //float ambient = 0.2f;
 
     float4 finalColor = texColor * input.color /* * (diffuse + ambient)*/;
-    finalColor.a = texColor.a * input.color.a;
+    finalColor.a = (texColor.a * input.color.a);
 
     return float4(ApplyWireframe(finalColor.rgb), finalColor.a);
 }
