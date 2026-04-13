@@ -1,4 +1,4 @@
-﻿#include "ExponentialHeightFogComponent.h"
+#include "ExponentialHeightFogComponent.h"
 #include "Render/Proxy/ExponentialHeightFogSceneProxy.h"
 #include "Math/Vector.h"
 IMPLEMENT_CLASS(UExponentialHeightFogComponent, UPrimitiveComponent)

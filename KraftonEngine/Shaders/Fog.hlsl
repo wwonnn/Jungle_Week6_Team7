@@ -43,10 +43,8 @@ float4 PS(PS_Input input) : SV_TARGET
 
     // 1. 월드 포지션 복구
     float2 ndc_xy = input.uv * 2.0f - 1.0f;
-    ndc_xy.y = -ndc_xy.y; // UV Y(down) to NDC Y(up)
+    ndc_xy.y = -ndc_xy.y;
     
-    // NDC -> World 복원
-    // InvViewProj가 (View * Proj)^-1 일 때, clipPos * InvViewProj 로 복원합니다.
     float4 clipPos = float4(ndc_xy, depth, 1.0f);
     float4 worldPosH = mul(clipPos, InvViewProj);
     float3 worldPos = worldPosH.xyz / worldPosH.w;
@@ -61,8 +59,7 @@ float4 PS(PS_Input input) : SV_TARGET
         return float4(0, 0, 0, 0);
     }
 
-    // depth가 1.0(배경)인 경우 FogCutoffDistance를 사용하고, 그 외에는 복원된 실제 거리(rayLength)를 사용합니다.
-    // FarZ가 현실적인 값이 되면 rayLength와 FogCutoffDistance 사이의 간격이 줄어들어 자연스럽게 연결됩니다.
+    // Skybox (depth >= 1.0f) 일 때만 FogCutoffDistance를 적용하고, 일반 메쉬는 실제 거리(rayLength)를 사용합니다.
     float currentRayLength = (depth >= 1.0f) ? FogCutoffDistance : rayLength;
     float effectiveRayLength = max(0.0f, currentRayLength - StartDistance);
     
@@ -73,7 +70,7 @@ float4 PS(PS_Input input) : SV_TARGET
 
     // 3. Unreal Engine 방식의 완전한 지수 높이 안개 적분
     float falloff = max(0.00001f, FogHeightFalloff * 0.001f); // 언리얼 스케일 보정
-    float density = FogDensity * 0.001f; // 밀도 스케일 수정 (너무 진해지는 문제 해결)
+    float density = FogDensity * 0.001f; // 언리얼 스케일 보정 (1000으로 나눔)
 
     // 안개 시작점의 높이 (StartDistance 고려)
     float3 startPos = cameraPos + rayDir * StartDistance;

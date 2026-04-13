@@ -92,6 +92,9 @@ void FStaticMeshSceneProxy::UpdateLOD(uint32 LODLevel)
 	CurrentLOD = LODLevel;
 	std::swap(MeshBuffer, LODData[LODLevel].MeshBuffer);
 	std::swap(SectionDraws, LODData[LODLevel].SectionDraws);
+
+	// 패스 상태 강제 재설정 (포그 이전인 Opaque에서 그려지도록 보장)
+	Pass = ERenderPass::Opaque;
 	UpdateSortKey();
 }
 
