@@ -1,4 +1,4 @@
-#include "Profiling/GPUProfiler.h"
+﻿#include "Profiling/GPUProfiler.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -14,11 +14,18 @@ void FGPUProfiler::Initialize(ID3D11Device* InDevice, ID3D11DeviceContext* InCon
 	D3D11_QUERY_DESC timestampDesc = {};
 	timestampDesc.Query = D3D11_QUERY_TIMESTAMP;
 
+	D3D11_QUERY_DESC occlusionDesc = {};
+	occlusionDesc.Query = D3D11_QUERY_OCCLUSION; // 통과한 픽셀 수 (데칼)
+
 	for (uint32 f = 0; f < FRAME_COUNT; ++f)
 	{
 		Device->CreateQuery(&disjointDesc, &Frames[f].DisjointQuery);
 		Frames[f].UsedCount = 0;
 		Frames[f].bActive = false;
+
+		Device->CreateQuery(&occlusionDesc, &Frames[f].Occlusion.OcclusionQuery);
+		Frames[f].Occlusion.bActive = false;
+		Frames[f].Occlusion.ProjectedPixels = 0;
 
 		for (uint32 i = 0; i < MAX_TIMESTAMPS; ++i)
 		{
@@ -57,6 +64,7 @@ void FGPUProfiler::BeginFrame()
 
 	// 이전 프레임 결과 수집
 	CollectPreviousFrame();
+	CollectOcclusionData();
 
 	// 현재 프레임 시작
 	FFrameData& Write = Frames[WriteIndex];
@@ -112,6 +120,60 @@ void FGPUProfiler::EndTimestamp(uint32 Index)
 	if (Index >= Write.UsedCount) return;
 
 	Context->End(Write.Timestamps[Index].EndQuery);
+}
+
+void FGPUProfiler::BeginOcclusionQuery()
+{
+	if (!bInitialized) return;
+
+	// 현재 프레임 시작
+	FFrameData& Write = Frames[WriteIndex];
+
+	// 이 슬롯의 이전 결과가 아직 소비되지 않았다면 직접 소비 시도
+	if (Write.Occlusion.bActive)
+	{
+		uint64 Dummy;
+		if (Context->GetData(Write.Occlusion.OcclusionQuery, &Dummy, sizeof(Dummy), 0) != S_OK)
+		{
+			// GPU가 아직 완료하지 않음 — 이 프레임은 프로파일링 건너뜀
+			bOcclusionActive = false;
+			return;
+		}
+		Write.Occlusion.bActive = false;
+	}
+
+	bOcclusionActive = true;
+	Write.Occlusion.bActive = true;
+	Context->Begin(Write.Occlusion.OcclusionQuery);
+}
+
+void FGPUProfiler::EndOcclusionQuery()
+{
+	if (!bInitialized || !bOcclusionActive) return;
+
+	Context->End(Frames[WriteIndex].Occlusion.OcclusionQuery);
+}
+
+void FGPUProfiler::CollectOcclusionData()
+{
+	uint32 ReadIndex = (WriteIndex + 1) % FRAME_COUNT;
+	FOcclusionFrameData& Read = Frames[ReadIndex].Occlusion;
+
+	if (!Read.bActive) return;
+
+	UINT64 PixelCount = 0;
+	if (Context->GetData(Read.OcclusionQuery,
+		&PixelCount, sizeof(UINT64), 0) != S_OK)
+		return; // 아직 준비 안됨
+
+	Read.ProjectedPixels = PixelCount;
+	Read.bActive = false;
+}
+
+UINT64 FGPUProfiler::GetProjectedPixels() const
+{
+	uint32 ReadIndex = (WriteIndex + 1) % FRAME_COUNT;
+	return Frames[ReadIndex].Occlusion.ProjectedPixels;
 }
 
 void FGPUProfiler::CollectPreviousFrame()

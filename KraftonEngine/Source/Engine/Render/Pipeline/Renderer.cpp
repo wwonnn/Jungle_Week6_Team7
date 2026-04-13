@@ -220,6 +220,9 @@ void FRenderer::Render(const FRenderBus& InRenderBus)
 		UpdateFrameBuffer(Context, InRenderBus);
 	}
 
+	// Fog 패스 IsEmpty 판정용 플래그 갱신
+	bShouldRenderFog = InRenderBus.HasFog() || (InRenderBus.GetViewMode() == EViewMode::SceneDepth);
+
 	for (uint32 i = 0; i < (uint32)ERenderPass::MAX; ++i)
 	{
 		ERenderPass CurPass = static_cast<ERenderPass>(i);
@@ -242,7 +245,10 @@ void FRenderer::Render(const FRenderBus& InRenderBus)
 		if (bHasBatcher)
 			PassBatchers[i].DrawBatch(CurPass, InRenderBus, Context);
 		else if (CurPass == ERenderPass::Decal)
+		{
+			SCOPE_STAT_CAT("ExecuteDecalPass", "4_ExecutePass");
 			ExecuteDecalPass(InRenderBus, InRenderBus.GetProxies(CurPass), Context);
+		}
 		else
 			ExecutePass(InRenderBus.GetProxies(CurPass), Context);
 	}
@@ -262,12 +268,13 @@ void FRenderer::InitializePassRenderStates()
 	S[(uint32)E::Font]          = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::SubUV]         = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::Translucent]   = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite,  EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::PostProcess]   = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::FXAA]          = { EDepthStencilState::NoDepth,       EBlendState::Opaque,     ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Fog]           = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlendKeepAlpha, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Editor]        = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
 	S[(uint32)E::Grid]          = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     false };
+	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite,  EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::PostProcess]   = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Billboard]     = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::FXAA]          = { EDepthStencilState::NoDepth,       EBlendState::Opaque,     ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::GizmoOuter]    = { EDepthStencilState::GizmoOutside, EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::GizmoInner]    = { EDepthStencilState::GizmoInside,  EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::OverlayFont]   = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
@@ -320,6 +327,13 @@ void FRenderer::InitializePassBatchers()
 			BillboardBatcher.DrawBatch(Ctx);
 		},
 		[this]() { return BillboardBatcher.GetSpriteCount() == 0; }
+	};
+
+	PassBatchers[(uint32)ERenderPass::Fog] = {
+		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
+			DrawHeightFog(Bus, Ctx);
+		},
+		[this]() { return !bShouldRenderFog; }
 	};
 
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
@@ -388,7 +402,12 @@ void FRenderer::ExecuteDecalPass(const FRenderBus& InRenderBus, const TArray<con
 	Context->OMSetRenderTargets(1, &RTV, nullptr);
 	Context->PSSetShaderResources(0, 1, &DepthSRV);
 
+	FGPUProfiler::Get().BeginOcclusionQuery();
+
 	ExecutePass(InRenderBus.GetProxies(ERenderPass::Decal), Context);
+
+	FGPUProfiler::Get().EndOcclusionQuery();
+	
 
 	// Decal SRV 해제 + DSV 복구
 	ID3D11DepthStencilView* DSV = InRenderBus.GetViewportDSV();
@@ -726,6 +745,69 @@ void FRenderer::DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContex
 	Context->OMSetRenderTargets(1, &RTV, DSV);
 }
 
+// ============================================================
+// Height Fog — DSV unbind → DepthSRV bind → Fog CB → Fullscreen Draw
+// SceneDepth 모드일 때는 깊이 시각화
+// ============================================================
+void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Context)
+{
+	// SceneDepth 모드이거나 Fog 데이터가 있을 때만 실행
+	bool bSceneDepthMode = (Bus.GetViewMode() == EViewMode::SceneDepth);
+	if (!bSceneDepthMode && !Bus.HasFog()) return;
+	if (!bSceneDepthMode && !Bus.GetShowFlags().bFog) return;
+
+	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
+	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
+	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	if (!DepthSRV || !RTV) return;
+
+	// 1) DSV 언바인딩 (DepthSRV와 동시 바인딩 불가)
+	Context->OMSetRenderTargets(1, &RTV, nullptr);
+
+	// 2) DepthSRV → PS t0 바인딩
+	Context->PSSetShaderResources(0, 1, &DepthSRV);
+
+	// 3) HeightFog 셰이더 바인딩
+	FShader* FogShader = FShaderManager::Get().GetShader(EShaderType::HeightFog);
+	if (FogShader) FogShader->Bind(Context);
+
+	// 4) Fog CB (b5) 업데이트 — InvViewProj와 CameraWorldPos는 CPU에서 계산
+	FConstantBuffer* FogCB = FConstantBufferPool::Get().GetBuffer(ECBSlot::Fog, sizeof(FHeightFogConstants));
+	FHeightFogConstants FogConstants = Bus.HasFog() ? Bus.GetFogParams() : FHeightFogConstants{};
+	if (bSceneDepthMode)
+		FogConstants.bSceneDepthMode = 1;
+
+	// CPU에서 행렬 계산 — 셰이더 내 수동 역행렬 제거
+	FMatrix ViewProj = Bus.GetView() * Bus.GetProj();
+	FogConstants.CameraWorldPos = Bus.GetCameraPosition();
+
+	// Proj 행렬에서 near/far 추출: linearZ = P[3][2] / (depth - P[2][2])
+	const FMatrix& P = Bus.GetProj();
+	float p22 = P.M[2][2];
+	float p32 = P.M[3][2];
+	if (p22 != 0.0f)
+		FogConstants.NearPlane = p32 / (-p22);    // depth=0  near
+	if (p22 != 1.0f)
+		FogConstants.FarPlane = p32 / (1.0f - p22); // depth=1  far
+
+	FogCB->Update(Context, &FogConstants, sizeof(FogConstants));
+	ID3D11Buffer* cb = FogCB->GetBuffer();
+	Context->PSSetConstantBuffers(ECBSlot::Fog, 1, &cb);
+
+	// 5) Fullscreen Triangle 드로우
+	Context->IASetInputLayout(nullptr);
+	Context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	Context->Draw(3, 0);
+	FDrawCallStats::Increment();
+
+	// 6) DepthSRV 언바인딩
+	ID3D11ShaderResourceView* nullSRV = nullptr;
+	Context->PSSetShaderResources(0, 1, &nullSRV);
+
+	// 7) DSV 재바인딩
+	Context->OMSetRenderTargets(1, &RTV, DSV);
+}
+
 //	Present the rendered frame to the screen. 반드시 Render 이후에 호출되어야 함.
 void FRenderer::EndFrame()
 {
@@ -737,6 +819,8 @@ void FRenderer::UpdateFrameBuffer(ID3D11DeviceContext* Context, const FRenderBus
 	FFrameConstants frameConstantData = {};
 	frameConstantData.View = InRenderBus.GetView();
 	frameConstantData.Projection = InRenderBus.GetProj();
+	frameConstantData.ViewProjection = frameConstantData.View * frameConstantData.Projection;
+	frameConstantData.InvViewProj = frameConstantData.ViewProjection.GetInverse();
 	frameConstantData.bIsWireframe = (InRenderBus.GetViewMode() == EViewMode::Wireframe);
 	frameConstantData.WireframeColor = InRenderBus.GetWireframeColor();
 

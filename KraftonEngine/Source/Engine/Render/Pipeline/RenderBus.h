@@ -68,7 +68,13 @@ public:
 	ID3D11RenderTargetView*  GetViewportRTV()        const { return ViewportRTV; }
 	ID3D11DepthStencilView*  GetViewportDSV()        const { return ViewportDSV; }
 	ID3D11ShaderResourceView* GetViewportStencilSRV() const { return ViewportStencilSRV; }
-	ID3D11ShaderResourceView* GetViewportDepthSRV() const { return ViewportDepthSRV; }
+	ID3D11ShaderResourceView* GetViewportDepthSRV()   const { return ViewportDepthSRV; }
+
+	// Height Fog
+	void SetFogParams(const FHeightFogConstants& InFog) { FogParams = InFog; bHasFog = true; }
+	const FHeightFogConstants& GetFogParams() const { return FogParams; }
+	bool HasFog() const { return bHasFog; }
+
 
 	// PostProcess 전용 (FXAA 등)
 	ID3D11RenderTargetView*  GetPostProcessRTV()    const { return PostProcessRTV; }
@@ -120,6 +126,11 @@ private:
 
 	ID3D11RenderTargetView*   PostProcessRTV    = nullptr;
 	ID3D11ShaderResourceView* BaseColorSRV      = nullptr;
+
+
+	// Height Fog
+	FHeightFogConstants FogParams;
+	bool bHasFog = false;
 
 	// GPU Occlusion
 	FGPUOcclusionCulling* OcclusionCulling = nullptr;

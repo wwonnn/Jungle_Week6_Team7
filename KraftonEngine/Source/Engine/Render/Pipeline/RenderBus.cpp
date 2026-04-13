@@ -23,6 +23,10 @@ void FRenderBus::Clear()
 	ViewportStencilSRV = nullptr;
 	PostProcessRTV = nullptr;
 	BaseColorSRV = nullptr;
+
+
+	bHasFog = false;
+	FogParams = {};
 }
 
 void FRenderBus::AddProxy(ERenderPass Pass, const FPrimitiveSceneProxy* Proxy)

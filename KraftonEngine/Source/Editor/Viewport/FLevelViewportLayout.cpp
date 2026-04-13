@@ -877,6 +877,8 @@ void FLevelViewportLayout::RenderPaneToolbar(int32 SlotIndex)
 			ImGui::RadioButton("Unlit", &CurrentMode, static_cast<int32>(EViewMode::Unlit));
 			ImGui::SameLine();
 			ImGui::RadioButton("Wireframe", &CurrentMode, static_cast<int32>(EViewMode::Wireframe));
+			ImGui::SameLine();
+			ImGui::RadioButton("SceneDepth", &CurrentMode, static_cast<int32>(EViewMode::SceneDepth));
 			Opts.ViewMode = static_cast<EViewMode>(CurrentMode);
 
 			ImGui::Separator();
@@ -892,6 +894,7 @@ void FLevelViewportLayout::RenderPaneToolbar(int32 SlotIndex)
 			ImGui::Checkbox("Debug Draw", &Opts.ShowFlags.bDebugDraw);
 			ImGui::Checkbox("Octree", &Opts.ShowFlags.bOctree);
 			ImGui::Checkbox("Decal", &Opts.ShowFlags.bDecal);
+			ImGui::Checkbox("Fog", &Opts.ShowFlags.bFog);
 
 			ImGui::Separator();
 

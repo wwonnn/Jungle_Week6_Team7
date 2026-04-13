@@ -41,6 +41,10 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	Shaders[(uint32)EShaderType::Decal].Create(InDevice, L"Shaders/ShaderDecal.hlsl",
 		"VS", "PS", FVertexInputLayout, ARRAYSIZE(FVertexInputLayout));
 
+	// Height Fog: fullscreen post-process (InputLayout 없음)
+	Shaders[(uint32)EShaderType::HeightFog].Create(InDevice, L"Shaders/HeightFog.hlsl",
+		"VS", "PS", nullptr, 0);
+
 	bIsInitialized = true;
 }
 

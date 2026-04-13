@@ -29,6 +29,8 @@ public:
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
 	void PostEditProperty(const char* PropertyName) override;
 
+	uint64 CalculateOBBScreenPixels(const FMatrix& ViewProj, float ViewportWidth,float ViewportHeight);
+
 private:
 	FName TextureName = "None";
 	FTextureResource* CachedTexture = nullptr;

@@ -99,6 +99,9 @@ private:
 	// PostProcess FXAA — BaseColorSRV 읽어 안티앨리어싱 후 PostProcessRTV에 draw
 	void DrawFXAA(const FRenderBus& Bus, ID3D11DeviceContext* Context);
 
+	// Height Fog — DepthSRV 읽어 exponential height fog + SceneDepth 시각화
+	void DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Context);
+
 private:
 	FD3DDevice Device;
 	FRenderResources Resources;
@@ -116,4 +119,7 @@ private:
 
 	FPassRenderState    PassRenderStates[(uint32)ERenderPass::MAX];
 	FPassBatcherBinding PassBatchers[(uint32)ERenderPass::MAX];
+
+	// Fog 패스 IsEmpty 판정용 — Render() 시작 시 설정
+	bool bShouldRenderFog = false;
 };

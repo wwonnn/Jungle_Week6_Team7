@@ -8,10 +8,13 @@ cbuffer FrameBuffer : register(b0)
 {
     float4x4 View;
     float4x4 Projection;
+    float4x4 ViewProjection;
+    float4x4 InvViewProj;
     float bIsWireframe;
     float3 WireframeRGB;
     float Time;
     float3 _framePad;
+
 }
 
 // b1: 오브젝트별 — 월드 변환, 색상
@@ -52,7 +55,6 @@ cbuffer MaterialBuffer : register(b4)
 // b5: Decal 
 cbuffer DecalBuffer : register(b5)
 {
-    float4x4 InvViewProj; // NDC → World 역투영
     float4x4 WorldToDecal; // World → Decal Local (-1~1)
     
     float FadeInner;    // Spot Fade 시작
@@ -60,5 +62,24 @@ cbuffer DecalBuffer : register(b5)
     int   bUseFade;     // Fade 효과 활성화 여부
     float3 _decalPad;
 };
+
+// b5: Height Fog parameters
+cbuffer HeightFogCB : register(b6)
+{
+    float3 CameraWorldPos;
+    float FogDensity;
+
+    float4 FogInscatteringColor;
+
+    float FogHeightFalloff;
+    float FogStartDistance;
+    float FogCutoffDistance;
+    float FogMaxOpacity;
+
+    float FogHeight;
+    uint bSceneDepthMode;
+    float FogNearPlane;
+    float FogFarPlane;
+}
 
 #endif // CONSTANT_BUFFERS_HLSL

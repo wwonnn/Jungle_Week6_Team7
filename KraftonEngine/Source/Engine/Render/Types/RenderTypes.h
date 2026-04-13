@@ -37,12 +37,13 @@ enum class ERenderPass : uint32
 	Font,
 	SubUV,
 	Translucent,
-	Editor,
-	Grid,
-	Billboard,		// 아이콘 (그리드 위, 기즈모 아래)
+	Fog,
+	Editor,         // 축(Axis) 등
+	Grid,           // 그리드
 	SelectionMask,	// 아웃라인 마스크 생성
 	PostProcess,	// 아웃라인 그리기
-	FXAA,
+	Billboard,		// 아이콘
+	FXAA,           // 후처리 (기즈모 제외)
 	GizmoOuter,
 	GizmoInner,
 	OverlayFont,
@@ -57,11 +58,12 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::Font",
 		"RenderPass::SubUV",
 		"RenderPass::Translucent",
+		"RenderPass::Fog",
 		"RenderPass::Editor",
 		"RenderPass::Grid",
-		"RenderPass::Billboard",
 		"RenderPass::SelectionMask",
 		"RenderPass::PostProcess",
+		"RenderPass::Billboard",
 		"RenderPass::FXAA",
 		"RenderPass::GizmoOuter",
 		"RenderPass::GizmoInner",
