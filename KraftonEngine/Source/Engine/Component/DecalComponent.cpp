@@ -1,8 +1,6 @@
 ﻿#include "DecalComponent.h"
 #include "Render/Resource/MeshBufferManager.h"
 #include "Serialization/Archive.h"
-#include "Texture/Texture2D.h"
-#include "Engine/Runtime/Engine.h"
 #include "Resource/ResourceManager.h"
 #include "Core/ResourceTypes.h"
 
@@ -18,6 +16,22 @@ FPrimitiveSceneProxy* UDecalComponent::CreateSceneProxy()
 {
 	SetTexture(TextureName);
 	return new FDecalSceneProxy(this);;
+}
+
+void UDecalComponent::Serialize(FArchive& Ar)
+{
+	UPrimitiveComponent::Serialize(Ar);
+	Ar << TextureName;
+	Ar << bHasFade;
+	Ar << FadeInner;
+	Ar << FadeOuter;
+}
+
+void UDecalComponent::PostDuplicate()
+{
+	UPrimitiveComponent::PostDuplicate();
+	// 텍스처 SRV 재바인딩
+	SetTexture(TextureName);
 }
 
 void UDecalComponent::SetTexture(const FName& InTextureName)
