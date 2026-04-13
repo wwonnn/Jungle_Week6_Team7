@@ -52,7 +52,7 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     // 5. World → Decal Local 좌표 변환
     float4 decalLocal = mul(float4(worldPos, 1.0f), WorldToDecal);
     
-    // 6. Decal OBB 범위 체크 (-1 ~ 1)
+    // 6. Decal OBB 범위 체크 (-0.5 ~ 0.5)
     //    범위 밖이면 clip으로 픽셀 버림
     float3 absLocal = abs(decalLocal.xyz);
     clip(all(absLocal <= 0.5f) ? 1 : -1);
@@ -60,7 +60,7 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     // 7. Z-up, X축 Projection
     //    X축으로 Projection: YZ 평면이 텍스처 UV
     //    decalLocal.y → U, decalLocal.z → V
-    //    로컬 좌표 -1~1 → UV 0~1
+    //    로컬 좌표 -0.5~0.5 → UV 0~1
     float2 decalUV;
     decalUV.x = decalLocal.y * 1.0f + 0.5f; // Y → U
     decalUV.y = decalLocal.z * -1.0f + 0.5f; // Z → V (Z-up이므로 위가 0)
