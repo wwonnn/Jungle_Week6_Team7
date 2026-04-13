@@ -200,13 +200,15 @@ void UGizmoComponent::HandleDrag(float DragAmount)
 
 void UGizmoComponent::TranslateTarget(float DragAmount)
 {
-	if (!TargetActor || !TargetActor->GetRootComponent()) return;
+	if (!TargetComponent) return;
 
 	FVector ConstrainedDelta = GetVectorForAxis(SelectedAxis) * DragAmount;
 
 	AddWorldOffset(ConstrainedDelta);
 
-	if (AllSelectedActors)
+	bool bIsRoot = TargetActor && TargetActor->GetRootComponent() == TargetComponent;
+
+	if (bIsRoot && AllSelectedActors && AllSelectedActors->size() > 0)
 	{
 		for (AActor* Actor : *AllSelectedActors)
 		{
@@ -215,23 +217,22 @@ void UGizmoComponent::TranslateTarget(float DragAmount)
 	}
 	else
 	{
-		TargetActor->AddActorWorldOffset(ConstrainedDelta);
+		TargetComponent->AddWorldOffset(ConstrainedDelta);
 	}
 }
 
 void UGizmoComponent::RotateTarget(float DragAmount)
 {
-	if (!TargetActor || !TargetActor->GetRootComponent()) return;
+	if (!TargetComponent) return;
 
 	FVector RotationAxis = GetVectorForAxis(SelectedAxis);
 	FQuat DeltaQuat = FQuat::FromAxisAngle(RotationAxis, DragAmount);
 
 	const float DeltaDeg = DragAmount * RAD_TO_DEG;
 
-	auto ApplyRotation = [&](AActor* Actor)
+	auto ApplyRotation = [&](USceneComponent* Root)
 		{
-			if (!Actor || !Actor->GetRootComponent()) return;
-			USceneComponent* Root = Actor->GetRootComponent();
+			if (!Root) return;
 			const FQuat& CurQuat = Root->GetRelativeQuat();
 			// 월드 스페이스: Delta * Cur, 로컬 스페이스: Cur * Delta
 			FQuat NewQuat = bIsWorldSpace ? (DeltaQuat * CurQuat) : (CurQuat * DeltaQuat);
@@ -259,77 +260,81 @@ void UGizmoComponent::RotateTarget(float DragAmount)
 			Root->SetRelativeRotationWithEulerHint(NewQuat, EulerHint);
 		};
 
-	if (AllSelectedActors)
+	bool bIsRoot = TargetActor && TargetActor->GetRootComponent() == TargetComponent;
+
+	if (bIsRoot && AllSelectedActors && AllSelectedActors->size() > 0)
 	{
 		for (AActor* Actor : *AllSelectedActors)
 		{
-			ApplyRotation(Actor);
+			if (Actor) ApplyRotation(Actor->GetRootComponent());
 		}
 	}
 	else
 	{
-		ApplyRotation(TargetActor);
+		ApplyRotation(TargetComponent);
 	}
 }
 
 void UGizmoComponent::ScaleTarget(float DragAmount)
 {
-	if (!TargetActor || !TargetActor->GetRootComponent()) return;
+	if (!TargetComponent) return;
 
 	float ScaleDelta = DragAmount * ScaleSensitivity;
 
-	auto ApplyScale = [&](AActor* Actor)
+	auto ApplyScale = [&](USceneComponent* Root)
 		{
-			if (!Actor) return;
-			FVector NewScale = Actor->GetActorScale();
+			if (!Root) return;
+			FVector NewScale = Root->GetRelativeScale();
 			switch (SelectedAxis)
 			{
 			case 0: NewScale.X += ScaleDelta; break;
 			case 1: NewScale.Y += ScaleDelta; break;
 			case 2: NewScale.Z += ScaleDelta; break;
 			}
-			Actor->SetActorScale(NewScale);
+			Root->SetRelativeScale(NewScale);
 		};
 
-	if (AllSelectedActors)
+	bool bIsRoot = TargetActor && TargetActor->GetRootComponent() == TargetComponent;
+
+	if (bIsRoot && AllSelectedActors && AllSelectedActors->size() > 0)
 	{
 		for (AActor* Actor : *AllSelectedActors)
 		{
-			ApplyScale(Actor);
+			if (Actor) ApplyScale(Actor->GetRootComponent());
 		}
 	}
 	else
 	{
-		ApplyScale(TargetActor);
+		ApplyScale(TargetComponent);
 	}
 }
 
 void UGizmoComponent::SetTargetLocation(FVector NewLocation)
 {
-	if (!TargetActor) return;
+	if (!TargetComponent) return;
 
-	TargetActor->SetActorLocation(NewLocation);
+	TargetComponent->SetWorldLocation(NewLocation);
 	UpdateGizmoTransform();
 }
 
 void UGizmoComponent::SetTargetRotation(FRotator NewRotation)
 {
-	if (!TargetActor) return;
+	if (!TargetComponent) return;
 
-	TargetActor->SetActorRotation(NewRotation);
+	TargetComponent->SetRelativeRotation(NewRotation);
 	UpdateGizmoTransform();
 }
 
 void UGizmoComponent::SetTargetScale(FVector NewScale)
 {
-	if (!TargetActor) return;
+	if (!TargetComponent) return;
 
 	FVector SafeScale = NewScale;
 	if (SafeScale.X < 0.001f) SafeScale.X = 0.001f;
 	if (SafeScale.Y < 0.001f) SafeScale.Y = 0.001f;
 	if (SafeScale.Z < 0.001f) SafeScale.Z = 0.001f;
 
-	TargetActor->SetActorScale(SafeScale);
+	TargetComponent->SetRelativeScale(SafeScale);
 }
 
 bool UGizmoComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult)
@@ -407,16 +412,17 @@ FVector UGizmoComponent::GetVectorForAxis(int32 Axis) const
 	}
 }
 
-void UGizmoComponent::SetTarget(AActor* NewTarget)
+void UGizmoComponent::SetTarget(USceneComponent* NewTargetComponent)
 {
-	if (!NewTarget || !NewTarget->GetRootComponent())
+	if (!NewTargetComponent)
 	{
 		return;
 	}
 
-	TargetActor = NewTarget;
+	TargetComponent = NewTargetComponent;
+	TargetActor = TargetComponent->GetOwner();
 
-	SetWorldLocation(TargetActor->GetActorLocation());
+	SetWorldLocation(TargetComponent->GetWorldLocation());
 	UpdateGizmoTransform();
 	SetVisibility(true);
 }
@@ -666,6 +672,7 @@ void UGizmoComponent::Deactivate()
 	}
 
 	TargetActor = nullptr;
+	TargetComponent = nullptr;
 	AllSelectedActors = nullptr;
 	SetVisibility(false);
 	SelectedAxis = -1;

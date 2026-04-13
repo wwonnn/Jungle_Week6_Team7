@@ -150,6 +150,10 @@ void FEditorPropertyWidget::Render(float DeltaTime)
 		{
 			bActorSelected = true;
 			SelectedComponent = nullptr;
+			if (PrimaryActor && PrimaryActor->GetRootComponent())
+			{
+				EditorEngine->GetSelectionManager().GetGizmo()->SetTarget(PrimaryActor->GetRootComponent());
+			}
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Remove"))
@@ -371,6 +375,10 @@ void FEditorPropertyWidget::RenderComponentTree(AActor* Actor)
 		{
 			SelectedComponent = Comp;
 			bActorSelected = false;
+			if (USceneComponent* SceneComp = Cast<USceneComponent>(Comp))
+			{
+				EditorEngine->GetSelectionManager().GetGizmo()->SetTarget(SceneComp);
+			}
 		}
 	}
 }
@@ -403,6 +411,7 @@ void FEditorPropertyWidget::RenderSceneComponentNode(USceneComponent* Comp)
 	{
 		SelectedComponent = Comp;
 		bActorSelected = false;
+		EditorEngine->GetSelectionManager().GetGizmo()->SetTarget(Comp);
 	}
 
 	if (bOpen)
