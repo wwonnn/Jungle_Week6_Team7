@@ -106,27 +106,35 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 		SCOPE_STAT_CAT("Collector", "3_Collect");
 		Collector.CollectWorld(World, Bus);
 
+		const bool bPIE = Editor->IsPlayingInEditor();
+
 		if (UGizmoComponent* Gizmo = Editor->GetGizmo())
-			Gizmo->UpdateAxisMask(Opts.ViewportType);
-
-		Collector.CollectGrid(Opts.GridSpacing, Opts.GridHalfLineCount, Bus);
-		Collector.CollectDebugDraw(World->GetDebugDrawQueue(), Bus);
-
-		for (AActor* SelectedActor : Editor->GetSelectionManager().GetSelectedActors())
 		{
-			if (!SelectedActor || SelectedActor->GetWorld() != World)
-			{
-				continue;
-			}
+			if (bPIE) Gizmo->Deactivate();
+			else Gizmo->UpdateAxisMask(Opts.ViewportType);
+		}
 
-			for (UActorComponent* ActorComponent : SelectedActor->GetComponents())
+		if (!bPIE)
+		{
+			Collector.CollectGrid(Opts.GridSpacing, Opts.GridHalfLineCount, Bus);
+			Collector.CollectDebugDraw(World->GetDebugDrawQueue(), Bus);
+
+			for (AActor* SelectedActor : Editor->GetSelectionManager().GetSelectedActors())
 			{
-				if (!ActorComponent)
+				if (!SelectedActor || SelectedActor->GetWorld() != World)
 				{
 					continue;
 				}
 
-				ActorComponent->CollectEditorVisualizations(Bus);
+				for (UActorComponent* ActorComponent : SelectedActor->GetComponents())
+				{
+					if (!ActorComponent)
+					{
+						continue;
+					}
+
+					ActorComponent->CollectEditorVisualizations(Bus);
+				}
 			}
 		}
 
