@@ -177,22 +177,26 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 			Proxy->CollectEntries(RenderBus);
 		else
 			RenderBus.AddProxy(Proxy->Pass, Proxy);
+// 선택된 오브젝트
+if (Proxy->bSelected)
+{
+	if (Proxy->bSupportsOutline)
+		RenderBus.AddProxy(ERenderPass::SelectionMask, Proxy);
 
-		// 선택된 오브젝트
-		if (Proxy->bSelected)
+	if (bShowBoundingVolume && Proxy->bShowAABB)
+	{
+		if (Proxy->Owner)
 		{
-			if (Proxy->bSupportsOutline)
-				RenderBus.AddProxy(ERenderPass::SelectionMask, Proxy);
-
-			if (bShowBoundingVolume && Proxy->bShowAABB)
-			{
-				FAABBEntry Entry = {};
-				Entry.AABB.Min = Proxy->CachedBounds.Min;
-				Entry.AABB.Max = Proxy->CachedBounds.Max;
-				Entry.AABB.Color = FColor::White();
-				RenderBus.AddAABBEntry(std::move(Entry));
-			}
+			// 아직 AABB 업데이트가 안 된 새로 추가된 컴포넌트 등을 위해 확실하게 갱신
+			Proxy->Owner->GetWorldBoundingBox();
 		}
+
+		FAABBEntry Entry = {};
+		Entry.AABB.Min = Proxy->CachedBounds.Min;
+		Entry.AABB.Max = Proxy->CachedBounds.Max;
+		Entry.AABB.Color = FColor::White();
+		RenderBus.AddAABBEntry(std::move(Entry));
+	}}
 	}
 
 	if (OcclusionMut && OcclusionMut->IsInitialized())
