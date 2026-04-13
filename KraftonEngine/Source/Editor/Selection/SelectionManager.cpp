@@ -170,7 +170,7 @@ void FSelectionManager::Tick()
 		return;
 	}
 
-	if (Gizmo->GetTarget() != Primary)
+	if (Gizmo->GetTargetActor() != Primary)
 	{
 		SyncGizmo();
 		return;
@@ -217,7 +217,7 @@ void FSelectionManager::SyncGizmo()
 	AActor* Primary = GetPrimarySelection();
 	if (Primary)
 	{
-		Gizmo->SetTarget(Primary);
+		Gizmo->SetTarget(Primary->GetRootComponent());
 		Gizmo->SetSelectedActors(&SelectedActors);
 	}
 	else
