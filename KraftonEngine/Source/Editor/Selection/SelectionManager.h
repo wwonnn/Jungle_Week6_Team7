@@ -37,9 +37,10 @@ public:
 	void SetGizmoEnabled(bool bEnabled);
 	void SetWorld(UWorld* InWorld);
 
+	void SetActorProxiesSelected(AActor* Actor, bool bSelected);
+
 private:
 	void SyncGizmo();
-	void SetActorProxiesSelected(AActor* Actor, bool bSelected);
 
 	TArray<AActor*> SelectedActors;
 	UGizmoComponent* Gizmo = nullptr;

@@ -343,6 +343,10 @@ void FEditorPropertyWidget::RenderComponentTree(AActor* Actor)
 			else
 				Cast<USceneComponent>(Comp)->AttachToComponent(Root);
 		}
+
+		// 방금 추가된 컴포넌트의 프록시에도 선택 상태(AABB 표시 등)를 동기화하기 위해
+		// SelectionManager에게 현재 액터의 선택 상태를 다시 갱신하라고 알림
+		EditorEngine->GetSelectionManager().SetActorProxiesSelected(Actor, true);
 	}
 
 	ImGui::Separator();
