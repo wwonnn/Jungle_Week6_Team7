@@ -8,6 +8,7 @@
 #include "Component/GizmoComponent.h"
 #include "GameFramework/StaticMeshActor.h"
 #include "GameFramework/DecalActor.h"
+#include "GameFramework/SpotLightActor.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
 
@@ -59,6 +60,14 @@ void FEditorControlWidget::Render(float DeltaTime)
 			case 2: // Decal
 			{
 				ADecalActor* Actor = World->SpawnActor<ADecalActor>();
+				Actor->SetActorLocation(CurSpawnPoint);
+				Actor->InitDefaultComponents();
+				World->InsertActorToOctree(Actor);
+				break;
+			}
+			case 3: // SpotLight
+			{
+				ASpotLightActor* Actor = World->SpawnActor<ASpotLightActor>();
 				Actor->SetActorLocation(CurSpawnPoint);
 				Actor->InitDefaultComponents();
 				World->InsertActorToOctree(Actor);
