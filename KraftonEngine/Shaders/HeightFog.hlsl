@@ -32,6 +32,11 @@ float3 ReconstructWorldPos(float2 uv, float hwDepth)
 
     // row-vector 규약: worldPos = ndc * InvViewProj
     float4 worldH = mul(ndc, InvViewProj);
+
+    // NaN 방지: w가 0에 근접하면 카메라 위치 반환 (포그 없음)
+    if (abs(worldH.w) < 1e-6)
+        return CameraWorldPos;
+
     return worldH.xyz / worldH.w;
 }
 
@@ -49,6 +54,10 @@ float4 GetExponentialHeightFog(float3 worldPos)
     float3 camToPixel = worldPos - CameraWorldPos;
     float rayLength = length(camToPixel);
 
+    // 비정상 거리 방지
+    if (rayLength < 0.001 || isnan(rayLength) || isinf(rayLength))
+        return float4(0, 0, 0, 0);
+
     // StartDistance / CutoffDistance 체크
     if (FogStartDistance > 0.0 && rayLength < FogStartDistance)
         return float4(0, 0, 0, 0);
@@ -59,7 +68,9 @@ float4 GetExponentialHeightFog(float3 worldPos)
 
     // 카메라 높이 기준 밀도
     float cameraRelHeight = CameraWorldPos.z - FogHeight;
-    float densityAtCamera = FogDensity * exp(-falloff * cameraRelHeight);
+    // exp 오버플로 방지: 지수 범위 제한
+    float densityExponent = clamp(-falloff * cameraRelHeight, -80.0, 80.0);
+    float densityAtCamera = FogDensity * exp(densityExponent);
 
     // 광선 Z 성분에 따른 높이 적분
     float rayDirZ = camToPixel.z;
@@ -68,8 +79,9 @@ float4 GetExponentialHeightFog(float3 worldPos)
     float lineIntegralFog;
     if (abs(exponent) > 0.01)
     {
-        // 비수평 광선: 해석적 적분
-        lineIntegralFog = densityAtCamera * (1.0 - exp(-exponent)) / exponent;
+        // 비수평 광선: 해석적 적분 (exp 오버플로 방지)
+        float clampedExp = clamp(-exponent, -80.0, 80.0);
+        lineIntegralFog = densityAtCamera * (1.0 - exp(clampedExp)) / exponent;
     }
     else
     {
@@ -77,7 +89,8 @@ float4 GetExponentialHeightFog(float3 worldPos)
         lineIntegralFog = densityAtCamera;
     }
 
-    float fogIntegral = lineIntegralFog * rayLength;
+    // 음수 적분 방지
+    float fogIntegral = max(lineIntegralFog * rayLength, 0.0);
 
     // StartDistance 보정
     if (FogStartDistance > 0.0)
@@ -86,14 +99,14 @@ float4 GetExponentialHeightFog(float3 worldPos)
         fogIntegral *= excludeRatio;
     }
 
-    // 가시도 계산
-    float visibility = saturate(exp(-fogIntegral));
+    // 가시도 계산 (적분값 범위 제한)
+    fogIntegral = min(fogIntegral, 20.0);
+    float visibility = exp(-fogIntegral);
 
     // MaxOpacity 제한: visibility 최저값 = 1 - MaxOpacity
     visibility = max(visibility, 1.0 - FogMaxOpacity);
 
-    float fogOpacity = 1.0 - visibility;
-
+    float fogOpacity = saturate(1.0 - visibility);
 
     //    블렌드: SrcAlpha * Src.rgb + (1-SrcAlpha) * Dst.rgb
     //    → fogOpacity * fogColor + visibility * sceneColor  (정확한 포그 합성)
@@ -130,6 +143,10 @@ float4 PS(PS_Input input) : SV_TARGET
 
     float3 worldPos = ReconstructWorldPos(input.uv, depth);
     float4 fogResult = GetExponentialHeightFog(worldPos);
+
+    // NaN/Inf 최종 방어: 결과가 비정상이면 그리지 않음
+    if (any(isnan(fogResult)) || any(isinf(fogResult)))
+        discard;
 
     if (fogResult.a < 0.001)
         discard;

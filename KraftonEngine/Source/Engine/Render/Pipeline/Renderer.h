@@ -115,4 +115,7 @@ private:
 
 	FPassRenderState    PassRenderStates[(uint32)ERenderPass::MAX];
 	FPassBatcherBinding PassBatchers[(uint32)ERenderPass::MAX];
+
+	// Fog 패스 IsEmpty 판정용 — Render() 시작 시 설정
+	bool bShouldRenderFog = false;
 };

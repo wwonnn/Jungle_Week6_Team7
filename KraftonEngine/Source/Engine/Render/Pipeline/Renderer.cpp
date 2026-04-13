@@ -216,6 +216,9 @@ void FRenderer::Render(const FRenderBus& InRenderBus)
 		UpdateFrameBuffer(Context, InRenderBus);
 	}
 
+	// Fog 패스 IsEmpty 판정용 플래그 갱신
+	bShouldRenderFog = InRenderBus.HasFog() || (InRenderBus.GetViewMode() == EViewMode::SceneDepth);
+
 	for (uint32 i = 0; i < (uint32)ERenderPass::MAX; ++i)
 	{
 		ERenderPass CurPass = static_cast<ERenderPass>(i);
@@ -315,7 +318,7 @@ void FRenderer::InitializePassBatchers()
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
 			DrawHeightFog(Bus, Ctx);
 		},
-		nullptr  // Fog는 내부에서 HasFog / SceneDepth 체크
+		[this]() { return !bShouldRenderFog; }
 	};
 
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
