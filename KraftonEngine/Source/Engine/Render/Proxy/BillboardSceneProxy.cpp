@@ -15,6 +15,7 @@ FBillboardSceneProxy::FBillboardSceneProxy(UBillboardComponent* InComponent)
 {
 	bPerViewportUpdate = true;
 	bShowAABB = false;
+	bShowOBB = false;
 	// 텍스처가 있으면 Batcher 경로, 없으면 기본 Primitive 경로
 	bBatcherRendered = (InComponent && InComponent->GetTexture() != nullptr);
 }

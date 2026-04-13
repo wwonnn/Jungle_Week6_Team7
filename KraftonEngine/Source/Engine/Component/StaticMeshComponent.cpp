@@ -130,6 +130,39 @@ void UStaticMeshComponent::UpdateWorldAABB() const
 	bHasValidWorldAABB = true;
 }
 
+void UStaticMeshComponent::UpdateWorldOBB() const
+{
+	if (!bHasValidBounds)
+	{
+		UPrimitiveComponent::UpdateWorldOBB();
+		return;
+	}
+
+	FVector WorldCenter = CachedWorldMatrix.TransformPositionWithW(CachedLocalCenter);
+
+	// 각 행의 길이 = 스케일
+	float ScaleX = FVector(CachedWorldMatrix.M[0][0], CachedWorldMatrix.M[0][1], CachedWorldMatrix.M[0][2]).Length();
+	float ScaleY = FVector(CachedWorldMatrix.M[1][0], CachedWorldMatrix.M[1][1], CachedWorldMatrix.M[1][2]).Length();
+	float ScaleZ = FVector(CachedWorldMatrix.M[2][0], CachedWorldMatrix.M[2][1], CachedWorldMatrix.M[2][2]).Length();
+
+	WorldOBB.Center = WorldCenter;
+
+	// 정규화된 방향 축
+	WorldOBB.Axes[0] = FVector(CachedWorldMatrix.M[0][0], CachedWorldMatrix.M[0][1], CachedWorldMatrix.M[0][2]) / ScaleX;
+	WorldOBB.Axes[1] = FVector(CachedWorldMatrix.M[1][0], CachedWorldMatrix.M[1][1], CachedWorldMatrix.M[1][2]) / ScaleY;
+	WorldOBB.Axes[2] = FVector(CachedWorldMatrix.M[2][0], CachedWorldMatrix.M[2][1], CachedWorldMatrix.M[2][2]) / ScaleZ;
+
+	// 스케일 적용된 Extent
+	WorldOBB.Extents = FVector(
+		CachedLocalExtent.X * ScaleX,
+		CachedLocalExtent.Y * ScaleY,
+		CachedLocalExtent.Z * ScaleZ
+	);
+
+	bWorldOBBDirty = false;
+	bHasValidWorldOBB = true;
+}
+
 bool UStaticMeshComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult)
 {
 	const FMatrix& WorldMatrix = GetWorldMatrix();

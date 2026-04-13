@@ -26,6 +26,7 @@ public:
 	void AddSubUVEntry(FSubUVEntry&& Entry);
 	void AddBillboardEntry(FBillboardEntry&& Entry);
 	void AddAABBEntry(FAABBEntry&& Entry);
+	void AddOBBEntry(FOBBEntry&& Entry);
 	void AddGridEntry(FGridEntry&& Entry);
 	void AddDebugLineEntry(FDebugLineEntry&& Entry);
 
@@ -34,6 +35,7 @@ public:
 	const TArray<FSubUVEntry>& GetSubUVEntries() const { return SubUVEntries; }
 	const TArray<FBillboardEntry>& GetBillboardEntries() const { return BillboardEntries; }
 	const TArray<FAABBEntry>& GetAABBEntries() const { return AABBEntries; }
+	const TArray<FOBBEntry>& GetOBBEntries() const { return OBBEntries; }
 	const TArray<FGridEntry>& GetGridEntries() const { return GridEntries; }
 	const TArray<FDebugLineEntry>& GetDebugLineEntries() const { return DebugLineEntries; }
 
@@ -91,6 +93,7 @@ private:
 	TArray<FSubUVEntry> SubUVEntries;
 	TArray<FBillboardEntry> BillboardEntries;
 	TArray<FAABBEntry>  AABBEntries;
+	TArray<FOBBEntry>  OBBEntries;
 	TArray<FGridEntry>  GridEntries;
 	TArray<FDebugLineEntry> DebugLineEntries;
 
