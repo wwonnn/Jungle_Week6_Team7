@@ -6,6 +6,7 @@
 #include "Component/CameraComponent.h"
 #include "Component/GizmoComponent.h"
 #include "GameFramework/StaticMeshActor.h"
+#include "GameFramework/ExponentialHeightFogActor.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
 
@@ -52,6 +53,13 @@ void FEditorControlWidget::Render(float DeltaTime)
 				Actor->SetActorLocation(CurSpawnPoint);
 				Actor->InitDefaultComponents("Data/BasicShape/Sphere.OBJ");
 				World->InsertActorToOctree(Actor);
+				break;
+			}
+			case 2: // ExponentialHeightFog
+			{
+				AExponentialHeightFogActor* Actor = World->SpawnActor<AExponentialHeightFogActor>();
+				Actor->SetActorLocation(CurSpawnPoint);
+				Actor->InitDefaultComponents();
 				break;
 			}
 			}

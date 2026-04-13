@@ -293,6 +293,9 @@
     <ClCompile Include="Source\Engine\GameFramework\AActor.cpp">
       <Filter>Source\Engine\GameFramework</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\ExponentialHeightFogActor.cpp">
+      <Filter>Source\Engine\GameFramework</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Level.cpp">
       <Filter>Source\Engine\GameFramework</Filter>
     </ClCompile>
@@ -675,6 +678,9 @@
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\AActor.h">
+      <Filter>Source\Engine\GameFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\ExponentialHeightFogActor.h">
       <Filter>Source\Engine\GameFramework</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Level.h">
