@@ -1,4 +1,4 @@
-﻿#include "Resource/ResourceManager.h"
+#include "Resource/ResourceManager.h"
 #include "Platform/Paths.h"
 #include "SimpleJSON/json.hpp"
 
@@ -35,7 +35,7 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 
 	JSON Root = JSON::Load(Content);
 
-	// Font — { "Name": { "Path": "...", "Columns": 16, "Rows": 16 } }
+	// Font
 	if (Root.hasKey(ResourceKey::Font))
 	{
 		JSON FontSection = Root[ResourceKey::Font];
@@ -52,7 +52,7 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 		}
 	}
 
-	// Particle — { "Name": { "Path": "...", "Columns": 6, "Rows": 6 } }
+	// Particle
 	if (Root.hasKey(ResourceKey::Particle))
 	{
 		JSON ParticleSection = Root[ResourceKey::Particle];
@@ -69,7 +69,7 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 		}
 	}
 
-	// Texture — { "Name": { "Path": "..." } }  (Columns/Rows는 항상 1)
+	// Texture
 	if (Root.hasKey(ResourceKey::Texture))
 	{
 		JSON TextureSection = Root[ResourceKey::Texture];
@@ -88,6 +88,7 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 
 	if (LoadGPUResources(InDevice))
 	{
+		ScanTextureAssets(InDevice);
 		UE_LOG("Complete Load Resources!");
 	}
 	else
@@ -98,100 +99,149 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 
 bool FResourceManager::LoadGPUResources(ID3D11Device* Device)
 {
-	if (!Device)
-	{
-		return false;
-	}
-
-	auto LoadSRV = [&](FTextureAtlasResource& Resource) -> bool
-	{
-		if (Resource.SRV)
-		{
-			if (Resource.TrackedMemoryBytes > 0)
-			{
-				MemoryStats::SubTextureMemory(Resource.TrackedMemoryBytes);
-				Resource.TrackedMemoryBytes = 0;
-			}
-			Resource.SRV->Release();
-			Resource.SRV = nullptr;
-		}
-
-		std::wstring FullPath = FPaths::Combine(FPaths::RootDir(), FPaths::ToWide(Resource.Path));
-
-		// 확장자에 따라 DDS / WIC 로더 분기
-		std::filesystem::path Ext = std::filesystem::path(Resource.Path).extension();
-		FString ExtStr = Ext.string();
-		for (char& c : ExtStr) c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
-
-		HRESULT hr;
-		if (ExtStr == ".dds")
-		{
-			hr = DirectX::CreateDDSTextureFromFileEx(
-				Device,
-				FullPath.c_str(),
-				0,
-				D3D11_USAGE_IMMUTABLE,
-				D3D11_BIND_SHADER_RESOURCE,
-				0, 0,
-				DirectX::DDS_LOADER_DEFAULT,
-				nullptr,
-				&Resource.SRV
-			);
-		}
-		else
-		{
-			// .png/.jpg/.bmp/.tga 등 — WIC 경유
-			hr = DirectX::CreateWICTextureFromFileEx(
-				Device,
-				FullPath.c_str(),
-				0,
-				D3D11_USAGE_IMMUTABLE,
-				D3D11_BIND_SHADER_RESOURCE,
-				0, 0,
-				// 이 버전의 DirectXTK 에는 PREMULTIPLY_ALPHA 플래그가 없다.
-				// straight-alpha 보간으로 생기는 검은 헤일로는 PS 측 알파 컷오프(0.5) 로 회피.
-				DirectX::WIC_LOADER_FORCE_RGBA32,
-				nullptr,
-				&Resource.SRV
-			);
-		}
-		if (FAILED(hr) || !Resource.SRV)
-		{
-			return false;
-		}
-
-		ID3D11Resource* TextureResource = nullptr;
-		Resource.SRV->GetResource(&TextureResource);
-		Resource.TrackedMemoryBytes = MemoryStats::CalculateTextureMemory(TextureResource);
-		if (TextureResource)
-		{
-			TextureResource->Release();
-		}
-
-		if (Resource.TrackedMemoryBytes > 0)
-		{
-			MemoryStats::AddTextureMemory(Resource.TrackedMemoryBytes);
-		}
-
-		return true;
-	};
+	if (!Device) return false;
 
 	for (auto& [Key, Resource] : FontResources)
 	{
-		if (!LoadSRV(Resource)) return false;
+		if (!LoadSingleGPUResource(Resource, Device)) return false;
 	}
 
 	for (auto& [Key, Resource] : ParticleResources)
 	{
-		if (!LoadSRV(Resource)) return false;
+		if (!LoadSingleGPUResource(Resource, Device)) return false;
 	}
 
 	for (auto& [Key, Resource] : TextureResources)
 	{
-		if (!LoadSRV(Resource)) return false;
+		if (!LoadSingleGPUResource(Resource, Device)) return false;
 	}
 
 	return true;
+}
+
+bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID3D11Device* Device)
+{
+	if (Resource.SRV)
+	{
+		if (Resource.TrackedMemoryBytes > 0)
+		{
+			MemoryStats::SubTextureMemory(Resource.TrackedMemoryBytes);
+			Resource.TrackedMemoryBytes = 0;
+		}
+		Resource.SRV->Release();
+		Resource.SRV = nullptr;
+	}
+
+	std::wstring FullPath = FPaths::Combine(FPaths::RootDir(), FPaths::ToWide(Resource.Path));
+
+	if (!std::filesystem::exists(FullPath))
+	{
+		return false;
+	}
+
+	std::filesystem::path Ext = std::filesystem::path(Resource.Path).extension();
+	FString ExtStr = Ext.string();
+	for (char& c : ExtStr) c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
+
+	HRESULT hr;
+	if (ExtStr == ".dds")
+	{
+		hr = DirectX::CreateDDSTextureFromFileEx(
+			Device,
+			FullPath.c_str(),
+			0,
+			D3D11_USAGE_IMMUTABLE,
+			D3D11_BIND_SHADER_RESOURCE,
+			0, 0,
+			DirectX::DDS_LOADER_DEFAULT,
+			nullptr,
+			&Resource.SRV
+		);
+	}
+	else
+	{
+		hr = DirectX::CreateWICTextureFromFileEx(
+			Device,
+			FullPath.c_str(),
+			0,
+			D3D11_USAGE_IMMUTABLE,
+			D3D11_BIND_SHADER_RESOURCE,
+			0, 0,
+			DirectX::WIC_LOADER_FORCE_RGBA32,
+			nullptr,
+			&Resource.SRV
+		);
+	}
+
+	if (FAILED(hr) || !Resource.SRV)
+	{
+		return false;
+	}
+
+	ID3D11Resource* TextureResource = nullptr;
+	Resource.SRV->GetResource(&TextureResource);
+	Resource.TrackedMemoryBytes = MemoryStats::CalculateTextureMemory(TextureResource);
+	if (TextureResource)
+	{
+		TextureResource->Release();
+	}
+
+	if (Resource.TrackedMemoryBytes > 0)
+	{
+		MemoryStats::AddTextureMemory(Resource.TrackedMemoryBytes);
+	}
+
+	return true;
+}
+
+void FResourceManager::ScanTextureAssets(ID3D11Device* InDevice)
+{
+	std::filesystem::path RootPath = FPaths::RootDir();
+	
+	// Asset 폴더
+	ScanDirectory(RootPath / L"Asset", InDevice);
+
+	// Data 폴더
+	ScanDirectory(RootPath / L"Data", InDevice);
+}
+
+void FResourceManager::ScanDirectory(const std::filesystem::path& DirPath, ID3D11Device* InDevice)
+{
+	if (!std::filesystem::exists(DirPath)) return;
+
+	for (const auto& Entry : std::filesystem::recursive_directory_iterator(DirPath))
+	{
+		if (!Entry.is_regular_file()) continue;
+
+		auto Ext = Entry.path().extension();
+		if (Ext == ".png" || Ext == ".jpg" || Ext == ".jpeg" || Ext == ".dds" || Ext == ".bmp")
+		{
+			std::filesystem::path RootPath = FPaths::RootDir();
+			std::filesystem::path RelativePath = std::filesystem::relative(Entry.path(), RootPath);
+			FString PathStr = FPaths::ToUtf8(RelativePath.wstring());
+			FString FileName = FPaths::ToUtf8(Entry.path().stem().wstring());
+
+			// 에디터 아이콘 (_64x) 처리: 이름에서 _64x 접미사를 제거하여 기존 코드와 호환성을 유지합니다.
+			if (FileName.size() > 4 && FileName.substr(FileName.size() - 4) == "_64x")
+			{
+				FileName = FileName.substr(0, FileName.size() - 4);
+			}
+
+			if (TextureResources.find(FileName) != TextureResources.end()) continue;
+
+			FTextureResource Resource;
+			Resource.Name = FName(FileName);
+			Resource.Path = PathStr;
+			Resource.Columns = 1;
+			Resource.Rows = 1;
+			Resource.SRV = nullptr;
+
+			if (LoadSingleGPUResource(Resource, InDevice))
+			{
+				TextureResources[FileName] = Resource;
+			}
+		}
+	}
 }
 
 void FResourceManager::ReleaseGPUResources()

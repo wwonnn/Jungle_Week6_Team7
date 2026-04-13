@@ -60,6 +60,7 @@ private:
 
 	// 프록시 패스 실행기 — FPrimitiveSceneProxy* 순회, 필드 직접 접근
 	void ExecutePass(const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
+	void ExecuteDecalPass(const FRenderBus& InRenderBus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
 
 	// ExecutePass 내부 헬퍼
 	struct FDrawState
@@ -94,6 +95,9 @@ private:
 
 	// PostProcess Outline — StencilSRV 읽어 edge detection 후 fullscreen draw
 	void DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContext* Context);
+
+	// PostProcess FXAA — BaseColorSRV 읽어 안티앨리어싱 후 PostProcessRTV에 draw
+	void DrawFXAA(const FRenderBus& Bus, ID3D11DeviceContext* Context);
 
 	// Height Fog — DepthSRV 읽어 exponential height fog + SceneDepth 시각화
 	void DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Context);

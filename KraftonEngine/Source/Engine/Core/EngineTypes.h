@@ -95,6 +95,42 @@ struct FBoundingBox
 };
 
 // ============================================================
+// FBoundingBox — OBB (Oriented Bounding Box)
+// ============================================================
+struct FOBB
+{
+	FVector Center;     // 월드 중심
+	FVector Axes[3];    // 월드 기준 3개 방향 축 (정규화)
+	FVector Extents;    // 각 축 방향 반지름
+
+	FOBB()
+		: Center(FVector(0, 0, 0))
+		, Extents(FVector(0, 0, 0))
+	{
+		Axes[0] = FVector(1, 0, 0);
+		Axes[1] = FVector(0, 1, 0);
+		Axes[2] = FVector(0, 0, 1);
+	}
+
+	FOBB(const FVector& InCenter, const FVector InAxes[3], const FVector& InExtents)
+		: Center(InCenter), Extents(InExtents) 
+	{
+		Axes[0] = InAxes[0];
+		Axes[1] = InAxes[1];
+		Axes[2] = InAxes[2];
+	}
+
+	// 중심점 반환
+	FVector GetCenter() const { return Center; }
+
+	// 크기(Extent) 반환
+	FVector GetExtent() const { return Extents; }
+
+	// 8개의 Corner 반환
+	void GetCorners(FVector(&OutCorners)[8]) const;
+};
+
+// ============================================================
 // EViewModeIndex — 렌더링 뷰 모드
 // ============================================================
 enum class EViewModeIndex

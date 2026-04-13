@@ -1,9 +1,10 @@
-﻿#pragma once
+#pragma once
 
 #include "Core/CoreTypes.h"
 #include "Core/Singleton.h"
 #include "Core/ResourceTypes.h"
 #include "Object/FName.h"
+#include <filesystem>
 
 // 리소스를 관리하는 싱글턴.
 // Resource.ini에서 리소스 경로/그리드 정보를 읽고, GPU 리소스를 로드/캐싱합니다.
@@ -49,9 +50,16 @@ public:
 	// --- Texture names ---
 	TArray<FString> GetTextureNames() const;
 
+	/** Asset/Data 폴더 내의 텍스처 파일(.png, .jpg, .dds)을 자동으로 스캔하여 등록합니다. */
+	void ScanTextureAssets(ID3D11Device* InDevice);
+
 private:
 	FResourceManager() = default;
 	~FResourceManager() { ReleaseGPUResources(); }
+
+	/** 특정 디렉토리에서 텍스처 파일을 재귀적으로 스캔합니다. */
+	void ScanDirectory(const std::filesystem::path& DirPath, ID3D11Device* InDevice);
+	bool LoadSingleGPUResource(FTextureAtlasResource& Resource, ID3D11Device* Device);
 
 	TMap<FString, FFontResource>     FontResources;
 	TMap<FString, FParticleResource> ParticleResources;

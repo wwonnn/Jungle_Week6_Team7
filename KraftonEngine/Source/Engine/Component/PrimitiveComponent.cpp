@@ -112,13 +112,21 @@ FBoundingBox UPrimitiveComponent::GetWorldBoundingBox() const
 	return FBoundingBox(WorldAABBMinLocation, WorldAABBMaxLocation);
 }
 
+FOBB UPrimitiveComponent::GetWorldOBB() const
+{
+	EnsureWorldOBBUpdated();
+	return WorldOBB;
+}
+
 void UPrimitiveComponent::MarkWorldBoundsDirty()
 {
 	// Local bounds(shape) 자체가 바뀐 경우용 진입점.
 	// fast-path(이전 AABB를 translation만으로 재사용)는 shape가 동일하다는 가정에 의존하므로
 	// 여기서는 반드시 무력화해야 한다. 안 그러면 mesh 교체 후에도 stale AABB가 캐시된다.
 	bWorldAABBDirty = true;
+	bWorldOBBDirty = true;
 	bHasValidWorldAABB = false;
+	bHasValidWorldOBB = false;
 	MarkRenderTransformDirty();
 }
 
@@ -137,6 +145,35 @@ void UPrimitiveComponent::UpdateWorldAABB() const
 	WorldAABBMaxLocation = WorldCenter + FVector(NewEx, NewEy, NewEz);
 	bWorldAABBDirty = false;
 	bHasValidWorldAABB = true;
+}
+
+void UPrimitiveComponent::UpdateWorldOBB() const
+{
+	FMatrix worldMatrix = GetWorldMatrix();
+	FVector WorldCenter = GetWorldLocation();
+	FVector LExt = LocalExtents;
+
+	FOBB obb;
+	obb.Center = WorldCenter;
+
+	// 월드 매트릭스의 각 열(Column)이 로컬 축의 월드 방향
+	// X축 (Right)
+	obb.Axes[0] = FVector(worldMatrix.M[0][0], worldMatrix.M[0][1], worldMatrix.M[0][2]).Normalized();
+	// Y축 (Forward)
+	obb.Axes[1] = FVector(worldMatrix.M[1][0], worldMatrix.M[1][1], worldMatrix.M[1][2]).Normalized();
+	// Z축 (Up)
+	obb.Axes[2] = FVector(worldMatrix.M[2][0], worldMatrix.M[2][1], worldMatrix.M[2][2]).Normalized();
+
+	// 스케일이 포함된 경우 Extent에 스케일 반영
+	float ScaleX = FVector(worldMatrix.M[0][0], worldMatrix.M[0][1], worldMatrix.M[0][2]).Length();
+	float ScaleY = FVector(worldMatrix.M[1][0], worldMatrix.M[1][1], worldMatrix.M[1][2]).Length();
+	float ScaleZ = FVector(worldMatrix.M[2][0], worldMatrix.M[2][1], worldMatrix.M[2][2]).Length();
+
+	obb.Extents = FVector(LExt.X * ScaleX, LExt.Y * ScaleY, LExt.Z * ScaleZ);
+
+	WorldOBB = obb;
+	bWorldOBBDirty = false;
+	bHasValidWorldOBB = true;
 }
 
 /* 현재 쓰이지 않는 코드입니다*/
@@ -167,6 +204,9 @@ void UPrimitiveComponent::UpdateWorldMatrix() const
 	const FVector PreviousWorldAABBMax = WorldAABBMaxLocation;
 	const bool bHadValidWorldAABB = bHasValidWorldAABB;
 
+	const FOBB PreviousWorldOBB = WorldOBB;
+	const bool bHadValidWorldOBB = bHasValidWorldOBB;
+
 	USceneComponent::UpdateWorldMatrix();
 
 	if (bWorldAABBDirty)
@@ -182,6 +222,28 @@ void UPrimitiveComponent::UpdateWorldMatrix() const
 		else
 		{
 			UpdateWorldAABB();
+		}
+	}
+
+	if (bWorldOBBDirty)
+	{
+		if (bHasValidWorldOBB && HasSameTransformBasis(PreviousWorldMatrix, CachedWorldMatrix))
+		{
+			const FVector TranslationDelta = CachedWorldMatrix.GetLocation() - PreviousWorldMatrix.GetLocation();
+			WorldOBB.Center = PreviousWorldOBB.Center + TranslationDelta;
+
+			// Axes와 Extents는 회전/스케일 변화 없으므로 그대로 복사
+			WorldOBB.Axes[0] = PreviousWorldOBB.Axes[0];
+			WorldOBB.Axes[1] = PreviousWorldOBB.Axes[1];
+			WorldOBB.Axes[2] = PreviousWorldOBB.Axes[2];
+			WorldOBB.Extents = PreviousWorldOBB.Extents;
+
+			bWorldOBBDirty = false;
+			bHasValidWorldOBB = true;
+		}
+		else
+		{
+			UpdateWorldOBB();
 		}
 	}
 
@@ -240,6 +302,7 @@ void UPrimitiveComponent::OnTransformDirty()
 	// 순수 transform 변경 — local bounds(shape)는 그대로이므로 fast-path를 살린다.
 	// (basis 동일 + translation만 바뀐 경우 UpdateWorldMatrix가 이전 AABB를 평행이동만 적용)
 	bWorldAABBDirty = true;
+	bWorldOBBDirty = true;
 	MarkRenderTransformDirty();
 }
 
@@ -249,5 +312,14 @@ void UPrimitiveComponent::EnsureWorldAABBUpdated() const
 	if (bWorldAABBDirty)
 	{
 		UpdateWorldAABB();
+	}
+}
+
+void UPrimitiveComponent::EnsureWorldOBBUpdated() const
+{
+	GetWorldMatrix();
+	if (bWorldOBBDirty)
+	{
+		UpdateWorldOBB();
 	}
 }

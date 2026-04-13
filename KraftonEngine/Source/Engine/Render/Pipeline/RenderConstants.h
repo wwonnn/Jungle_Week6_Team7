@@ -23,7 +23,8 @@ namespace ECBSlot
 	constexpr uint32 Gizmo = 2;     // b2: Gizmo state
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
-	constexpr uint32 Fog = 5;         // b5: Height Fog parameters
+	constexpr uint32 Decal = 5;    // b5: Decal properties
+	constexpr uint32 Fog = 6;         // b5: Height Fog parameters
 }
 
 //PerObject
@@ -37,6 +38,15 @@ struct FPerObjectConstants
 	{
 		return { WorldMatrix, FVector4(1.0f, 1.0f, 1.0f, 1.0f) };
 	}
+};
+
+struct FDecalConstants
+{
+	FMatrix InvViewProj;
+	FMatrix WorldToDecal;
+
+	float FadeInner;
+	float FadeOuter;
 };
 
 struct FFrameConstants
@@ -108,6 +118,20 @@ struct FAABBConstants
 	FColor Color;
 };
 
+struct FOBBConstants
+{
+	FVector Center;
+	float Padding0;
+
+	FVector Axes[3];
+	float Padding1;
+
+	FVector Extents;
+	float Padding2;
+
+	FColor Color;
+};
+
 struct FGridConstants
 {
 	float GridSpacing;
@@ -167,6 +191,11 @@ struct FAABBEntry
 	FAABBConstants AABB;
 };
 
+struct FOBBEntry
+{
+	FOBBConstants OBB;
+};
+
 struct FGridEntry
 {
 	FGridConstants Grid;
@@ -195,8 +224,8 @@ struct FConstantBufferBinding
 	uint32 Size = 0;					// 업로드할 바이트 수
 	uint32 Slot = 0;					// VS/PS CB 슬롯
 
-	static constexpr size_t kMaxDataSize = 64;
-	alignas(16) uint8 Data[kMaxDataSize] = {};
+	static constexpr size_t kMaxDataSize = 256;
+	alignas(64) uint8 Data[kMaxDataSize] = {};
 
 	// Buffer/Size/Slot
 	template<typename T>

@@ -12,6 +12,7 @@ cbuffer FrameBuffer : register(b0)
     float3 WireframeRGB;
     float Time;
     float3 _framePad;
+
 }
 
 // b1: 오브젝트별 — 월드 변환, 색상
@@ -49,10 +50,20 @@ cbuffer MaterialBuffer : register(b4)
     float4 SectionColor;
 }
 
-// b5: Height Fog parameters
-cbuffer HeightFogCB : register(b5)
+// b5: Decal 
+cbuffer DecalBuffer : register(b5)
 {
-    float4x4 InvViewProj;           // CPU에서 계산한 (View*Proj)^-1
+    float4x4 InvViewProj;
+    float4x4 WorldToDecal; // World → Decal Local (-1~1)
+    
+    float FadeInner;    // Spot Fade 시작
+    float FadeOuter;    // Spot Fade 끝
+};
+
+// b5: Height Fog parameters
+cbuffer HeightFogCB : register(b6)
+{
+    float4x4 InvViewProj;
 
     float3 CameraWorldPos;
     float FogDensity;
