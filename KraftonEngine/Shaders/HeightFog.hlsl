@@ -61,12 +61,14 @@ float4 GetExponentialHeightFog(float3 worldPos)
     if (FogCutoffDistance > 0.0 && rayLength > FogCutoffDistance)
         return float4(0, 0, 0, 0);
 
-    float falloff = max(FogHeightFalloff, 0.001);
+    // 언리얼 엔진의 스케일 팩터 적용
+    float falloff = max(FogHeightFalloff , 0.001);
+    float density = FogDensity ;
 
     //densityAtCamera = FogDensity * exp2(-falloff * (cameraZ - fogHeight))
     float cameraRelHeight = CameraWorldPos.z - FogHeight;
     float densityExponent = clamp(-falloff * cameraRelHeight, -127.0, 127.0);
-    float densityAtCamera = FogDensity * exp2(densityExponent);
+    float densityAtCamera = density * exp2(densityExponent);
 
     //광선 Z 방향에 따른 높이 적분 (exp2 기반)
     float rayDirZ = camToPixel.z;
@@ -113,7 +115,7 @@ float4 PS(PS_Input input) : SV_TARGET
     if (bSceneDepthMode)
     {
         if (depth >= 1.0)
-            return float4(0, 0, 0, 1);
+            return float4(1, 1, 1, 1); 
 
         float linearZ = LinearizeDepth(depth);
         float nearZ = FogNearPlane;
@@ -121,7 +123,7 @@ float4 PS(PS_Input input) : SV_TARGET
         if (farZ <= nearZ) farZ = nearZ + 1000.0;
 
         float normalized = saturate((linearZ - nearZ) / (farZ - nearZ));
-        float gray = 1.0 - normalized;
+        float gray = normalized; 
         return float4(gray, gray, gray, 1);
     }
 
