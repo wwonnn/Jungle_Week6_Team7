@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "GameFramework/AActor.h"
 
 class UHeightFogComponent;
-
+class UBillboardComponent;
 class AExponentialHeightFogActor : public AActor
 {
 public:
@@ -16,4 +16,5 @@ public:
 
 private:
 	UHeightFogComponent* FogComponent = nullptr;
+	UBillboardComponent* SpriteComponent = nullptr;
 };
