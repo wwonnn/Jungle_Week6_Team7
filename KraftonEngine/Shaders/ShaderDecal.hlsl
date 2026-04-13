@@ -89,8 +89,10 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     //spotFade = pow(spotFade, 2.0f);
    
     // 11. 최종 알파에 적용
-    decalColor.a *= spotFade;
-    //decalColor.a *= edgeFade * spotFade;
+    // 방사형 페이드(spotFade)와 깊이 축 페이드(fadeZ)를 모두 적용하여 광원에서 멀어질수록 옅어지도록 함
+    decalColor.a *= spotFade * fadeZ;
+    // (선택) OBB 측면 경계에서 끊기지 않게 하려면 fadeY, fadeZ도 곱할 수 있음
+    // decalColor.a *= spotFade * edgeFade;
 
     // 12. Alpha 기반 클리핑 (선택)
     clip(decalColor.a - 0.01f);

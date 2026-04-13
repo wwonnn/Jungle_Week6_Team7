@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "GameFramework/AActor.h"
 
@@ -15,5 +15,6 @@ public:
 
 private:
 	UBillboardComponent* LightSource = nullptr;
+	//UBillboardComponent* LightShaft = nullptr;
 	UDecalComponent* FloorDecal = nullptr;
 };
