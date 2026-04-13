@@ -41,14 +41,16 @@ float4 PS(PS_Input input) : SV_TARGET
 
     // 1. 월드 포지션 복구
     float2 ndc_xy = input.uv * 2.0f - 1.0f;
-    ndc_xy.y = -ndc_xy.y;
+    ndc_xy.y = -ndc_xy.y; // UV Y(down) to NDC Y(up)
     
+    // NDC -> World 복원
+    // InvViewProj가 (View * Proj)^-1 일 때, clipPos * InvViewProj 로 복원합니다.
     float4 clipPos = float4(ndc_xy, depth, 1.0f);
-    float4 worldPos = mul(clipPos, InvViewProj);
-    worldPos.xyz /= worldPos.w;
+    float4 worldPosH = mul(clipPos, InvViewProj);
+    float3 worldPos = worldPosH.xyz / worldPosH.w;
     
     float3 cameraPos = CameraPos.xyz;
-    float3 rayVec = worldPos.xyz - cameraPos;
+    float3 rayVec = worldPos - cameraPos;
     float rayLength = length(rayVec);
     float3 rayDir = rayVec / max(rayLength, 0.0001f);
 
@@ -57,8 +59,9 @@ float4 PS(PS_Input input) : SV_TARGET
         return float4(0, 0, 0, 0);
     }
 
-    // Skybox (depth >= 1.0f) 일 때만 FogCutoffDistance를 적용하고, 일반 메쉬는 실제 거리(rayLength)를 사용합니다.
-    float currentRayLength = (depth >= 1.0f) ? FogCutoffDistance : rayLength;
+    // depth가 1.0(배경)인 경우 FogCutoffDistance를 사용하고, 그 외에는 복원된 실제 거리(rayLength)를 사용합니다.
+    // FarZ가 현실적인 값이 되면 rayLength와 FogCutoffDistance 사이의 간격이 줄어들어 자연스럽게 연결됩니다.
+    float currentRayLength = (depth >= 0.9999f) ? FogCutoffDistance : rayLength;
     float effectiveRayLength = max(0.0f, currentRayLength - StartDistance);
     
     if (effectiveRayLength <= 0.0f)
