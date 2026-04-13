@@ -43,7 +43,6 @@ struct FPerObjectConstants
 struct FDecalConstants
 {
 	FMatrix WorldToDecal;
-	FMatrix InvViewProj;
 
 	float FadeInner;
 	float FadeOuter;

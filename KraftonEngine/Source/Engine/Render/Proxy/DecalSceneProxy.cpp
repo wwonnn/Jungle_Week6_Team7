@@ -49,7 +49,6 @@ void FDecalSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 		ECBSlot::Decal);
 
 	G.WorldToDecal = PerObjectConstants.Model.GetInverse();
-	G.InvViewProj = (Bus.GetView() * Bus.GetProj()).GetInverse();
 	
 	// 소유 컴포넌트로부터 이 프록시만의 페이드 값을 가져와 G에 채워넣습니다.
 	GetDecalComponent()->SetFadeConstants(G);
