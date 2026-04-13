@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "BatcherBase.h"
 #include "Core/CoreTypes.h"
