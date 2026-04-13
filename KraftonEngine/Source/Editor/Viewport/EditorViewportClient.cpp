@@ -7,6 +7,7 @@
 #include "Engine/Profiling/PlatformTime.h"
 #include "Engine/Runtime/WindowsWindow.h"
 
+#include "Component/BillboardComponent.h"
 #include "Component/CameraComponent.h"
 #include "Viewport/Viewport.h"
 #include "GameFramework/World.h"
@@ -394,13 +395,43 @@ void FEditorViewportClient::HandleDragStart(const FRay& Ray)
 	{
 		//기즈모와 충돌하지 않았다면 월드 BVH를 통해 가장 가까운 프리미티브를 찾음
 		AActor* BestActor = nullptr;
+		FHitResult BestHit{};
+		BestHit.Distance = FLT_MAX;
+
 		if (UWorld* W = GetWorld())
 		{
-			W->RaycastPrimitives(Ray, HitResult, BestActor); //BVH 시작
-		}
+			// 1. 일반적인 BVH 레이캐스트 수행
+			W->RaycastPrimitives(Ray, BestHit, BestActor);
 
-		//멀티픽킹은 성능을 위해 일단 비활성화
-		//bool bCtrlHeld = InputSystem::Get().GetKey(VK_CONTROL);
+			// 2. [추가] Billboard 전용 우선순위 처리
+			// 빌보드(아이콘)는 씬 오브젝트 뒤에 있더라도 '항상 위'에 그려지는 에디터 요소이므로,
+			// 레이에 닿았다면 거리에 상관없이(또는 가중치를 주어) 우선 선택되게 합니다.
+			// 현재 BVH 결과가 빌보드가 아니라면, 닿은 오브젝트들 중 빌보드가 있는지 재검사합니다.
+			
+			for (AActor* Actor : W->GetActors())
+			{
+				if (!Actor || !Actor->IsVisible()) continue;
+				for (UPrimitiveComponent* Comp : Actor->GetPrimitiveComponents())
+				{
+					// 빌보드 컴포넌트인 경우에만 정밀 거리 검사
+					if (UBillboardComponent* Billboard = Cast<UBillboardComponent>(Comp))
+					{
+						FHitResult BillboardHit{};
+						if (Billboard->LineTraceComponent(Ray, BillboardHit))
+						{
+							// 빌보드에 닿았다면, 기존 최단 거리 결과보다 우선하거나
+							// 혹은 '에디터 아이콘'으로서의 우선순위를 부여합니다.
+							// 여기서는 빌보드에 닿기만 하면 일단 BestActor로 후보 등록 (Unreal 방식)
+							if (BillboardHit.Distance < BestHit.Distance + 100.0f) // 약간의 오차 허용 또는 우선권
+							{
+								BestHit = BillboardHit;
+								BestActor = Actor;
+							}
+						}
+					}
+				}
+			}
+		}
 
 		if (BestActor == nullptr)
 		{

@@ -15,6 +15,7 @@ public:
 
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction) override;
 	FPrimitiveSceneProxy* CreateSceneProxy() override;
+	bool LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult) override;
 
 	void Serialize(FArchive& Ar) override;
 	void PostDuplicate() override;
