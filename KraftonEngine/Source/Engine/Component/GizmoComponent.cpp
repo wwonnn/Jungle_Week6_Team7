@@ -561,10 +561,10 @@ void UGizmoComponent::UpdateGizmoMode(EGizmoMode NewMode)
 
 void UGizmoComponent::UpdateGizmoTransform()
 {
-	if (!TargetActor || !TargetActor->GetRootComponent()) return;
+	if (!TargetComponent) return;
 
-	const FVector DesiredLocation = TargetActor->GetActorLocation();
-	const FRotator ActorRot = TargetActor->GetActorRotation();
+	const FVector DesiredLocation = TargetComponent->GetWorldLocation();
+	const FRotator ActorRot = TargetComponent->GetWorldMatrix().ToRotator();
 	const FRotator DesiredRotation = (CurMode == EGizmoMode::Scale || !bIsWorldSpace) ? ActorRot : FRotator();
 	const FMeshData* DesiredMeshData = nullptr;
 
