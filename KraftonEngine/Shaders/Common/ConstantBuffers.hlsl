@@ -57,6 +57,8 @@ cbuffer DecalBuffer : register(b5)
     
     float FadeInner;    // Spot Fade 시작
     float FadeOuter;    // Spot Fade 끝
+    int   bUseFade;     // Fade 효과 활성화 여부
+    float3 _decalPad;
 };
 
 #endif // CONSTANT_BUFFERS_HLSL

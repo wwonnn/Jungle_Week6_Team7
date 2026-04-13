@@ -35,7 +35,6 @@ float3 ReconstructWorldPos(float2 screenUV, float depth)
 float4 PS(PS_Input_PosW input) : SV_TARGET
 {
     // 1. 현재 픽셀의 Screen UV 계산
-    //    ClipPosW.xy / ClipPosW.w → NDC, 이를 0~1 UV로
     float2 screenUV;
     screenUV.x = (input.positionW.x / input.positionW.w) * 0.5f + 0.5f;
     screenUV.y = (input.positionW.y / input.positionW.w) * -0.5f + 0.5f;
@@ -53,48 +52,34 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     float4 decalLocal = mul(float4(worldPos, 1.0f), WorldToDecal);
     
     // 6. Decal OBB 범위 체크 (-0.5 ~ 0.5)
-    //    범위 밖이면 clip으로 픽셀 버림
     float3 absLocal = abs(decalLocal.xyz);
     clip(all(absLocal <= 0.5f) ? 1 : -1);
 
-    // 7. Z-up, X축 Projection
-    //    X축으로 Projection: YZ 평면이 텍스처 UV
-    //    decalLocal.y → U, decalLocal.z → V
-    //    로컬 좌표 -0.5~0.5 → UV 0~1
+    // 7. UV 프로젝션 (YZ 평면 사용)
     float2 decalUV;
-    decalUV.x = decalLocal.y * 1.0f + 0.5f; // Y → U
-    decalUV.y = decalLocal.z * -1.0f + 0.5f; // Z → V (Z-up이므로 위가 0)
+    decalUV.x = decalLocal.y * 1.0f + 0.5f;
+    decalUV.y = decalLocal.z * -1.0f + 0.5f;
     
     // 8. Decal 텍스처 샘플링
     float4 decalColor = DecalAlbedo.Sample(LinearSampler, decalUV);
     
-    // ============================================================
-    // Fade In / Out
-    // TODO: Offset들 Editor에서 조절 가능하게
-    // ============================================================
-    // 9. Edge Fade (Decal Cube의 가장자리에서 투명하게)
-    const float fadeStart = 0.4f; // 튜닝 가능
-    const float fadeEnd = 0.5f;
-    
-    float fadeX = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.x);
-    float fadeY = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.y);
-    float fadeZ = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.z);
-    float edgeFade = fadeX * fadeY * fadeZ;
-    
-    // 10. Spot Fade (중앙은 선명, 가장자리는 투명)
-    float2 uvCenter = decalUV - 0.5f; 
-    float dist = length(uvCenter); 
+    // 9. 페이드 효과 (선택적 적용)
+    if (bUseFade != 0)
+    {
+        // 깊이 축 감쇠 (박스의 끝부분에서 부드럽게 사라지게 함)
+        const float fadeStart = 0.4f;
+        const float fadeEnd = 0.5f;
+        float depthFade = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.x);
+        
+        // 2D 원형 감쇠
+        float2 uvCenter = decalUV - 0.5f; 
+        float dist = length(uvCenter); 
+        float spotFade = 1.0f - smoothstep(FadeInner, FadeOuter, dist);
 
-    float spotFade = 1.0f - smoothstep(FadeInner, FadeOuter, dist);
-    //spotFade = pow(spotFade, 2.0f);
-   
-    // 11. 최종 알파에 적용
-    // 방사형 페이드(spotFade)와 깊이 축 페이드(fadeZ)를 모두 적용하여 광원에서 멀어질수록 옅어지도록 함
-    decalColor.a *= spotFade * fadeZ;
-    // (선택) OBB 측면 경계에서 끊기지 않게 하려면 fadeY, fadeZ도 곱할 수 있음
-    // decalColor.a *= spotFade * edgeFade;
+        decalColor.a *= spotFade * depthFade;
+    }
 
-    // 12. Alpha 기반 클리핑 (선택)
+    // 10. Alpha 기반 클리핑
     clip(decalColor.a - 0.01f);
     
     return decalColor;

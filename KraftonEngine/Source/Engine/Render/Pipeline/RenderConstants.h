@@ -46,6 +46,8 @@ struct FDecalConstants
 
 	float FadeInner;
 	float FadeOuter;
+	int32 bUseFade;
+	float Padding[3];
 };
 
 struct FFrameConstants

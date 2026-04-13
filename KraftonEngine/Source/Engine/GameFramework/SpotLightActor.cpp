@@ -22,7 +22,7 @@ void ASpotLightActor::InitDefaultComponents()
 FloorDecal = AddComponent<UDecalComponent>();
 FloorDecal->AttachToComponent(LightSource);
 FloorDecal->SetTexture("Floor_Light"); 
-FloorDecal->SetRelativeRotation(FVector(0.f, 90.f, 0.f));    
+FloorDecal->SetRelativeRotation(FVector(0.f, 90.f, 0.f));
 
 // 거리가 멀어지거나 가장자리로 갈수록 부드럽게 사라지는 페이드(Fade) 효과 활성화
 // Inner(0.2)부터 서서히 흐려지기 시작해서 Outer(0.8)에서 완전히 투명해짐

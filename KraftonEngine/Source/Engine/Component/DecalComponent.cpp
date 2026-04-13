@@ -69,6 +69,7 @@ void UDecalComponent::SetFadeConstants(FDecalConstants& OutDecalConstants) const
 {
 	OutDecalConstants.FadeInner = bHasFade ? FadeInner : 1.0f;
 	OutDecalConstants.FadeOuter = bHasFade ? FadeOuter : 1.0f;
+	OutDecalConstants.bUseFade = bHasFade ? 1 : 0;
 }
 
 ID3D11ShaderResourceView* UDecalComponent::GetSRV() const
