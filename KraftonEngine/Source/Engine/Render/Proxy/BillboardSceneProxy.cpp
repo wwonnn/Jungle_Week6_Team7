@@ -137,8 +137,9 @@ void FBillboardSceneProxy::UpdatePerViewport(const FRenderBus& Bus)
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(BillboardForward, Bus.GetCameraRight() * -1.0f, Bus.GetCameraUp());
 
-	// 완성된 스케일을 컴포넌트의 월드 스케일에 반영
-	FVector FinalScale = Comp->GetWorldScale() * DistanceScale;
+	// 완성된 스케일을 컴포넌트의 월드 스케일에 반영하지 않고 단위 스케일(1,1,1) 기준으로 계산합니다.
+	// (아이콘이 부모 액터의 스케일에 따라 찌그러지거나 커지는 것을 방지)
+	FVector FinalScale = FVector(1.0f, 1.0f, 1.0f) * DistanceScale;
 
 	FMatrix BillboardMatrix = FMatrix::MakeScaleMatrix(FinalScale)
 		* RotMatrix * FMatrix::MakeTranslationMatrix(BillboardPos);
