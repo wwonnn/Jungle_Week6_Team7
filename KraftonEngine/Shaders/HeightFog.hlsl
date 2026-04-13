@@ -1,6 +1,7 @@
 // HeightFog.hlsl
 // Fullscreen post-process: Exponential Height Fog + SceneDepth visualization
 // UE5 FogRendering.cpp / HeightFogCommon.ush 참고 구현
+// UE5와 동일하게 exp2 (base-2) 사용
 
 #include "Common/ConstantBuffers.hlsl"
 
@@ -12,7 +13,7 @@ struct PS_Input
     float2 uv : TEXCOORD0;
 };
 
-// ── VS: Fullscreen Triangle (SV_VertexID) ──
+//VS: Fullscreen Triangle (SV_VertexID)
 PS_Input VS(uint vertexID : SV_VertexID)
 {
     PS_Input output;
@@ -21,7 +22,7 @@ PS_Input VS(uint vertexID : SV_VertexID)
     return output;
 }
 
-// ── 하드웨어 깊이 → 월드 좌표 (CPU 계산 InvViewProj 사용) ──
+//하드웨어 깊이 → 월드 좌표 (CPU 계산 InvViewProj 사용)
 float3 ReconstructWorldPos(float2 uv, float hwDepth)
 {
     float4 ndc;
@@ -30,31 +31,27 @@ float3 ReconstructWorldPos(float2 uv, float hwDepth)
     ndc.z = hwDepth;
     ndc.w = 1.0;
 
-    // row-vector 규약: worldPos = ndc * InvViewProj
     float4 worldH = mul(ndc, InvViewProj);
 
-    // NaN 방지: w가 0에 근접하면 카메라 위치 반환 (포그 없음)
     if (abs(worldH.w) < 1e-6)
         return CameraWorldPos;
 
     return worldH.xyz / worldH.w;
 }
 
-// ── 선형 깊이 ──
+//선형 깊이
 float LinearizeDepth(float hwDepth)
 {
     return Projection[3][2] / (hwDepth - Projection[2][2]);
 }
 
-// ── UE5식 Exponential Height Fog ──
-// 결과: float4(fogColor, fogOpacity)
-//   fogOpacity=0 → 안개 없음,  fogOpacity=1 → 완전 안개
+//UE5식 Exponential Height Fog (exp2 기반)
+// UE5 HeightFogCommon.ush와 동일한 base-2 지수 사용
 float4 GetExponentialHeightFog(float3 worldPos)
 {
     float3 camToPixel = worldPos - CameraWorldPos;
     float rayLength = length(camToPixel);
 
-    // 비정상 거리 방지
     if (rayLength < 0.001 || isnan(rayLength) || isinf(rayLength))
         return float4(0, 0, 0, 0);
 
@@ -66,30 +63,27 @@ float4 GetExponentialHeightFog(float3 worldPos)
 
     float falloff = max(FogHeightFalloff, 0.001);
 
-    // 카메라 높이 기준 밀도
+    //densityAtCamera = FogDensity * exp2(-falloff * (cameraZ - fogHeight))
     float cameraRelHeight = CameraWorldPos.z - FogHeight;
-    // exp 오버플로 방지: 지수 범위 제한
-    float densityExponent = clamp(-falloff * cameraRelHeight, -80.0, 80.0);
-    float densityAtCamera = FogDensity * exp(densityExponent);
+    float densityExponent = clamp(-falloff * cameraRelHeight, -127.0, 127.0);
+    float densityAtCamera = FogDensity * exp2(densityExponent);
 
-    // 광선 Z 성분에 따른 높이 적분
+    //광선 Z 방향에 따른 높이 적분 (exp2 기반)
     float rayDirZ = camToPixel.z;
     float exponent = falloff * rayDirZ;
 
     float lineIntegralFog;
     if (abs(exponent) > 0.01)
     {
-        // 비수평 광선: 해석적 적분 (exp 오버플로 방지)
-        float clampedExp = clamp(-exponent, -80.0, 80.0);
-        lineIntegralFog = densityAtCamera * (1.0 - exp(clampedExp)) / exponent;
+        float clampedExp = clamp(-exponent, -127.0, 127.0);
+        lineIntegralFog = densityAtCamera * (1.0 - exp2(clampedExp)) / exponent;
     }
     else
     {
-        // 수평 근사
+        // 수평 근사 (exponent ≈ 0)
         lineIntegralFog = densityAtCamera;
     }
 
-    // 음수 적분 방지
     float fogIntegral = max(lineIntegralFog * rayLength, 0.0);
 
     // StartDistance 보정
@@ -99,27 +93,23 @@ float4 GetExponentialHeightFog(float3 worldPos)
         fogIntegral *= excludeRatio;
     }
 
-    // 가시도 계산 (적분값 범위 제한)
+    // UE5: 가시도 = exp(-fogIntegral)
     fogIntegral = min(fogIntegral, 20.0);
     float visibility = exp(-fogIntegral);
 
-    // MaxOpacity 제한: visibility 최저값 = 1 - MaxOpacity
+    // MaxOpacity 제한
     visibility = max(visibility, 1.0 - FogMaxOpacity);
 
     float fogOpacity = saturate(1.0 - visibility);
 
-    //    블렌드: SrcAlpha * Src.rgb + (1-SrcAlpha) * Dst.rgb
-    //    → fogOpacity * fogColor + visibility * sceneColor  (정확한 포그 합성)
     return float4(FogInscatteringColor.rgb, fogOpacity);
 }
 
-// ── PS ──
 float4 PS(PS_Input input) : SV_TARGET
 {
     int2 coord = int2(input.position.xy);
     float depth = DepthTex.Load(int3(coord, 0)).r;
 
-    // ═══════════ SceneDepth 시각화 ═══════════
     if (bSceneDepthMode)
     {
         if (depth >= 1.0)
@@ -135,16 +125,14 @@ float4 PS(PS_Input input) : SV_TARGET
         return float4(gray, gray, gray, 1);
     }
 
-    // ═══════════ Exponential Height Fog ═══════════
-
-    // Sky (depth=1) → 완전 안개
+    // Sky (depth=1)  완전 안개
     if (depth >= 1.0)
         return float4(FogInscatteringColor.rgb, FogMaxOpacity);
 
     float3 worldPos = ReconstructWorldPos(input.uv, depth);
     float4 fogResult = GetExponentialHeightFog(worldPos);
 
-    // NaN/Inf 최종 방어: 결과가 비정상이면 그리지 않음
+    // NaN/Inf 최종 방어
     if (any(isnan(fogResult)) || any(isinf(fogResult)))
         discard;
 
