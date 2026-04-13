@@ -1,4 +1,4 @@
-#include "Render/Proxy/SubUVSceneProxy.h"
+﻿#include "Render/Proxy/SubUVSceneProxy.h"
 #include "Component/SubUVComponent.h"
 #include "Render/Pipeline/RenderBus.h"
 #include "Render/Resource/ShaderManager.h"
@@ -11,6 +11,7 @@ FSubUVSceneProxy::FSubUVSceneProxy(USubUVComponent* InComponent)
 {
 	bBatcherRendered = true;
 	bShowAABB = false;
+	bShowOBB = false;
 }
 
 void FSubUVSceneProxy::UpdateMesh()

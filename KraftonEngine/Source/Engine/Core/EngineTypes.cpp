@@ -44,3 +44,20 @@ bool FBoundingBox::IsValid() const
 {
 	return Min.X <= Max.X && Min.Y <= Max.Y && Min.Z <= Max.Z;
 }
+
+void FOBB::GetCorners(FVector(&OutCorners)[8]) const
+{
+	FVector X = Axes[0] * Extents.X;
+	FVector Y = Axes[1] * Extents.Y;
+	FVector Z = Axes[2] * Extents.Z;
+	FVector C = Center;
+
+	OutCorners[0] = C - X - Y - Z;
+	OutCorners[1] = C + X - Y - Z;
+	OutCorners[2] = C - X + Y - Z;
+	OutCorners[3] = C + X + Y - Z;
+	OutCorners[4] = C - X - Y + Z;
+	OutCorners[5] = C + X - Y + Z;
+	OutCorners[6] = C - X + Y + Z;
+	OutCorners[7] = C + X + Y + Z;
+}

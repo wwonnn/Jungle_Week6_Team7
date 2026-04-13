@@ -125,6 +125,42 @@ void FLineBatcher::AddAABB(const FBoundingBox& Box, const FColor& InColor)
 	}
 }
 
+void FLineBatcher::AddOBB(const FOBB& OBB, const FColor& InColor)
+{
+	const FVector4 BoxColor = InColor.ToVector4();
+	const uint32 BaseVertex = static_cast<uint32>(IndexedVertices.size());
+
+	// OBB 축 벡터 미리 계산
+	const FVector X = OBB.Axes[0] * OBB.Extents.X;
+	const FVector Y = OBB.Axes[1] * OBB.Extents.Y;
+	const FVector Z = OBB.Axes[2] * OBB.Extents.Z;
+	const FVector C = OBB.Center;
+
+	// AABB와 동일한 순서로 8개 꼭짓점 배치
+	// Min쪽 = -X-Y-Z, Max쪽 = +X+Y+Z
+	IndexedVertices.emplace_back(C - X - Y - Z, BoxColor); // 0: Min
+	IndexedVertices.emplace_back(C + X - Y - Z, BoxColor); // 1
+	IndexedVertices.emplace_back(C + X + Y - Z, BoxColor); // 2
+	IndexedVertices.emplace_back(C - X + Y - Z, BoxColor); // 3
+	IndexedVertices.emplace_back(C - X - Y + Z, BoxColor); // 4
+	IndexedVertices.emplace_back(C + X - Y + Z, BoxColor); // 5
+	IndexedVertices.emplace_back(C + X + Y + Z, BoxColor); // 6: Max
+	IndexedVertices.emplace_back(C - X + Y + Z, BoxColor); // 7
+
+	// AABB와 완전히 동일한 엣지 인덱스 재사용
+	static constexpr uint32 OBBEdgeIndices[] =
+	{
+		0, 1, 1, 2, 2, 3, 3, 0,  // 아랫면
+		4, 5, 5, 6, 6, 7, 7, 4,  // 윗면
+		0, 4, 1, 5, 2, 6, 3, 7   // 기둥 4개
+	};
+
+	for (uint32 EdgeIndex : OBBEdgeIndices)
+	{
+		Indices.push_back(BaseVertex + EdgeIndex);
+	}
+}
+
 void FLineBatcher::AddWorldHelpers(const FShowFlags& ShowFlags, float GridSpacing, int32 GridHalfLineCount, const FVector& CameraPosition, const FVector& CameraForward, bool bIsOrtho)
 {
 	const float Spacing = GridSpacing;

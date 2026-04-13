@@ -68,6 +68,10 @@ void FRenderer::PrepareBatchers(const FRenderBus& Bus)
 	{
 		EditorLineBatcher.AddAABB(FBoundingBox{ Entry.AABB.Min, Entry.AABB.Max }, Entry.AABB.Color);
 	}
+	for (const auto& Entry : Bus.GetOBBEntries())
+	{
+		EditorLineBatcher.AddOBB(FOBB{ Entry.OBB.Center, Entry.OBB.Axes, Entry.OBB.Extents }, Entry.OBB.Color);
+	}
 	for (const auto& Entry : Bus.GetDebugLineEntries())
 	{
 		EditorLineBatcher.AddLine(Entry.Start, Entry.End, Entry.Color.ToVector4());

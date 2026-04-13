@@ -165,6 +165,7 @@ void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	CachedWorldMatrix = FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
 
 	UpdateWorldAABB();
+	UpdateWorldOBB();
 }
 
 FMatrix UBillboardComponent::ComputeBillboardMatrix(const FVector& CameraForward) const
