@@ -32,10 +32,12 @@ public:
 
 	// 월드 공간 AABB를 FBoundingBox로 반환 (파트 B LineBatcher와의 인터페이스)
 	FBoundingBox GetWorldBoundingBox() const;
+	FOBB GetWorldOBB() const;
 	void MarkWorldBoundsDirty();
 
 	//Collision
 	virtual void UpdateWorldAABB() const;
+	virtual void UpdateWorldOBB() const;
 	virtual bool LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult);
 	void UpdateWorldMatrix() const override;
 
@@ -80,12 +82,18 @@ public:
 protected:
 	void OnTransformDirty() override;
 	void EnsureWorldAABBUpdated() const;
+	void EnsureWorldOBBUpdated() const;
 
 	FVector LocalExtents = { 0.5f, 0.5f, 0.5f };
 	mutable FVector WorldAABBMinLocation;
 	mutable FVector WorldAABBMaxLocation;
 	mutable bool bWorldAABBDirty = true;
 	mutable bool bHasValidWorldAABB = false;
+
+	mutable FOBB WorldOBB;
+	mutable bool bWorldOBBDirty = true;
+	mutable bool bHasValidWorldOBB = false;
+
 	bool bIsVisible = true;
 	FPrimitiveSceneProxy* SceneProxy = nullptr;
 	

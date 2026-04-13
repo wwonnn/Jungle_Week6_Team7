@@ -23,6 +23,7 @@ public:
 	bool LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult) override;
 	bool LineTraceStaticMeshFast(const FRay& Ray, const FMatrix& WorldMatrix, const FMatrix& WorldInverse, FHitResult& OutHitResult);
 	void UpdateWorldAABB() const override;
+	void UpdateWorldOBB() const override;
 
 	// 구체 프록시 생성 (FStaticMeshSceneProxy)
 	FPrimitiveSceneProxy* CreateSceneProxy() override;
