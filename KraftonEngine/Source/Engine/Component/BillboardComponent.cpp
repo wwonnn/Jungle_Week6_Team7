@@ -7,6 +7,7 @@
 #include "Object/ObjectFactory.h"
 
 #include <cstring>
+#include <algorithm>
 
 IMPLEMENT_CLASS(UBillboardComponent, UPrimitiveComponent)
 
@@ -63,6 +64,80 @@ void UBillboardComponent::PostEditProperty(const char* PropertyName)
 	}
 }
 
+bool UBillboardComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult)
+{
+	if (!GetOwner() || !GetOwner()->GetWorld()) return false;
+	const UCameraComponent* ActiveCamera = GetOwner()->GetWorld()->GetActiveCamera();
+	if (!ActiveCamera) return false;
+
+	// 1. 피킹 시점의 카메라 방향 기반 평면 구성
+	FVector Normal = ActiveCamera->GetForwardVector() * -1.0f;
+	FVector Pos = GetWorldLocation();
+
+	float Denom = Normal.Dot(Ray.Direction);
+	if (std::abs(Denom) < 1e-6f) return false;
+
+	float t = (Pos - Ray.Origin).Dot(Normal) / Denom;
+	if (t < 0) return false;
+
+	FVector HitPoint = Ray.Origin + Ray.Direction * t;
+	FVector LocalHit = HitPoint - Pos;
+
+	// 2. 현재 BillboardSceneProxy와 완벽하게 일치하는 스케일 로직
+	float Distance = (Pos - ActiveCamera->GetWorldLocation()).Length();
+	
+	const float BaseWorldScale = 1.0f;
+	const float ScreenScaleFactor = 0.05f;
+	const float MasterIconScale = 5.0f;
+
+	float DistanceScale = BaseWorldScale;
+
+	if (!ActiveCamera->IsOrthogonal())
+	{
+		float LimitScale = Distance * ScreenScaleFactor;
+		float BaseRatio = std::min(BaseWorldScale, LimitScale);
+		BaseRatio = std::max(0.0001f, BaseRatio);
+		DistanceScale = BaseRatio * MasterIconScale;
+	}
+	else
+	{
+		DistanceScale = ActiveCamera->GetOrthoWidth() * 0.001f * BaseWorldScale * MasterIconScale;
+	}
+
+	// 3. 실제 화면에 그려지는 크기 (BillboardBatcher의 0.25 계수 반영)
+	// Batcher: HalfW = Width * Scale.Y * 0.25f
+	// 전체 Width = 2 * HalfW = Width * Scale.Y * 0.5f
+	FVector WorldScale = GetWorldScale();
+	float VisualWidth = Width * WorldScale.Y * DistanceScale * 0.5f;
+	float VisualHeight = Height * WorldScale.Z * DistanceScale * 0.5f;
+
+	// 4. Batcher가 정점을 뻗는 실제 축 (카메라의 Right, Up)
+	FVector Right = ActiveCamera->GetRightVector();
+	FVector Up = ActiveCamera->GetUpVector();
+
+	float x = LocalHit.Dot(Right);
+	float y = LocalHit.Dot(Up);
+
+	// 5. 판정 범위 체크 (약간의 마진 추가 1.1배)
+	const float PickingMargin = 1.1f;
+	if (std::abs(x) > (VisualWidth * 0.5f) * PickingMargin || std::abs(y) > (VisualHeight * 0.5f) * PickingMargin)
+		return false;
+
+	// 6. 원형 판정
+	float normX = x / (VisualWidth * 0.5f);
+	float normY = y / (VisualHeight * 0.5f);
+	if (normX * normX + normY * normY > 1.0f)
+		return false;
+
+	// 7. 히트 결과 설정
+	OutHitResult.bHit = true;
+	OutHitResult.Distance = t;
+	OutHitResult.WorldHitLocation = HitPoint;
+	OutHitResult.WorldNormal = Normal;
+	OutHitResult.HitComponent = this;
+	return true;
+}
+
 void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
 	
 {
@@ -90,6 +165,7 @@ void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	CachedWorldMatrix = FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
 
 	UpdateWorldAABB();
+	UpdateWorldOBB();
 }
 
 FMatrix UBillboardComponent::ComputeBillboardMatrix(const FVector& CameraForward) const

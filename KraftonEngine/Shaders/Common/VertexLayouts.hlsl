@@ -70,6 +70,13 @@ struct PS_Input_PosOnly
     float4 position : SV_POSITION;
 };
 
+// SV_POSITION + TexCoord (Decal)
+struct PS_Input_PosW
+{
+    float4 position : SV_POSITION;
+    float4 positionW : TEXCOORD0;
+};
+
 // SV_POSITION + Color + WorldPos (Editor)
 struct PS_Input_ColorWorld
 {

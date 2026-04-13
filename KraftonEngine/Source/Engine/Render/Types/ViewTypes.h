@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreTypes.h"
 
@@ -21,6 +21,7 @@ struct FShowFlags
 	bool bBoundingVolume = false;
 	bool bDebugDraw = true;
 	bool bOctree = false;
+	bool bDecal = true;
 	bool bFog = true;
 };
 
@@ -46,5 +47,6 @@ struct FViewportRenderOptions
 	int32 GridHalfLineCount = 100;
 	float CameraMoveSensitivity = 1.0f;
 	float CameraRotateSensitivity = 1.0f;
+	bool bFXAA = true;
 	ELevelViewportType ViewportType = ELevelViewportType::Perspective;
 };

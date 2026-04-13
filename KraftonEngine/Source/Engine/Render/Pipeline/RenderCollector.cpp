@@ -6,6 +6,7 @@
 #include "Editor/EditorEngine.h"
 #include "Render/Proxy/FScene.h"
 #include "Render/Proxy/PrimitiveSceneProxy.h"
+#include "Render/Proxy/DecalSceneProxy.h"
 #include "Render/DebugDraw/DebugDrawQueue.h"
 #include "Render/Culling/GPUOcclusionCulling.h"
 #include "Render/Pipeline/LODContext.h"
@@ -188,6 +189,7 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 
 	for (FPrimitiveSceneProxy* Proxy : Proxies)
 	{
+		if (dynamic_cast<FDecalSceneProxy*>(Proxy) != nullptr && !RenderBus.GetShowFlags().bDecal) continue;
 
 		// LOD 갱신 — WorldTick에서 이동, 단일 순회에 병합
 		if (LODCtx.bValid && LODCtx.ShouldRefreshLOD(Proxy->ProxyId, Proxy->LastLODUpdateFrame))
@@ -221,7 +223,6 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 			Proxy->CollectEntries(RenderBus);
 		else
 			RenderBus.AddProxy(Proxy->Pass, Proxy);
-
 		// 선택된 오브젝트
 		if (Proxy->bSelected)
 		{
@@ -230,16 +231,41 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 
 			if (bShowBoundingVolume && Proxy->bShowAABB)
 			{
+				if (Proxy->Owner)
+				{
+					// 아직 AABB 업데이트가 안 된 새로 추가된 컴포넌트 등을 위해 확실하게 갱신
+					Proxy->Owner->GetWorldBoundingBox();
+				}
+
 				FAABBEntry Entry = {};
 				Entry.AABB.Min = Proxy->CachedBounds.Min;
 				Entry.AABB.Max = Proxy->CachedBounds.Max;
 				Entry.AABB.Color = FColor::White();
 				RenderBus.AddAABBEntry(std::move(Entry));
+
 			}
+
+			if (bShowBoundingVolume && Proxy->bShowOBB)
+			{
+				if (Proxy->Owner)
+				{
+					// 아직 AABB 업데이트가 안 된 새로 추가된 컴포넌트 등을 위해 확실하게 갱신
+					Proxy->Owner->GetWorldOBB();
+				}
+
+				FOBBEntry Entry = {};
+				Entry.OBB.Center = Proxy->CachedOBB.Center;
+				Entry.OBB.Axes[0] = Proxy->CachedOBB.Axes[0];
+				Entry.OBB.Axes[1] = Proxy->CachedOBB.Axes[1];
+				Entry.OBB.Axes[2] = Proxy->CachedOBB.Axes[2];
+				Entry.OBB.Extents = Proxy->CachedOBB.Extents;
+				Entry.OBB.Color = FColor::Green();
+				RenderBus.AddOBBEntry(std::move(Entry));
+			}
+
+			if (OcclusionMut && OcclusionMut->IsInitialized())
+				OcclusionMut->EndGatherAABB();
 		}
 	}
-
-	if (OcclusionMut && OcclusionMut->IsInitialized())
-		OcclusionMut->EndGatherAABB();
 }
 

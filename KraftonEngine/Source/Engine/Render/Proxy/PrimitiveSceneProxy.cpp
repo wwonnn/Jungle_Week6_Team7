@@ -68,6 +68,7 @@ void FPrimitiveSceneProxy::UpdateTransform()
 	PerObjectConstants = FPerObjectConstants::FromWorldMatrix(Owner->GetWorldMatrix());
 	CachedWorldPos = PerObjectConstants.Model.GetLocation();
 	CachedBounds = Owner->GetWorldBoundingBox();
+	CachedOBB = Owner->GetWorldOBB();
 	LastLODUpdateFrame = UINT32_MAX;
 	MarkPerObjectCBDirty();
 }

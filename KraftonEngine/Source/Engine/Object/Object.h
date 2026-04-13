@@ -24,7 +24,7 @@ class FArchive;
 	FClassRegistrar ClassName::s_Registrar(&ClassName::s_TypeInfo);	   
 
 #define DEFINE_CLASS(ClassName, ParentClass)                           \
-    DEFINE_CLASS_WITH_FLAGS(ClassName, ParentClass, CF_None)
+    DEFINE_CLASS_WITH_FLAGS(ClassName, ParentClass, CF_None)  
 
 enum EClassFlags : uint32_t
 {

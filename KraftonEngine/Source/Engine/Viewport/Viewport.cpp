@@ -61,6 +61,8 @@ void FViewport::BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4])
 {
 	if (!RTV) return;
 
+	bHasPostProcessed = false;
+
 	const float DefaultColor[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
 	const float* Color = ClearColor ? ClearColor : DefaultColor;
 	D3D11_VIEWPORT VPRect = GetViewportRect();
@@ -93,6 +95,16 @@ bool FViewport::CreateResources()
 	if (FAILED(hr)) return false;
 
 	hr = Device->CreateShaderResourceView(RTTexture, nullptr, &SRV);
+	if (FAILED(hr)) return false;
+
+	// ── 렌더 타깃 텍스처 2 (PostProcess용) ──
+	hr = Device->CreateTexture2D(&TexDesc, nullptr, &PSTexture);
+	if (FAILED(hr)) return false;
+
+	hr = Device->CreateRenderTargetView(PSTexture, nullptr, &PRTV);
+	if (FAILED(hr)) return false;
+
+	hr = Device->CreateShaderResourceView(PSTexture, nullptr, &PSRV);
 	if (FAILED(hr)) return false;
 
 	// ── 뎁스/스텐실 (TYPELESS → DSV + StencilSRV) ──
@@ -155,6 +167,9 @@ void FViewport::ReleaseResources()
 	if (DepthSRV) { DepthSRV->Release(); DepthSRV = nullptr; }
 	if (DSV) { DSV->Release(); DSV = nullptr; }
 	if (DepthTexture) { DepthTexture->Release(); DepthTexture = nullptr; }
+	if (PSRV) { PSRV->Release(); PSRV = nullptr; }
+	if (PRTV) { PRTV->Release(); PRTV = nullptr; }
+	if (PSTexture) { PSTexture->Release(); PSTexture = nullptr; }
 	if (SRV) { SRV->Release(); SRV = nullptr; }
 	if (RTV) { RTV->Release(); RTV = nullptr; }
 	if (RTTexture) { RTTexture->Release(); RTTexture = nullptr; }

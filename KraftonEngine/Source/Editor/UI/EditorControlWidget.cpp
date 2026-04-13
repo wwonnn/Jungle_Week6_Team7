@@ -1,4 +1,5 @@
 ﻿#include "Editor/UI/EditorControlWidget.h"
+#include "Editor/Viewport/LevelEditorViewportClient.h"
 #include "Editor/EditorEngine.h"
 #include "Engine/Profiling/Timer.h"
 #include "Engine/Profiling/MemoryStats.h"
@@ -6,6 +7,7 @@
 #include "Component/CameraComponent.h"
 #include "Component/GizmoComponent.h"
 #include "GameFramework/StaticMeshActor.h"
+#include "GameFramework/DecalActor.h"
 #include "GameFramework/ExponentialHeightFogActor.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
@@ -55,12 +57,20 @@ void FEditorControlWidget::Render(float DeltaTime)
 				World->InsertActorToOctree(Actor);
 				break;
 			}
-			case 2: // ExponentialHeightFog
+			case 2: // Decal
+			{
+				ADecalActor* Actor = World->SpawnActor<ADecalActor>();
+				Actor->SetActorLocation(CurSpawnPoint);
+				Actor->InitDefaultComponents();
+				World->InsertActorToOctree(Actor);
+				break;
+			case 3: // ExponentialHeightFog
 			{
 				AExponentialHeightFogActor* Actor = World->SpawnActor<AExponentialHeightFogActor>();
 				Actor->SetActorLocation(CurSpawnPoint);
 				Actor->InitDefaultComponents();
 				break;
+			}
 			}
 			}
 		}
@@ -97,6 +107,23 @@ void FEditorControlWidget::Render(float DeltaTime)
 	if (ImGui::DragFloat3("Camera Rotation", CameraRotation, 0.1f))
 	{
 		Camera->SetRelativeRotation(FRotator(CameraRotation[1], CameraRotation[2], CamRot.Roll));
+	}
+
+	SEPARATOR();
+
+	// Rendering
+	bool bFXAA = true;
+	if (FLevelEditorViewportClient* ActiveVC = EditorEngine->GetActiveViewport())
+	{
+		bFXAA = ActiveVC->GetRenderOptions().bFXAA;
+	}
+
+	if (ImGui::Checkbox("Enable FXAA", &bFXAA))
+	{
+		for (FLevelEditorViewportClient* VC : EditorEngine->GetLevelViewportClients())
+		{
+			VC->GetRenderOptions().bFXAA = bFXAA;
+		}
 	}
 
 	ImGui::End();

@@ -1,4 +1,4 @@
-#include "RenderBus.h"
+﻿#include "RenderBus.h"
 #include "Component/CameraComponent.h"
 #include "Viewport/Viewport.h"
 
@@ -14,6 +14,7 @@ void FRenderBus::Clear()
 	SubUVEntries.clear();
 	BillboardEntries.clear();
 	AABBEntries.clear();
+	OBBEntries.clear();
 	GridEntries.clear();
 	DebugLineEntries.clear();
 
@@ -24,6 +25,8 @@ void FRenderBus::Clear()
 
 	bHasFog = false;
 	FogParams = {};
+	PostProcessRTV = nullptr;
+	BaseColorSRV = nullptr;
 }
 
 void FRenderBus::AddProxy(ERenderPass Pass, const FPrimitiveSceneProxy* Proxy)
@@ -61,6 +64,11 @@ void FRenderBus::AddAABBEntry(FAABBEntry&& Entry)
 	AABBEntries.push_back(std::move(Entry));
 }
 
+void FRenderBus::AddOBBEntry(FOBBEntry&& Entry)
+{
+	OBBEntries.push_back(std::move(Entry));
+}
+
 void FRenderBus::AddGridEntry(FGridEntry&& Entry)
 {
 	GridEntries.push_back(std::move(Entry));
@@ -90,6 +98,8 @@ void FRenderBus::SetViewportInfo(const FViewport* VP)
 	ViewportRTV = VP->GetRTV();
 	ViewportDSV = VP->GetDSV();
 	ViewportStencilSRV = VP->GetStencilSRV();
+	PostProcessRTV = VP->GetPostProcessRTV();
+	BaseColorSRV = VP->GetBaseSRV();
 	ViewportDepthSRV = VP->GetDepthSRV();
 }
 
