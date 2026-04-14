@@ -53,32 +53,20 @@ void FRenderCollector::CollectOverlayText(const FOverlayStatSystem& OverlaySyste
 void FRenderCollector::CollectFog(UWorld* World, FRenderBus& RenderBus)
 {
 	if (!World) return;
+	if (!RenderBus.GetShowFlags().bFog) return;
 
-	const bool bFogEnabled = RenderBus.GetShowFlags().bFog;
+	UHeightFogComponent* FogComp = World->GetScene().GetFog();
+	if (!FogComp) return;
 
-	if (!bFogEnabled) return;
-
-	// 첫 번째 HeightFogComponent를 찾아 포그 파라미터 설정
-	for (AActor* Actor : World->GetActors())
-	{
-		if (!Actor) continue;
-		for (UActorComponent* Comp : Actor->GetComponents())
-		{
-			UHeightFogComponent* FogComp = Cast<UHeightFogComponent>(Comp);
-			if (!FogComp) continue;
-
-			FHeightFogConstants Params;
-			Params.FogInscatteringColor = FogComp->GetFogInscatteringColor();
-			Params.FogDensity = FogComp->GetFogDensity();
-			Params.FogHeightFalloff = FogComp->GetFogHeightFalloff();
-			Params.FogStartDistance = FogComp->GetStartDistance();
-			Params.FogCutoffDistance = FogComp->GetFogCutoffDistance();
-			Params.FogMaxOpacity = FogComp->GetFogMaxOpacity();
-			Params.FogHeight = FogComp->GetWorldLocation().Z;
-			RenderBus.SetFogParams(Params);
-			return;
-		}
-	}
+	FHeightFogConstants Params;
+	Params.FogInscatteringColor = FogComp->GetFogInscatteringColor();
+	Params.FogDensity = FogComp->GetFogDensity();
+	Params.FogHeightFalloff = FogComp->GetFogHeightFalloff();
+	Params.FogStartDistance = FogComp->GetStartDistance();
+	Params.FogCutoffDistance = FogComp->GetFogCutoffDistance();
+	Params.FogMaxOpacity = FogComp->GetFogMaxOpacity();
+	Params.FogHeight = FogComp->GetWorldLocation().Z;
+	RenderBus.SetFogParams(Params);
 }
 
 void FRenderCollector::CollectDebugDraw(const FDebugDrawQueue& Queue, FRenderBus& RenderBus)
