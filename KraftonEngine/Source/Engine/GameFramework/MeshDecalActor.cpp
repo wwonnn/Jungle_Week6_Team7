@@ -21,6 +21,6 @@ void AMeshDecalActor::InitDefaultComponents()
 	BillboardComponent = AddComponent<UBillboardComponent>();
 	BillboardComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 	BillboardComponent->AttachToComponent(MeshDecalComponent);
-	BillboardComponent->SetTexture(FName("SpotLight"));
+	BillboardComponent->SetTexture(FName("DecalActor"));
 	BillboardComponent->SetSpriteSize(1.f, 1.f);
 }

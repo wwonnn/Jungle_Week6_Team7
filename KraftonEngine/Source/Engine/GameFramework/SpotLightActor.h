@@ -4,6 +4,7 @@
 
 class UDecalComponent;
 class UBillboardComponent;
+class USceneComponent;
 
 class ASpotLightActor : public AActor
 {
@@ -14,6 +15,7 @@ public:
 	void InitDefaultComponents();
 
 private:
+	USceneComponent* Root = nullptr;
 	UBillboardComponent* LightSource = nullptr;
 	//UBillboardComponent* LightShaft = nullptr;
 	UDecalComponent* FloorDecal = nullptr;

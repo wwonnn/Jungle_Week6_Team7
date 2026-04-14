@@ -62,7 +62,8 @@ struct FFrameConstants
 	float bIsWireframe;
 	FVector WireframeColor;
 	float Time;
-	float _pad[3];
+	FVector2 InvViewportSize;
+	float _pad[1];
 };
 
 struct FMaterialConstants

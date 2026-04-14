@@ -28,6 +28,7 @@ public:
 	virtual FMeshBuffer* GetMeshBuffer() const { return nullptr; }
 	virtual const FMeshData* GetMeshData() const { return nullptr; }
 
+	virtual void SetSelected(bool bNewSelected) {};
 	void SetVisibility(bool bNewVisible);
 	inline bool IsVisible() const { return bIsVisible; }
 

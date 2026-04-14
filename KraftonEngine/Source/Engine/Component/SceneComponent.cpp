@@ -176,7 +176,18 @@ void USceneComponent::UpdateWorldMatrix() const
 
 	if (ParentComponent != nullptr)
 	{
-		CachedWorldMatrix = RelativeMatrix * ParentComponent->GetWorldMatrix();
+		if (bInheritScale)
+		{
+			CachedWorldMatrix = RelativeMatrix * ParentComponent->GetWorldMatrix();
+		}
+		else
+		{
+			// 부모 월드행렬에서 스케일만 제거
+			FMatrix ParentWorld = ParentComponent->GetWorldMatrix();
+			FMatrix ParentNoScale = ParentWorld.RemoveScale(); // 스케일 제거한 행렬
+
+			CachedWorldMatrix = RelativeMatrix * ParentNoScale;
+		}
 	}
 	else
 	{
