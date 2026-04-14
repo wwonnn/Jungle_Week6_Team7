@@ -452,6 +452,10 @@ void FRenderer::ExecuteFireBallPass(FRenderBus& InRenderBus, ID3D11DeviceContext
 
 	ID3D11ShaderResourceView* NullSRV[2] = { nullptr, nullptr };
 	Context->PSSetShaderResources(0, 2, NullSRV);
+
+	ID3D11DepthStencilView* DepthSRV = InRenderBus.GetViewportDSV();
+	Context->OMSetRenderTargets(1, &RTV, DepthSRV);
+
 	InRenderBus.SetCurrentPostProcessTarget(InRenderBus.GetPostProcessRTV1(), InRenderBus.GetPostProcessSRV1());
 }
 

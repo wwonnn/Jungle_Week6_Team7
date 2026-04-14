@@ -34,6 +34,7 @@ enum class ERenderPass : uint32
 {
 	Opaque,
 	Decal,
+	FireBall,
 	Font,
 	SubUV,
 	Translucent,
@@ -43,7 +44,6 @@ enum class ERenderPass : uint32
 	SelectionMask,
 	PostProcess,
 	Billboard,		// 아이콘 (그리드 위, 기즈모 아래)
-	FireBall,
 	FXAA,
 	GizmoOuter,
 	GizmoInner,
@@ -56,6 +56,7 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 	static const char* Names[] = {
 		"RenderPass::Opaque",
 		"RenderPass::Decal",
+		"RenderPass::FireBall",
 		"RenderPass::Font",
 		"RenderPass::SubUV",
 		"RenderPass::Translucent",
@@ -65,7 +66,6 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::SelectionMask",
 		"RenderPass::PostProcess",
 		"RenderPass::Billboard",
-		"RenderPass::FireBall",
 		"RenderPass::FXAA",
 		"RenderPass::GizmoOuter",
 		"RenderPass::GizmoInner",
