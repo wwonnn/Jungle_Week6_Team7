@@ -257,7 +257,6 @@ void UMeshDecalComponent::UpdateDecalMeshData()
 	if (!GetOwner()) return;
 	if (!GetOwner()->GetWorld()) return;
 	TArray<UPrimitiveComponent*> Candidates = GetCandidates();
-	UE_LOG("MeshDecal Candidates: %d", static_cast<int>(Candidates.size()));
 
 	for (UPrimitiveComponent* Primitive : Candidates)
 	{
@@ -337,7 +336,6 @@ void UMeshDecalComponent::UpdateDecalMeshData()
 		}
 	}
 
-	UE_LOG("MeshDecal Result: Vertices=%d Indices=%d", static_cast<int>(DecalMeshData.Vertices.size()), static_cast<int>(DecalMeshData.Indices.size()));
 	MarkProxyDirty(EDirtyFlag::Mesh);
 }
 

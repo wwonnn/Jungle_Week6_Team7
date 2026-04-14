@@ -30,9 +30,6 @@ float4 PS(PS_Input_Full input) : SV_TARGET
     if (texColor.a < 0.001f)
         texColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    //float3 lightDir = normalize(float3(1.0f, -1.0f, 1.0f));
-    //float diffuse = max(dot(input.normal, -lightDir), 0.0f);
-    //float ambient = 0.2f;
 
     float4 finalColor = texColor * input.color /* * (diffuse + ambient)*/;
     finalColor.a = (texColor.a * input.color.a);

@@ -2,7 +2,7 @@
   "Actors" : [{
       "ClassName" : "AStaticMeshActor",
       "NonSceneComponents" : [],
-      "PrimitiveKey" : "8",
+      "PrimitiveKey" : "17",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -35,7 +35,7 @@
     }, {
       "ClassName" : "AStaticMeshActor",
       "NonSceneComponents" : [],
-      "PrimitiveKey" : "18",
+      "PrimitiveKey" : "21",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -179,7 +179,7 @@
     }, {
       "ClassName" : "AFireBallActor",
       "NonSceneComponents" : [],
-      "PrimitiveKey" : "34",
+      "PrimitiveKey" : "36",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -218,28 +218,28 @@
   "PerspectiveCamera" : {
     "FOV" : 1.570795,
     "FarClip" : 100.000000,
-    "Location" : [-9.540224, 3.948785, 6.121591],
+    "Location" : [-6.837417, 9.187251, 6.853143],
     "NearClip" : 0.100000,
-    "Rotation" : [0.000000, 10.074492, -1.927261]
+    "Rotation" : [0.000000, 13.374465, -24.127073]
   },
   "Primitives" : {
-    "18" : {
+    "17" : {
+      "Location" : [0.000000, 0.000000, 0.000000],
+      "ObjStaticMeshAsset" : "Data/BasicShape/Cube.OBJ",
+      "Rotation" : [0.000000, -0.000000, 0.000000],
+      "Scale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "StaticMeshComp"
+    },
+    "21" : {
       "Location" : [-0.145782, 4.134712, 0.000000],
       "ObjStaticMeshAsset" : "Data/BasicShape/Cube.OBJ",
       "Rotation" : [0.000000, -0.000000, 0.000000],
       "Scale" : [1.000000, 1.000000, 1.000000],
       "Type" : "StaticMeshComp"
     },
-    "34" : {
+    "36" : {
       "Location" : [0.000000, 0.000000, 3.141385],
       "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
-      "Rotation" : [0.000000, -0.000000, 0.000000],
-      "Scale" : [1.000000, 1.000000, 1.000000],
-      "Type" : "StaticMeshComp"
-    },
-    "8" : {
-      "Location" : [0.000000, 0.000000, 0.000000],
-      "ObjStaticMeshAsset" : "Data/BasicShape/Cube.OBJ",
       "Rotation" : [0.000000, -0.000000, 0.000000],
       "Scale" : [1.000000, 1.000000, 1.000000],
       "Type" : "StaticMeshComp"
