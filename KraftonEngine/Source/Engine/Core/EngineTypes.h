@@ -58,7 +58,7 @@ struct FBoundingBox
 	FVector GetExtent() const;
 
 	// 8개의 Corner 반환
-	void GetCorners(FVector (&OutCorners)[8]) const;
+	void GetCorners(FVector(&OutCorners)[8]) const;
 
 	// 유효 여부 (Min < Max)
 	bool IsValid() const;
@@ -125,6 +125,17 @@ struct FOBB
 
 	// 크기(Extent) 반환
 	FVector GetExtent() const { return Extents; }
+
+	static FOBB FromAABB(const FBoundingBox& AABB)
+	{
+		FOBB Result;
+		Result.Center = AABB.GetCenter();
+		Result.Axes[0] = FVector(1, 0, 0);
+		Result.Axes[1] = FVector(0, 1, 0);
+		Result.Axes[2] = FVector(0, 0, 1);
+		Result.Extents = AABB.GetExtent();
+		return Result;
+	}
 
 	// 8개의 Corner 반환
 	void GetCorners(FVector(&OutCorners)[8]) const;

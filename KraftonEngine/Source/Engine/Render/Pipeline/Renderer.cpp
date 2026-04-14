@@ -283,6 +283,7 @@ void FRenderer::InitializePassRenderStates()
 	S[(uint32)E::GizmoOuter] = { EDepthStencilState::GizmoOutside, EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::GizmoInner] = { EDepthStencilState::GizmoInside,  EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::OverlayFont] = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::MeshDecal] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 }
 
 // ============================================================
@@ -800,7 +801,7 @@ void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Contex
 
 	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
 	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
-	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	ID3D11RenderTargetView* RTV = Bus.GetCurrentRTV();
 	if (!DepthSRV || !RTV) return;
 
 	// 1) DSV 언바인딩 (DepthSRV와 동시 바인딩 불가)

@@ -24,8 +24,9 @@ namespace ECBSlot
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
 	constexpr uint32 Decal = 5;    // b5: Decal properties
-	constexpr uint32 Fog = 6;         // b5: Height Fog parameters
-	constexpr uint32 FireBall = 7;   // b6: FireBall properties
+	constexpr uint32 Fog = 6;         // b6: Height Fog parameters
+	constexpr uint32 FireBall = 7;   // b7: FireBall properties
+	constexpr uint32 MeshDecal = 8; // b8: Mesh Decal properties
 }
 
 //PerObject
@@ -165,6 +166,12 @@ struct FBillboardConstants
 	const FTextureResource* Texture = nullptr;
 	float Width = 1.0f;
 	float Height = 1.0f;
+};
+
+struct FMeshDecalConstants
+{
+	float Opacity = 1.0f;
+	float _Offset[3];
 };
 
 // ============================================================

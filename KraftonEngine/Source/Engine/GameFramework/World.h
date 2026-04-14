@@ -63,7 +63,7 @@ public:
 	// FScene — 렌더 프록시 관리자
 	FScene& GetScene() { return Scene; }
 	const FScene& GetScene() const { return Scene; }
-	
+
 	// DebugDraw — DrawDebugLine 등 글로벌 함수가 사용
 	FDebugDrawQueue& GetDebugDrawQueue() { return DebugDrawQueue; }
 	const FDebugDrawQueue& GetDebugDrawQueue() const { return DebugDrawQueue; }
@@ -73,6 +73,8 @@ public:
 	void InsertActorToOctree(AActor* actor);
 	void RemoveActorToOctree(AActor* actor);
 	void UpdateActorInOctree(AActor* actor);
+
+	TArray<UPrimitiveComponent*> QueryOBB(const FOBB& OBB);
 
 private:
 	bool NeedsVisibleProxyRebuild() const;

@@ -8,6 +8,7 @@
 #include "Core/EngineTypes.h"
 #include "Render/Types/VertexTypes.h"
 #include "Render/Proxy/DirtyFlag.h"
+#include "Collision/OBB.h"
 
 class FPrimitiveSceneProxy;
 class FScene;
@@ -96,7 +97,7 @@ protected:
 
 	bool bIsVisible = true;
 	FPrimitiveSceneProxy* SceneProxy = nullptr;
-	
+
 	FOctree* OctreeNode = nullptr;
 	bool bInOctreeOverflow = false;
 };
