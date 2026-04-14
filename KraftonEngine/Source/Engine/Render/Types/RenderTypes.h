@@ -28,6 +28,7 @@ enum class EMeshShape
 	TransGizmo,
 	RotGizmo,
 	ScaleGizmo,
+	Arrow,
 };
 
 enum class ERenderPass : uint32

@@ -44,6 +44,7 @@ public:
 
 		T* Comp = UObjectManager::Get().CreateObject<T>(this);
 		Comp->SetOwner(this);
+		Comp->InitializeComponent();
 		OwnedComponents.push_back(Comp);
 		bPrimitiveCacheDirty = true;
 		Comp->CreateRenderState();
