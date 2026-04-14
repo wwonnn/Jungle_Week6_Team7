@@ -5,6 +5,7 @@ Texture2D SceneDepth : register(t0);        // Z-Buffer (SRV)
 Texture2D DecalAlbedo : register(t1);       // Decal 텍스처
 SamplerState PointSampler : register(s0);
 SamplerState LinearSampler : register(s1);
+// SamplerState AnisoSampler : register(s1);   // Renderer에서 슬롯 1에 Aniso 바인딩함 (충돌 방지)
 
 // Decal OBB Local -> Screen MVP 변환
 PS_Input_PosW VS(VS_Input_PC input)
@@ -32,55 +33,57 @@ float3 ReconstructWorldPos(float2 screenUV, float depth)
 }
 
 // Z-Buffer를 이용해 Screen -> Decal Local로 역변환
-float4 PS(PS_Input_PosW input) : SV_TARGET
+float4 PS(PS_Input_PosW input, float4 screenPos : SV_Position) : SV_TARGET
 {
-    // 1. 현재 픽셀의 Screen UV 계산
-    float2 screenUV;
-    screenUV.x = (input.positionW.x / input.positionW.w) * 0.5f + 0.5f;
-    screenUV.y = (input.positionW.y / input.positionW.w) * -0.5f + 0.5f;
+    // 1. 현재 픽셀의 정확한 Screen UV 계산
+    // SV_Position은 픽셀 센터 좌표(0.5, 1.5...)를 주므로 Viewport 크기로 나누어야 함
+    float2 screenUV = screenPos.xy * InvViewportSize;
    
     // 2. Z-Buffer에서 Depth 샘플링
     float sceneDepth = SceneDepth.Sample(PointSampler, screenUV).r;
-
+    
     // 3. Depth가 1.0이면 Sky/빈 공간 → 데칼 없음
-    clip(sceneDepth < 1.0f ? 1 : -1);
+    clip(sceneDepth < 0.9999f ? 1 : -1);
     
     // 4. Screen UV + Depth → World Position 복원
-    float3 worldPos = ReconstructWorldPos(screenUV, sceneDepth);
+    float biasedDepth = sceneDepth - 0.00005f;
+    float3 worldPos = ReconstructWorldPos(screenUV, biasedDepth);
 
     // 5. World → Decal Local 좌표 변환
     float4 decalLocal = mul(float4(worldPos, 1.0f), WorldToDecal);
     
     // 6. Decal OBB 범위 체크 (-0.5 ~ 0.5)
     float3 absLocal = abs(decalLocal.xyz);
-    // 거친 clip 대신 부드러운 감쇠 사용
-    float edgeFade = 1.0f;
-    edgeFade *= 1.0f - smoothstep(0.48f, 0.5f, absLocal.x);
-    edgeFade *= 1.0f - smoothstep(0.48f, 0.5f, absLocal.y);
-    edgeFade *= 1.0f - smoothstep(0.48f, 0.5f, absLocal.z);
+    
+    // OBB 영역을 벗어나는 픽셀은 즉시 폐기하여 늘어짐/반복 현상 방지
+    clip(0.5f - absLocal.x);
+    clip(0.5f - absLocal.y);
+    clip(0.5f - absLocal.z);
     
     // 7. UV 프로젝션 (YZ 평면 사용)
-    float2 decalUV;
-    decalUV.x = decalLocal.y * 1.0f + 0.5f;
-    decalUV.y = decalLocal.z * -1.0f + 0.5f;
+    float2 decalUV = decalLocal.yz + 0.5f;
+    decalUV.y = 1.0f - decalUV.y; 
     
     // 8. Decal 텍스처 샘플링
     float4 decalColor = DecalAlbedo.Sample(LinearSampler, decalUV);
-    decalColor.a *= edgeFade;
-
-    // 9. 페이드 효과 (선택적 적용)
+    
+    // 9. 페이드 효과 (Spotlight 원형 감쇠 및 경계면 페이드)
     if (bUseFade != 0)
     {
-        // 2D 원형 감쇠
-        float2 uvCenter = decalUV - 0.5f; 
-        float dist = length(uvCenter); 
-        float spotFade = 1.0f - smoothstep(FadeInner, FadeOuter, dist);
-
-        decalColor.a *= spotFade;
+        // 경계면 노이즈 방지
+        float edgeFade = 1.0f;
+        edgeFade *= smoothstep(0.5f, 0.4f, absLocal.x);
+        edgeFade *= smoothstep(0.5f, 0.45f, absLocal.y);
+        edgeFade *= smoothstep(0.5f, 0.45f, absLocal.z);
+        
+        float dist = length(decalLocal.yz) * 2.0f; 
+        float spotFade = smoothstep(FadeOuter, FadeInner, dist);
+        
+        decalColor.a *= edgeFade * spotFade;
     }
 
-    // 10. Alpha 기반 클리핑 완화 (거친 테두리 방지)
-    clip(decalColor.a - 0.001f);
+    // 10. 최종 출력
+    clip(decalColor.a - 0.01f);
     
     return decalColor;
 }

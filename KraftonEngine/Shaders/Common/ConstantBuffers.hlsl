@@ -13,8 +13,8 @@ cbuffer FrameBuffer : register(b0)
     float bIsWireframe;
     float3 WireframeRGB;
     float Time;
-    float3 _framePad;
-
+    float2 InvViewportSize;
+    float _framePad[1];
 }
 
 // b1: 오브젝트별 — 월드 변환, 색상
