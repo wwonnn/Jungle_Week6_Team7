@@ -1,19 +1,24 @@
 ﻿#include "SpotLightActor.h"
 #include "Component/DecalComponent.h"
 #include "Component/BillboardComponent.h"
+#include "Component/SceneComponent.h"
 
 IMPLEMENT_CLASS(ASpotLightActor, AActor)
 
 void ASpotLightActor::InitDefaultComponents()
 {
-	// 빛의 근원지
+	// 액터의 기준점이 될 비가시적 루트 컴포넌트 생성 (PIE에서도 항상 존재)
+	Root = AddComponent<USceneComponent>();
+	SetRootComponent(Root);
+
+	// 빛의 근원지 아이콘 (에디터 전용)
 	LightSource = AddComponent<UBillboardComponent>();
-	SetRootComponent(LightSource);
+	LightSource->AttachToComponent(Root);
 	LightSource->SetTexture("SpotLight");
 
 	// 바닥에 맺히는 빛
 	FloorDecal = AddComponent<UDecalComponent>();
-	FloorDecal->AttachToComponent(LightSource);
+	FloorDecal->AttachToComponent(Root);
 	FloorDecal->SetTexture("Floor_Light");
 	FloorDecal->SetRelativeRotation(FVector(0.f, 90.f, 0.f));
 
