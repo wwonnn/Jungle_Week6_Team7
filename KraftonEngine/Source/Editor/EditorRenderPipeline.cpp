@@ -112,8 +112,7 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 
 		if (UGizmoComponent* Gizmo = Editor->GetGizmo())
 		{
-			if (bPIE) Gizmo->Deactivate();
-			else Gizmo->UpdateAxisMask(Opts.ViewportType);
+			Gizmo->UpdateAxisMask(Opts.ViewportType);
 		}
 
 		if (!bPIE)
