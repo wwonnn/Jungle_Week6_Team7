@@ -46,7 +46,8 @@ float4 PS(PS_Input_PosW input, float4 screenPos : SV_Position) : SV_TARGET
     clip(sceneDepth < 0.9999f ? 1 : -1);
     
     // 4. Screen UV + Depth → World Position 복원
-    float biasedDepth = sceneDepth - 0.00005f;
+    // Bias를 최소화하여 지형과의 밀착도 향상 (일렁임 방지)
+    float biasedDepth = sceneDepth - 0.000001f; 
     float3 worldPos = ReconstructWorldPos(screenUV, biasedDepth);
 
     // 5. World → Decal Local 좌표 변환
