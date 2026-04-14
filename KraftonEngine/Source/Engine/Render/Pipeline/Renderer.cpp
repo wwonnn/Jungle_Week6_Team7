@@ -265,24 +265,22 @@ void FRenderer::InitializePassRenderStates()
 	auto& S = PassRenderStates;
 
 	//                              DepthStencil                    Blend                Rasterizer                   Topology                                WireframeAware
-	S[(uint32)E::Opaque] = { EDepthStencilState::Default,      EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
-	S[(uint32)E::Decal] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidFrontCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
-	S[(uint32)E::Font] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
-	S[(uint32)E::SubUV] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
-	S[(uint32)E::Translucent] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::Fog] = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlendKeepAlpha, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::Editor] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
-	S[(uint32)E::Grid] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     false };
-	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite,  EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::PostProcess] = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::FireBall] = { EDepthStencilState::NoDepth,       EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::FXAA] = { EDepthStencilState::NoDepth,       EBlendState::Opaque,     ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::Editor] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
-	S[(uint32)E::Grid] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     false };
-	S[(uint32)E::Billboard] = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
-	S[(uint32)E::GizmoOuter] = { EDepthStencilState::GizmoOutside, EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::GizmoInner] = { EDepthStencilState::GizmoInside,  EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
-	S[(uint32)E::OverlayFont] = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Opaque]        = { EDepthStencilState::Default,      EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::Decal]         = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidFrontCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::FireBall]      = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Font]          = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::SubUV]         = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::Translucent]   = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Fog]           = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlendKeepAlpha, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Editor]        = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
+	S[(uint32)E::Grid]          = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     false };
+	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite, EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::PostProcess]   = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::Billboard]     = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
+	S[(uint32)E::FXAA]          = { EDepthStencilState::NoDepth,      EBlendState::Opaque,     ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::GizmoOuter]    = { EDepthStencilState::GizmoOutside, EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::GizmoInner]    = { EDepthStencilState::GizmoInside,  EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::OverlayFont]   = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 }
 
 // ============================================================
@@ -417,8 +415,11 @@ void FRenderer::ExecuteDecalPass(FRenderBus& InRenderBus, const TArray<const FPr
 	// Decal SRV 해제 + DSV 복구
 	ID3D11DepthStencilView* DSV = InRenderBus.GetViewportDSV();
 	ID3D11ShaderResourceView* NullSRV = nullptr;
+	ID3D11SamplerState* NullSampler = nullptr;
 	Context->PSSetShaderResources(0, 1, &NullSRV);
 	Context->PSSetShaderResources(1, 1, &NullSRV);
+	Context->PSSetSamplers(0, 1, &NullSampler);
+	Context->PSSetSamplers(1, 1, &NullSampler);
 	Context->OMSetRenderTargets(1, &RTV, DSV);
 }
 
@@ -739,6 +740,11 @@ void FRenderer::ApplyPassRenderState(ERenderPass Pass, ID3D11DeviceContext* Cont
 	Device.SetBlendState(State.Blend);
 	Device.SetRasterizerState(Rasterizer);
 	Context->IASetPrimitiveTopology(State.Topology);
+
+	// 기본 샘플러 바인딩 (s0, s1 모두 Linear)
+	ID3D11SamplerState* Linear = Resources.DefaultSampler;
+	Context->PSSetSamplers(0, 1, &Linear);
+	Context->PSSetSamplers(1, 1, &Linear);
 }
 
 // ============================================================
@@ -748,7 +754,7 @@ void FRenderer::DrawPostProcessOutline(FRenderBus& Bus, ID3D11DeviceContext* Con
 {
 	ID3D11ShaderResourceView* StencilSRV = Bus.GetViewportStencilSRV();
 	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
-	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	ID3D11RenderTargetView* RTV = Bus.GetCurrentRTV();
 	if (!StencilSRV || !RTV) return;
 
 	// SelectionMask 큐가 비어 있으면 선택된 오브젝트 없음 → 스킵
@@ -800,7 +806,7 @@ void FRenderer::DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Contex
 
 	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
 	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
-	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	ID3D11RenderTargetView* RTV = Bus.GetCurrentRTV();
 	if (!DepthSRV || !RTV) return;
 
 	// 1) DSV 언바인딩 (DepthSRV와 동시 바인딩 불가)
@@ -865,6 +871,13 @@ void FRenderer::UpdateFrameBuffer(ID3D11DeviceContext* Context, const FRenderBus
 	frameConstantData.InvViewProj = frameConstantData.ViewProjection.GetInverse();
 	frameConstantData.bIsWireframe = (InRenderBus.GetViewMode() == EViewMode::Wireframe);
 	frameConstantData.WireframeColor = InRenderBus.GetWireframeColor();
+
+	float viewportWidth = static_cast<float>(InRenderBus.GetViewportWidth());
+	float viewportHeight = static_cast<float>(InRenderBus.GetViewportHeight());
+	if (viewportWidth > 0 && viewportHeight > 0)
+	{
+		frameConstantData.InvViewportSize = FVector2(1.0f / viewportWidth, 1.0f / viewportHeight);
+	}
 
 	if (GEngine && GEngine->GetTimer())
 	{
