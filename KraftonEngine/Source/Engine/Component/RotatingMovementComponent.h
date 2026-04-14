@@ -17,5 +17,12 @@ public:
 	void Serialize(FArchive& Ar) override;
 
 private:
+	// 초당 회전 속도 (Pitch, Yaw, Roll)
 	FRotator RotationRate = FRotator(0.0f, 90.0f, 0.0f);
+
+	// 회전 중심점 오프셋 (UpdatedComponent의 위치 기준 로컬 오프셋)
+	FVector PivotTranslation = FVector(0.0f, 0.0f, 0.0f);
+
+	// 로컬 공간에서 회전할지 여부
+	bool bRotationInLocalSpace = true;
 };
