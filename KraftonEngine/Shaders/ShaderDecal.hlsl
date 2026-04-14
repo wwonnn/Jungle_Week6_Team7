@@ -5,7 +5,7 @@ Texture2D SceneDepth : register(t0);        // Z-Buffer (SRV)
 Texture2D DecalAlbedo : register(t1);       // Decal 텍스처
 SamplerState PointSampler : register(s0);
 SamplerState LinearSampler : register(s1);
-SamplerState AnisoSampler : register(s1);   // Renderer에서 슬롯 1에 Aniso 바인딩함
+// SamplerState AnisoSampler : register(s1);   // Renderer에서 슬롯 1에 Aniso 바인딩함 (충돌 방지)
 
 // Decal OBB Local -> Screen MVP 변환
 PS_Input_PosW VS(VS_Input_PC input)
@@ -55,11 +55,10 @@ float4 PS(PS_Input_PosW input, float4 screenPos : SV_Position) : SV_TARGET
     // 6. Decal OBB 범위 체크 (-0.5 ~ 0.5)
     float3 absLocal = abs(decalLocal.xyz);
     
-    // 경계면 노이즈 방지
-    float edgeFade = 1.0f;
-    edgeFade *= smoothstep(0.5f, 0.4f, absLocal.x);
-    edgeFade *= smoothstep(0.5f, 0.45f, absLocal.y);
-    edgeFade *= smoothstep(0.5f, 0.45f, absLocal.z);
+    // OBB 영역을 벗어나는 픽셀은 즉시 폐기하여 늘어짐/반복 현상 방지
+    clip(0.5f - absLocal.x);
+    clip(0.5f - absLocal.y);
+    clip(0.5f - absLocal.z);
     
     // 7. UV 프로젝션 (YZ 평면 사용)
     float2 decalUV = decalLocal.yz + 0.5f;
@@ -68,14 +67,19 @@ float4 PS(PS_Input_PosW input, float4 screenPos : SV_Position) : SV_TARGET
     // 8. Decal 텍스처 샘플링
     float4 decalColor = DecalAlbedo.Sample(LinearSampler, decalUV);
     
-    decalColor.a *= edgeFade;
-
-    // 9. 페이드 효과 (Spotlight 원형 감쇠)
+    // 9. 페이드 효과 (Spotlight 원형 감쇠 및 경계면 페이드)
     if (bUseFade != 0)
     {
+        // 경계면 노이즈 방지
+        float edgeFade = 1.0f;
+        edgeFade *= smoothstep(0.5f, 0.4f, absLocal.x);
+        edgeFade *= smoothstep(0.5f, 0.45f, absLocal.y);
+        edgeFade *= smoothstep(0.5f, 0.45f, absLocal.z);
+        
         float dist = length(decalLocal.yz) * 2.0f; 
         float spotFade = smoothstep(FadeOuter, FadeInner, dist);
-        decalColor.a *= spotFade;
+        
+        decalColor.a *= edgeFade * spotFade;
     }
 
     // 10. 최종 출력
