@@ -70,5 +70,6 @@ void FObjViewerRenderPipeline::RenderPreviewViewport(FRenderer& Renderer)
 	Renderer.PrepareBatchers(Bus);
 	Renderer.Render(Bus);
 
-	VP->SetHasPostProcessed(true);
+	VP->SetCurrentRenderTarget(Bus.GetCurrentRTV(), Bus.GetCurrentSRV());
+	VP->SetHasPostProcessed(Bus.HasPostProcessOutput());
 }

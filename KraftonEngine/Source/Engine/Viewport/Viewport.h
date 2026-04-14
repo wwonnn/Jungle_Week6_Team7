@@ -24,7 +24,7 @@ public:
 	void BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4] = nullptr);
 
 	// ViewportClient 참조
-	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }       
+	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }
 	FViewportClient* GetClient() const { return ViewportClient; }
 
 	// 크기
@@ -33,9 +33,13 @@ public:
 
 	// D3D 리소스 접근자
 	ID3D11RenderTargetView* GetRTV() const { return RTV; }
-	ID3D11ShaderResourceView* GetSRV() const { return bHasPostProcessed ? PSRV : SRV; }
+	ID3D11ShaderResourceView* GetSRV() const { return bHasPostProcessed && CurrentSRV ? CurrentSRV : SRV; }
+	ID3D11RenderTargetView* GetBaseRTV() const { return RTV; }
 	ID3D11ShaderResourceView* GetBaseSRV() const { return SRV; }
-	ID3D11RenderTargetView* GetPostProcessRTV() const { return PRTV; }
+	ID3D11RenderTargetView* GetPostProcessRTV1() const { return PRTV1; }
+	ID3D11ShaderResourceView* GetPostProcessSRV1() const { return PSRV1; }
+	ID3D11RenderTargetView* GetPostProcessRTV2() const { return PRTV2; }
+	ID3D11ShaderResourceView* GetPostProcessSRV2() const { return PSRV2; }
 
 	ID3D11ShaderResourceView* GetDepthSRV() const { return DepthSRV; }
 	ID3D11ShaderResourceView* GetStencilSRV() const { return StencilSRV; }
@@ -43,6 +47,14 @@ public:
 	const D3D11_VIEWPORT& GetViewportRect() const { return ViewportRect; }
 
 	void SetHasPostProcessed(bool bInHasPP) { bHasPostProcessed = bInHasPP; }
+
+	void SetCurrentRenderTarget(ID3D11RenderTargetView* InRTV, ID3D11ShaderResourceView* InSRV)
+	{
+		CurrentRTV = InRTV;
+		CurrentSRV = InSRV;
+	}
+	ID3D11RenderTargetView* GetCurrentRTV() const { return CurrentRTV; }
+	ID3D11ShaderResourceView* GetCurrentSRV() const { return CurrentSRV; }
 
 private:
 	bool CreateResources();
@@ -59,9 +71,19 @@ private:
 	ID3D11ShaderResourceView* SRV = nullptr;
 
 	// 렌더 타깃 2 (PostProcess 결과용)
-	ID3D11Texture2D* PSTexture = nullptr;
-	ID3D11RenderTargetView* PRTV = nullptr;
-	ID3D11ShaderResourceView* PSRV = nullptr;
+	ID3D11Texture2D* PSTexture1 = nullptr;
+	ID3D11RenderTargetView* PRTV1 = nullptr;
+	ID3D11ShaderResourceView* PSRV1 = nullptr;
+
+	// 렌더 타깃 3 (PostProcess Ping-Pong용)
+	ID3D11Texture2D* PSTexture2 = nullptr;
+	ID3D11RenderTargetView* PRTV2 = nullptr;
+	ID3D11ShaderResourceView* PSRV2 = nullptr;
+
+	// 렌더 타깃 추적용
+	ID3D11RenderTargetView* CurrentRTV = nullptr;
+	ID3D11ShaderResourceView* CurrentSRV = nullptr;
+
 
 	bool bHasPostProcessed = false;
 

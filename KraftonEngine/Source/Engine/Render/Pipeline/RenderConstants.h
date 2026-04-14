@@ -25,6 +25,7 @@ namespace ECBSlot
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
 	constexpr uint32 Decal = 5;    // b5: Decal properties
 	constexpr uint32 Fog = 6;         // b5: Height Fog parameters
+	constexpr uint32 FireBall = 7;   // b6: FireBall properties
 }
 
 //PerObject
@@ -162,7 +163,7 @@ struct FSubUVConstants
 struct FBillboardConstants
 {
 	const FTextureResource* Texture = nullptr;
-	float Width  = 1.0f;
+	float Width = 1.0f;
 	float Height = 1.0f;
 };
 
@@ -208,6 +209,25 @@ struct FDebugLineEntry
 	FVector Start;
 	FVector End;
 	FColor  Color;
+};
+
+struct FFireBallEntry
+{
+	FVector Center;
+	float _Padding;
+	float Intensity;
+	float Radius;
+	float RadiusFallOff;
+	float _Padding2;
+	FVector4 Color;
+};
+
+struct FFireBallConstnats
+{
+	FMatrix InvViewProj;
+	uint32 FireBallCount;
+	float _Padding[3];
+	FFireBallEntry FireBalls[16];	// 최대 16개까지 지원
 };
 
 // 스크린 공간 텍스트 — Overlay Stats 등에서 사용
