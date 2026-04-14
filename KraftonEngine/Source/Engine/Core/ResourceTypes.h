@@ -16,6 +16,11 @@ struct FTextureAtlasResource
 	ID3D11ShaderResourceView* SRV = nullptr; // GPU에 로드된 텍스처 SRV
 	uint64 TrackedMemoryBytes = 0;
 
+	// CPU-side pixel data for picking (RGBA8 format)
+	TArray<uint8> PixelData;
+	uint32 Width = 0;
+	uint32 Height = 0;
+
 	uint32 Columns = 1;						// 아틀라스 가로 프레임(셀) 수
 	uint32 Rows    = 1;						// 아틀라스 세로 프레임(셀) 수
 

@@ -53,8 +53,12 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     
     // 6. Decal OBB 범위 체크 (-0.5 ~ 0.5)
     float3 absLocal = abs(decalLocal.xyz);
-    clip(all(absLocal <= 0.5f) ? 1 : -1);
-
+    // 거친 clip 대신 부드러운 감쇠 사용
+    float edgeFade = 1.0f;
+    edgeFade *= 1.0f - smoothstep(0.48f, 0.5f, absLocal.x);
+    edgeFade *= 1.0f - smoothstep(0.48f, 0.5f, absLocal.y);
+    edgeFade *= 1.0f - smoothstep(0.48f, 0.5f, absLocal.z);
+    
     // 7. UV 프로젝션 (YZ 평면 사용)
     float2 decalUV;
     decalUV.x = decalLocal.y * 1.0f + 0.5f;
@@ -62,25 +66,21 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     
     // 8. Decal 텍스처 샘플링
     float4 decalColor = DecalAlbedo.Sample(LinearSampler, decalUV);
-    
+    decalColor.a *= edgeFade;
+
     // 9. 페이드 효과 (선택적 적용)
     if (bUseFade != 0)
     {
-        // 깊이 축 감쇠 (박스의 끝부분에서 부드럽게 사라지게 함)
-        const float fadeStart = 0.4f;
-        const float fadeEnd = 0.5f;
-        float depthFade = 1.0f - smoothstep(fadeStart, fadeEnd, absLocal.x);
-        
         // 2D 원형 감쇠
         float2 uvCenter = decalUV - 0.5f; 
         float dist = length(uvCenter); 
         float spotFade = 1.0f - smoothstep(FadeInner, FadeOuter, dist);
 
-        decalColor.a *= spotFade * depthFade;
+        decalColor.a *= spotFade;
     }
 
-    // 10. Alpha 기반 클리핑
-    clip(decalColor.a - 0.01f);
+    // 10. Alpha 기반 클리핑 완화 (거친 테두리 방지)
+    clip(decalColor.a - 0.001f);
     
     return decalColor;
 }
