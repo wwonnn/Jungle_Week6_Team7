@@ -184,6 +184,12 @@ void UWorld::UpdateActorInOctree(AActor* Actor)
 	InvalidateVisibleSet();
 }
 
+TArray<UPrimitiveComponent*> UWorld::QueryOBB(const FOBB& OBB)
+{
+	WorldPrimitivePickingBVH.EnsureBuilt(GetActors());
+	return WorldPrimitivePickingBVH.QueryOBB(OBB);
+}
+
 // LOD 상수 및 SelectLOD는 LODContext.h에 정의
 
 static float DistanceSquared(const FVector& A, const FVector& B)

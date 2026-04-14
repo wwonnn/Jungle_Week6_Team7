@@ -34,6 +34,7 @@ enum class ERenderPass : uint32
 {
 	Opaque,
 	Decal,
+	MeshDecal,
 	FireBall,
 	Font,
 	SubUV,
@@ -56,6 +57,7 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 	static const char* Names[] = {
 		"RenderPass::Opaque",
 		"RenderPass::Decal",
+		"RenderPass::MeshDecal",
 		"RenderPass::FireBall",
 		"RenderPass::Font",
 		"RenderPass::SubUV",

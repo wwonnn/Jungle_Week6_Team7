@@ -52,14 +52,20 @@ cbuffer MaterialBuffer : register(b4)
     float4 SectionColor;
 }
 
+cbuffer MeshDecalBuffer : register(b8)
+{
+    float DecalOpacity;
+    float3 _Padding;
+}
+
 // b5: Decal 
 cbuffer DecalBuffer : register(b5)
 {
     float4x4 WorldToDecal; // World → Decal Local (-1~1)
     
-    float FadeInner;    // Spot Fade 시작
-    float FadeOuter;    // Spot Fade 끝
-    int   bUseFade;     // Fade 효과 활성화 여부
+    float FadeInner; // Spot Fade 시작
+    float FadeOuter; // Spot Fade 끝
+    int bUseFade; // Fade 효과 활성화 여부
     float3 _decalPad;
 };
 

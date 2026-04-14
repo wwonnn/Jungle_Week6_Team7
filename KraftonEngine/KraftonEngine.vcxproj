@@ -310,9 +310,10 @@
     <ClCompile Include="Source\Engine\Component\GizmoComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\HeightFogComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\MeshComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\MeshDecalComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\ProjectileMovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\MovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\PrimitiveComponent.cpp" />
-    <ClCompile Include="Source\Engine\Component\ProjectileMovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\RotatingMovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\SceneComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\StaticMeshComponent.cpp" />
@@ -323,8 +324,10 @@
     <ClCompile Include="Source\Engine\GameFramework\AActor.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\DecalActor.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\ExponentialHeightFogActor.cpp" />
+    <ClCompile Include="Source\Engine\GameFramework\FireBallActor.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\Level.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\SpotLightActor.cpp" />
+    <ClCompile Include="Source\Engine\GameFramework\MeshDecalActor.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\StaticMeshActor.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\World.cpp" />
     <ClCompile Include="Source\Engine\Input\InputSystem.cpp" />
@@ -367,6 +370,7 @@
     <ClCompile Include="Source\Engine\Render\Pipeline\Renderer.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\BillboardSceneProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\DecalSceneProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\DecalMeshSceneProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\FScene.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\GizmoSceneProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\PrimitiveSceneProxy.cpp" />
@@ -425,6 +429,7 @@
     <ClInclude Include="Source\Editor\Viewport\FLevelViewportLayout.h" />
     <ClInclude Include="Source\Editor\Viewport\LevelEditorViewportClient.h" />
     <ClInclude Include="Source\Engine\Collision\MeshTrianglePickingBVH.h" />
+    <ClInclude Include="Source\Engine\Collision\OBB.h" />
     <ClInclude Include="Source\Engine\Collision\Octree.h" />
     <ClInclude Include="Source\Engine\Collision\RayUtils.h" />
     <ClInclude Include="Source\Engine\Collision\RayUtilsSIMD.h" />
@@ -438,9 +443,10 @@
     <ClInclude Include="Source\Engine\Component\GizmoComponent.h" />
     <ClInclude Include="Source\Engine\Component\HeightFogComponent.h" />
     <ClInclude Include="Source\Engine\Component\MeshComponent.h" />
+    <ClInclude Include="Source\Engine\Component\MeshDecalComponent.h" />
+    <ClInclude Include="Source\Engine\Component\ProjectileMovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\MovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\PrimitiveComponent.h" />
-    <ClInclude Include="Source\Engine\Component\ProjectileMovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\RotatingMovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\SceneComponent.h" />
     <ClInclude Include="Source\Engine\Component\StaticMeshComponent.h" />
@@ -459,8 +465,10 @@
     <ClInclude Include="Source\Engine\GameFramework\AActor.h" />
     <ClInclude Include="Source\Engine\GameFramework\DecalActor.h" />
     <ClInclude Include="Source\Engine\GameFramework\ExponentialHeightFogActor.h" />
+    <ClInclude Include="Source\Engine\GameFramework\FireBallActor.h" />
     <ClInclude Include="Source\Engine\GameFramework\Level.h" />
     <ClInclude Include="Source\Engine\GameFramework\SpotLightActor.h" />
+    <ClInclude Include="Source\Engine\GameFramework\MeshDecalActor.h" />
     <ClInclude Include="Source\Engine\GameFramework\StaticMeshActor.h" />
     <ClInclude Include="Source\Engine\GameFramework\World.h" />
     <ClInclude Include="Source\Engine\GameFramework\WorldContext.h" />
@@ -513,6 +521,7 @@
     <ClInclude Include="Source\Engine\Render\Pipeline\Renderer.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\BillboardSceneProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\DecalSceneProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\DecalMeshSceneProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\DirtyFlag.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\FScene.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\GizmoSceneProxy.h" />

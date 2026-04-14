@@ -48,6 +48,9 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	Shaders[(uint32)EShaderType::HeightFog].Create(InDevice, L"Shaders/HeightFog.hlsl",
 		"VS", "PS", nullptr, 0);
 
+	Shaders[(uint32)EShaderType::MeshDecal].Create(InDevice, L"Shaders/MeshDecalShader.hlsl",
+		"VS", "PS", FVertexPNCTInputLayout, ARRAYSIZE(FVertexPNCTInputLayout));
+
 	bIsInitialized = true;
 }
 
