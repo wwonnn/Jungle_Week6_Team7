@@ -1,7 +1,6 @@
 ﻿#include "FireBallActor.h"
 #include "Component/StaticMeshComponent.h"
-#include "Component/DecalComponent.h"
-#include "Component/BillboardComponent.h"
+#include "Component/FireBallComponent.h"
 #include "Mesh/ObjManager.h"
 #include "Engine/Runtime/Engine.h"
 IMPLEMENT_CLASS(AFireBallActor, AActor)
@@ -12,8 +11,10 @@ AFireBallActor::AFireBallActor()
 
 void AFireBallActor::InitDefaultComponents()
 {
+	FireBallComp = AddComponent<UFireBallComponent>();
+	SetRootComponent(FireBallComp);
 	StaticMeshComp = AddComponent<UStaticMeshComponent>();
-	SetRootComponent(StaticMeshComp);
+	StaticMeshComp->AttachToComponent(FireBallComp);
 
 	ID3D11Device* Device = GEngine->GetRenderer().GetFD3DDevice().GetDevice();
 	UStaticMesh* DefaultMesh = FObjManager::LoadObjStaticMesh("Data/BasicShape/Sphere.OBJ", Device);
@@ -23,13 +24,6 @@ void AFireBallActor::InitDefaultComponents()
 		StaticMeshComp->SetStaticMesh(DefaultMesh);
 	}
 
-	DecalComp = AddComponent<UDecalComponent>();
-	DecalComp->AttachToComponent(StaticMeshComp);
-	DecalComp->SetRelativeRotation(FVector(0.f, 90.f, 0.f));
-
-	SpriteComp = AddComponent<UBillboardComponent>();
-	SpriteComp->SetTexture("DecalActor");
-	SpriteComp->AttachToComponent(DecalComp);
 }
 
 void AFireBallActor::TickActor(float DeltaSeconds, ELevelTick TickType, FActorTickFunction& ThisTickFunction)

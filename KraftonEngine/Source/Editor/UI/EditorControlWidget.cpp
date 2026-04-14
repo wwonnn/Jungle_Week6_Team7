@@ -11,6 +11,7 @@
 #include "GameFramework/SpotLightActor.h"
 #include "GameFramework/ExponentialHeightFogActor.h"
 #include "GameFramework/MeshDecalActor.h"
+#include "GameFramework/FireBallActor.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
 
@@ -85,6 +86,14 @@ void FEditorControlWidget::Render(float DeltaTime)
 			case 5:
 			{
 				AMeshDecalActor* Actor = World->SpawnActor<AMeshDecalActor>();
+				Actor->SetActorLocation(CurSpawnPoint);
+				Actor->InitDefaultComponents();
+				World->InsertActorToOctree(Actor);
+				break;
+			}
+			case 6:
+			{
+				AFireBallActor* Actor = World->SpawnActor<AFireBallActor>();
 				Actor->SetActorLocation(CurSpawnPoint);
 				Actor->InitDefaultComponents();
 				World->InsertActorToOctree(Actor);
