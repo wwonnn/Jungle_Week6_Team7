@@ -1,4 +1,4 @@
-#include "MeshBufferManager.h"
+﻿#include "MeshBufferManager.h"
 #include "Math/MathUtils.h"
 
 void FMeshBufferManager::Initialize(ID3D11Device* InDevice)
@@ -56,6 +56,7 @@ void FMeshBufferManager::CreatePrimitiveMeshData()
 	CreateRotationGizmo();
 	CreateScaleGizmo();
 	CreateQuad();
+	CreateArrow();
 }
 
 void FMeshBufferManager::CreateCube()
@@ -269,6 +270,51 @@ void FMeshBufferManager::CreateQuad()
 	vertices.push_back({ FVector(0.0f, -0.5f, -0.5f), DefaultColor, 0 });
 
 	indices.assign({ 0, 1, 2, 0, 2, 3 });
+}
+
+void FMeshBufferManager::CreateArrow()
+{
+	FMeshData& Data = MeshDataMap[EMeshShape::Arrow];
+	TArray<FVertex>& vertices = Data.Vertices;
+	TArray<uint32>& indices = Data.Indices;
+
+	const int32 segments = 16;
+	const float radius = 0.04f;
+	const float headRadius = 0.1f;
+	const float stemLength = 0.8f;
+	const float totalLength = 1.0f;
+
+	FVector4 DefaultColor(0.1f, 0.1f, 0.7f, 1.0f);
+
+	for (int32 i = 0; i <= segments; ++i)
+	{
+		float angle = (2.0f * M_PI * i) / segments;
+		float c = cos(angle);
+		float s = sin(angle);
+
+		vertices.push_back({ FVector(0.0f,       c * radius,     s * radius),     DefaultColor, 0 });
+		vertices.push_back({ FVector(stemLength, c * radius,     s * radius),     DefaultColor, 0 });
+		vertices.push_back({ FVector(stemLength, c * headRadius, s * headRadius), DefaultColor, 0 });
+	}
+
+	vertices.push_back({ FVector(totalLength, 0, 0), DefaultColor, 0 });
+	int32 tipIndex = (int32)vertices.size() - 1;
+
+	vertices.push_back({ FVector(stemLength, 0, 0), DefaultColor, 0 });
+	int32 baseCenterIndex = (int32)vertices.size() - 1;
+
+	for (int32 i = 0; i < segments; ++i)
+	{
+		int32 curr = i * 3;
+		int32 next = (i + 1) * 3;
+
+		indices.push_back(curr);     indices.push_back(curr + 1); indices.push_back(next + 1);
+		indices.push_back(curr);     indices.push_back(next + 1); indices.push_back(next);
+		indices.push_back(curr + 1); indices.push_back(next + 2); indices.push_back(curr + 2);
+		indices.push_back(curr + 1); indices.push_back(next + 1); indices.push_back(next + 2);
+		indices.push_back(curr + 2); indices.push_back(next + 2); indices.push_back(tipIndex);
+		indices.push_back(baseCenterIndex); indices.push_back(next + 2); indices.push_back(curr + 2);
+	}
 }
 
 void FMeshBufferManager::CreateTranslationGizmo()

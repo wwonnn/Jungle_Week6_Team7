@@ -28,6 +28,9 @@ public:
 	virtual void Activate();
 	virtual void Deactivate();
 
+	// 처음 생성되었을 때
+	virtual void InitializeComponent() {};
+
 	void SetActive(bool bNewActive);
 	inline void SetAutoActivate(bool bNewAutoActivate) { bAutoActivate = bNewAutoActivate; }
 	inline void SetComponentTickEnabled(bool bEnabled) {

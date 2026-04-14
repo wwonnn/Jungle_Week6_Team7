@@ -3,8 +3,20 @@
 #include "Serialization/Archive.h"
 #include "Resource/ResourceManager.h"
 #include "Core/ResourceTypes.h"
+#include "Component/ArrowComponent.h"
+#include "GameFramework/AActor.h"
 
 IMPLEMENT_CLASS(UDecalComponent, UPrimitiveComponent)
+
+void UDecalComponent::InitializeComponent()
+{
+	if (Owner != nullptr && ArrowComponent == nullptr)
+	{
+		ArrowComponent = Owner->AddComponent<UArrowComponent>();
+		ArrowComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+		ArrowComponent->AttachToComponent(this);
+	}
+}
 
 FMeshBuffer* UDecalComponent::GetMeshBuffer() const
 {

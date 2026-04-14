@@ -548,7 +548,15 @@
     <ClCompile Include="Source\Engine\GameFramework\MeshDecalActor.cpp" />
     <ClCompile Include="Source\Engine\Component\MeshComponent.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\ExponentialHeightFogActor.cpp" />
-    <ClCompile Include="Source\Engine\GameFramework\DecalActor.cpp" />
+    <ClCompile Include="Source\Engine\Component\ArrowComponent.cpp">
+      <Filter>Source\Engine\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Render\Proxy\ArrowSceneProxy.cpp">
+      <Filter>Source\Engine\Render\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\DecalActor.cpp">
+      <Filter>Source\Engine\GameFramework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Editor\EditorEngine.h">
@@ -1013,7 +1021,15 @@
     <ClInclude Include="Source\Engine\GameFramework\MeshDecalActor.h" />
     <ClInclude Include="Source\Engine\Component\MeshComponent.h" />
     <ClInclude Include="Source\Engine\GameFramework\ExponentialHeightFogActor.h" />
-    <ClInclude Include="Source\Engine\GameFramework\DecalActor.h" />
+    <ClInclude Include="Source\Engine\Component\ArrowComponent.h">
+      <Filter>Source\Engine\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Render\Proxy\ArrowSceneProxy.h">
+      <Filter>Source\Engine\Render\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\DecalActor.h">
+      <Filter>Source\Engine\GameFramework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KraftonEngine.rc" />

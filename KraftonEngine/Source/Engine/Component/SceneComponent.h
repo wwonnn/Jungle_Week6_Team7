@@ -63,6 +63,8 @@ public:
 
 	FMatrix GetRelativeMatrix() const;
 
+	bool IsGizmoActive() const { return bActiveGizmo; }
+
 	void Move(const FVector& Delta);
 	void MoveLocal(const FVector& Delta);
 	void Rotate(float DeltaYaw, float DeltaPitch);
@@ -71,9 +73,10 @@ protected:
 	USceneComponent* ParentComponent = nullptr;
 	TArray<USceneComponent*> ChildComponents;
 
-
+	bool bActiveGizmo = true; // false면 선택 시에도 Gizmo 비활성화
 	mutable bool bTransformDirty = true;
 
+	bool bInheritScale = true;
 	FTransform RelativeTransform;
 	mutable FRotator CachedEditRotator;	// 에디터 프로퍼티 바인딩용 (Euler 캐시)
 	mutable bool bCachedEulerDirty = true;	// Quat가 외부에서 변경됐을 때만 Euler 재계산

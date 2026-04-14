@@ -512,6 +512,19 @@ FVector FMatrix::GetScale() const
 	return FVector(ScaleX, ScaleY, ScaleZ);
 }
 
+FMatrix FMatrix::RemoveScale() const
+{
+	FVector AxisX = FVector(M[0][0], M[0][1], M[0][2]).Normalized();
+	FVector AxisY = FVector(M[1][0], M[1][1], M[1][2]).Normalized();
+	FVector AxisZ = FVector(M[2][0], M[2][1], M[2][2]).Normalized();
+
+	FMatrix Result = *this;
+	Result.M[0][0] = AxisX.X; Result.M[0][1] = AxisX.Y; Result.M[0][2] = AxisX.Z;
+	Result.M[1][0] = AxisY.X; Result.M[1][1] = AxisY.Y; Result.M[1][2] = AxisY.Z;
+	Result.M[2][0] = AxisZ.X; Result.M[2][1] = AxisZ.Y; Result.M[2][2] = AxisZ.Z;
+	return Result;
+}
+
 void FMatrix::SetAxes(const FVector& Right, const FVector& Up, const FVector& Forward)
 {
 	M[0][0] = Right.X;   M[0][1] = Right.Y;   M[0][2] = Right.Z;   M[0][3] = 0.0f;

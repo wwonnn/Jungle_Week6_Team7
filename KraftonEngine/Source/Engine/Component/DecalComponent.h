@@ -6,6 +6,7 @@
 #include "Object/FName.h"
 
 class FPrimitiveSceneProxy;
+class UArrowComponent;
 
 class UDecalComponent : public UPrimitiveComponent
 {
@@ -14,6 +15,8 @@ public:
 
 	UDecalComponent() = default;
 	~UDecalComponent() override = default;
+
+	void InitializeComponent() override;
 
 	FMeshBuffer* GetMeshBuffer() const override;
 	FPrimitiveSceneProxy* CreateSceneProxy() override;
@@ -38,5 +41,7 @@ private:
 	bool bHasFade = false;
 	float FadeInner = 0.2f;
 	float FadeOuter = 0.6f;
+
+	UArrowComponent* ArrowComponent = nullptr;
 };
 
