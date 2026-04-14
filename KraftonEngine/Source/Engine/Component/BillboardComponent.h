@@ -35,6 +35,9 @@ public:
 	float GetWidth()  const { return Width; }
 	float GetHeight() const { return Height; }
 
+	void SetUseSquarePicking(bool bInSquare) { bUseSquarePicking = bInSquare; }
+	void SetUsePixelPerfectPicking(bool bInPixelPerfect) { bUsePixelPerfectPicking = bInPixelPerfect; }
+
 	// 주어진 카메라 방향으로 빌보드 월드 행렬을 계산 (per-view 렌더링용)
 	FMatrix ComputeBillboardMatrix(const FVector& CameraForward) const;
 
@@ -49,5 +52,7 @@ protected:
 
 	float Width  = 1.0f;
 	float Height = 1.0f;
+	bool bUseSquarePicking = false;
+	bool bUsePixelPerfectPicking = false;
 };
 
