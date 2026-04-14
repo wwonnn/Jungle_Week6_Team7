@@ -11,6 +11,8 @@ class UHeightFogComponent : public USceneComponent
 public:
 	DECLARE_CLASS(UHeightFogComponent, USceneComponent)
 
+	void CreateRenderState() override;
+	void DestroyRenderState() override;
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
 	void Serialize(FArchive& Ar) override;
 

@@ -1,7 +1,28 @@
 ﻿#include "HeightFogComponent.h"
 #include "Serialization/Archive.h"
+#include "GameFramework/AActor.h"
+#include "GameFramework/World.h"
+#include "Render/Proxy/FScene.h"
 
 IMPLEMENT_CLASS(UHeightFogComponent, USceneComponent)
+
+void UHeightFogComponent::CreateRenderState()
+{
+	USceneComponent::CreateRenderState();
+	if (GetOwner() && GetOwner()->GetWorld())
+	{
+		GetOwner()->GetWorld()->GetScene().AddFog(this);
+	}
+}
+
+void UHeightFogComponent::DestroyRenderState()
+{
+	if (GetOwner() && GetOwner()->GetWorld())
+	{
+		GetOwner()->GetWorld()->GetScene().RemoveFog(this);
+	}
+	USceneComponent::DestroyRenderState();
+}
 
 void UHeightFogComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {

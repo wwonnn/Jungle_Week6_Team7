@@ -54,43 +54,30 @@ void FRenderCollector::CollectFog(UWorld* World, FRenderBus& RenderBus)
 {
 	if (!World) return;
 
-	const bool bSceneDepthMode = (RenderBus.GetViewMode() == EViewMode::SceneDepth);
 	const bool bFogEnabled = RenderBus.GetShowFlags().bFog;
 
-	if (!bSceneDepthMode && !bFogEnabled) return;
+	if (!bFogEnabled) return;
 
 	// 첫 번째 HeightFogComponent를 찾아 포그 파라미터 설정
-	if (bFogEnabled)
+	for (AActor* Actor : World->GetActors())
 	{
-		for (AActor* Actor : World->GetActors())
+		if (!Actor) continue;
+		for (UActorComponent* Comp : Actor->GetComponents())
 		{
-			if (!Actor) continue;
-			for (UActorComponent* Comp : Actor->GetComponents())
-			{
-				UHeightFogComponent* FogComp = Cast<UHeightFogComponent>(Comp);
-				if (!FogComp) continue;
+			UHeightFogComponent* FogComp = Cast<UHeightFogComponent>(Comp);
+			if (!FogComp) continue;
 
-				FHeightFogConstants Params;
-				Params.FogInscatteringColor = FogComp->GetFogInscatteringColor();
-				Params.FogDensity = FogComp->GetFogDensity();
-				Params.FogHeightFalloff = FogComp->GetFogHeightFalloff();
-				Params.FogStartDistance = FogComp->GetStartDistance();
-				Params.FogCutoffDistance = FogComp->GetFogCutoffDistance();
-				Params.FogMaxOpacity = FogComp->GetFogMaxOpacity();
-				Params.FogHeight = FogComp->GetWorldLocation().Z;
-				Params.bSceneDepthMode = bSceneDepthMode ? 1 : 0;
-				RenderBus.SetFogParams(Params);
-				return;
-			}
+			FHeightFogConstants Params;
+			Params.FogInscatteringColor = FogComp->GetFogInscatteringColor();
+			Params.FogDensity = FogComp->GetFogDensity();
+			Params.FogHeightFalloff = FogComp->GetFogHeightFalloff();
+			Params.FogStartDistance = FogComp->GetStartDistance();
+			Params.FogCutoffDistance = FogComp->GetFogCutoffDistance();
+			Params.FogMaxOpacity = FogComp->GetFogMaxOpacity();
+			Params.FogHeight = FogComp->GetWorldLocation().Z;
+			RenderBus.SetFogParams(Params);
+			return;
 		}
-	}
-
-	// HeightFogComponent가 없어도 SceneDepth 모드는 동작해야 함
-	if (bSceneDepthMode)
-	{
-		FHeightFogConstants Params;
-		Params.bSceneDepthMode = 1;
-		RenderBus.SetFogParams(Params);
 	}
 }
 

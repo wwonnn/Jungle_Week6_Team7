@@ -50,6 +50,28 @@ FScene::~FScene()
 	DirtyProxies.clear();
 	SelectedProxies.clear();
 	NeverCullProxies.clear();
+	VisibleProxies.clear();
+	FogComponents.clear();
+}
+
+void FScene::AddFog(UHeightFogComponent* Fog)
+{
+	if (std::find(FogComponents.begin(), FogComponents.end(), Fog) == FogComponents.end())
+	{
+		FogComponents.push_back(Fog);
+	}
+}
+
+void FScene::RemoveFog(UHeightFogComponent* Fog)
+{
+	auto It = std::find(FogComponents.begin(), FogComponents.end(), Fog);
+	if (It != FogComponents.end())
+	{
+		FogComponents.erase(It);
+	}
+
+	SelectedProxies.clear();
+	NeverCullProxies.clear();
 	FreeSlots.clear();
 	VisibleProxies.clear();
 }

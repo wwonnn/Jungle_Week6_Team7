@@ -45,6 +45,9 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	Shaders[(uint32)EShaderType::HeightFog].Create(InDevice, L"Shaders/HeightFog.hlsl",
 		"VS", "PS", nullptr, 0);
 
+	Shaders[(uint32)EShaderType::SceneDepth].Create(InDevice, L"Shaders/SceneDepth.hlsl",
+		"VS", "PS", nullptr, 0);
+
 	bIsInitialized = true;
 }
 

@@ -76,9 +76,7 @@ cbuffer HeightFogCB : register(b6)
     float FogMaxOpacity;
 
     float FogHeight;
-    uint bSceneDepthMode;
-    float FogNearPlane;
-    float FogFarPlane;
+    float3 _fogPad;
 }
 
 #endif // CONSTANT_BUFFERS_HLSL

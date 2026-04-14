@@ -20,7 +20,7 @@ PS_Input VS(uint vertexID : SV_VertexID)
     output.uv = float2((vertexID << 1) & 2, vertexID & 2);
     output.position = float4(output.uv * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
     return output;
-}
+}   
 
 //하드웨어 깊이 → 월드 좌표 (CPU 계산 InvViewProj 사용)
 float3 ReconstructWorldPos(float2 uv, float hwDepth)
@@ -111,21 +111,6 @@ float4 PS(PS_Input input) : SV_TARGET
 {
     int2 coord = int2(input.position.xy);
     float depth = DepthTex.Load(int3(coord, 0)).r;
-
-    if (bSceneDepthMode)
-    {
-        if (depth >= 1.0)
-            return float4(1, 1, 1, 1); 
-
-        float linearZ = LinearizeDepth(depth);
-        float nearZ = FogNearPlane;
-        float farZ = FogFarPlane;
-        if (farZ <= nearZ) farZ = nearZ + 1000.0;
-
-        float normalized = saturate((linearZ - nearZ) / (farZ - nearZ));
-        float gray = normalized; 
-        return float4(gray, gray, gray, 1);
-    }
 
     // Sky (depth=1)  완전 안개
     if (depth >= 1.0)
