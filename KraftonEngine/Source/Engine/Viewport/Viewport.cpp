@@ -1,4 +1,4 @@
-#include "Viewport/Viewport.h"
+﻿#include "Viewport/Viewport.h"
 
 FViewport::~FViewport()
 {
@@ -62,6 +62,8 @@ void FViewport::BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4])
 	if (!RTV) return;
 
 	bHasPostProcessed = false;
+	CurrentRTV = RTV;
+	CurrentSRV = SRV;
 
 	const float DefaultColor[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
 	const float* Color = ClearColor ? ClearColor : DefaultColor;
@@ -98,13 +100,23 @@ bool FViewport::CreateResources()
 	if (FAILED(hr)) return false;
 
 	// ── 렌더 타깃 텍스처 2 (PostProcess용) ──
-	hr = Device->CreateTexture2D(&TexDesc, nullptr, &PSTexture);
+	hr = Device->CreateTexture2D(&TexDesc, nullptr, &PSTexture1);
 	if (FAILED(hr)) return false;
 
-	hr = Device->CreateRenderTargetView(PSTexture, nullptr, &PRTV);
+	hr = Device->CreateRenderTargetView(PSTexture1, nullptr, &PRTV1);
 	if (FAILED(hr)) return false;
 
-	hr = Device->CreateShaderResourceView(PSTexture, nullptr, &PSRV);
+	hr = Device->CreateShaderResourceView(PSTexture1, nullptr, &PSRV1);
+	if (FAILED(hr)) return false;
+
+	//렌더 타깃 텍스처3 (PostProcess용) ──
+	hr = Device->CreateTexture2D(&TexDesc, nullptr, &PSTexture2);
+	if (FAILED(hr)) return false;
+
+	hr = Device->CreateRenderTargetView(PSTexture2, nullptr, &PRTV2);
+	if (FAILED(hr)) return false;
+
+	hr = Device->CreateShaderResourceView(PSTexture2, nullptr, &PSRV2);
 	if (FAILED(hr)) return false;
 
 	// ── 뎁스/스텐실 (TYPELESS → DSV + StencilSRV) ──
@@ -157,6 +169,8 @@ bool FViewport::CreateResources()
 	ViewportRect.Height = static_cast<float>(Height);
 	ViewportRect.MinDepth = 0.0f;
 	ViewportRect.MaxDepth = 1.0f;
+	CurrentRTV = RTV;
+	CurrentSRV = SRV;
 
 	return true;
 }
@@ -167,9 +181,12 @@ void FViewport::ReleaseResources()
 	if (DepthSRV) { DepthSRV->Release(); DepthSRV = nullptr; }
 	if (DSV) { DSV->Release(); DSV = nullptr; }
 	if (DepthTexture) { DepthTexture->Release(); DepthTexture = nullptr; }
-	if (PSRV) { PSRV->Release(); PSRV = nullptr; }
-	if (PRTV) { PRTV->Release(); PRTV = nullptr; }
-	if (PSTexture) { PSTexture->Release(); PSTexture = nullptr; }
+	if (PSRV1) { PSRV1->Release(); PSRV1 = nullptr; }
+	if (PRTV1) { PRTV1->Release(); PRTV1 = nullptr; }
+	if (PSTexture1) { PSTexture1->Release(); PSTexture1 = nullptr; }
+	if (PSRV2) { PSRV2->Release(); PSRV2 = nullptr; }
+	if (PRTV2) { PRTV2->Release(); PRTV2 = nullptr; }
+	if (PSTexture2) { PSTexture2->Release(); PSTexture2 = nullptr; }
 	if (SRV) { SRV->Release(); SRV = nullptr; }
 	if (RTV) { RTV->Release(); RTV = nullptr; }
 	if (RTTexture) { RTTexture->Release(); RTTexture = nullptr; }
