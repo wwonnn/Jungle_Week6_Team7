@@ -263,10 +263,11 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 				Entry.OBB.Color = FColor::Green();
 				RenderBus.AddOBBEntry(std::move(Entry));
 			}
-
-			if (OcclusionMut && OcclusionMut->IsInitialized())
-				OcclusionMut->EndGatherAABB();
 		}
 	}
+
+	// for 루프 밖에서 EndGatherAABB — 모든 프록시 순회 완료 후 1회 호출
+	if (OcclusionMut && OcclusionMut->IsInitialized())
+		OcclusionMut->EndGatherAABB();
 }
 

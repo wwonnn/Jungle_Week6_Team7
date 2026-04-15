@@ -26,7 +26,6 @@ PS_Input_PosW VS(VS_Input_PC input)
 }
 float4 PS(PS_Input_PosW input) : SV_TARGET
 {
-    //Screen UV 
     float2 screenUV;
     screenUV.x = (input.positionW.x / input.positionW.w) * 0.5 + 0.5;
     screenUV.y = (input.positionW.y / input.positionW.w) * -0.5 + 0.5;
@@ -43,7 +42,7 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
 
     // projection Depth ( X direction
     float projDepth = localPos.x;
-    if (projDepth<=0.0)
+    if (projDepth <= 0.0)
         discard;
    
     // distance attenuation (Inverse Square Falloff
@@ -59,7 +58,7 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
     float3 dirToPixel = normalize(localPos);
     float cosAngle = dirToPixel.x; // dot(dir, forward) = dir.x (forwar = +X)
     
-    if (cosAngle - OuterConeAngleCos)
+    if (cosAngle < OuterConeAngleCos)
         discard;
     // inter to outer attenuation
     float spotFalloff = saturate((cosAngle - OuterConeAngleCos) /
@@ -73,5 +72,4 @@ float4 PS(PS_Input_PosW input) : SV_TARGET
 
 
     return float4(lightContribution, 1.0);
-
 }

@@ -58,6 +58,7 @@ void FBlendStateManager::Release()
 {
 	SAFE_RELEASE(Alpha);
 	SAFE_RELEASE(AlphaKeepAlpha);
+	SAFE_RELEASE(Additive);
 	SAFE_RELEASE(NoColorWrite);
 }
 
@@ -72,6 +73,7 @@ void FBlendStateManager::Set(ID3D11DeviceContext* InContext, EBlendState InState
 	case EBlendState::Opaque:     InContext->OMSetBlendState(nullptr, BlendFactor, 0xffffffff);       break;
 	case EBlendState::AlphaBlend:          InContext->OMSetBlendState(Alpha, BlendFactor, 0xffffffff);         break;
 	case EBlendState::AlphaBlendKeepAlpha: InContext->OMSetBlendState(AlphaKeepAlpha, BlendFactor, 0xffffffff); break;
+	case EBlendState::Additive:            InContext->OMSetBlendState(Additive, BlendFactor, 0xffffffff);      break;
 	case EBlendState::NoColor:             InContext->OMSetBlendState(NoColorWrite, BlendFactor, 0xFFFFFFFF);  break;
 	}
 

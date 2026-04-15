@@ -21,6 +21,7 @@ public:
 
 	void Serialize(FArchive& Ar) override;
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
+	void CollectEditorVisualizations(FRenderBus& RenderBus) const override;
 
 	// Getters
 	float   GetInnerConeAngle()    const { return InnerConeAngle; }
