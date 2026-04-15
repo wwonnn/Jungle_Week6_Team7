@@ -30,6 +30,9 @@ void FRenderBus::Clear()
 	CurrentRTV = nullptr;
 	CurrentSRV = nullptr;
 	bHasPostProcessOutput = false;
+
+	bHasFog = false;
+	FogParams = {};
 }
 
 void FRenderBus::AddProxy(ERenderPass Pass, const FPrimitiveSceneProxy* Proxy)
