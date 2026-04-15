@@ -54,6 +54,25 @@ static const wchar_t* GetLayoutIconFileName(EViewportLayout Layout)
 	}
 }
 
+void FLevelViewportLayout::RefreshWorldCameras(UWorld* World) const
+{
+	if (!World)
+	{
+		return;
+	}
+
+	TArray<UCameraComponent*> NewCameras;
+	for (FLevelEditorViewportClient* VC : LevelViewportClients)
+	{
+		if (VC && VC->GetCamera())
+		{
+			NewCameras.push_back(VC->GetCamera());
+		}
+	}
+
+	World->SetAllCameras(NewCameras);
+}
+
 // ─── 아이콘 로드/해제 ────────────────────────────────────────
 
 void FLevelViewportLayout::LoadLayoutIcons(ID3D11Device* Device)
@@ -121,6 +140,7 @@ void FLevelViewportLayout::Initialize(UEditorEngine* InEditor, FWindowsWindow* I
 	AllViewportClients.push_back(LevelVC);
 	LevelViewportClients.push_back(LevelVC);
 	SetActiveViewport(LevelVC);
+	RefreshWorldCameras(Editor ? Editor->GetWorld() : nullptr);
 
 	ViewportWindows[0] = new SWindow();
 	LevelVC->SetLayoutWindow(ViewportWindows[0]);
@@ -205,14 +225,17 @@ void FLevelViewportLayout::ResetViewport(UWorld* InWorld)
 	}
 	if (ActiveViewportClient && InWorld)
 		InWorld->SetActiveCamera(ActiveViewportClient->GetCamera());
+	RefreshWorldCameras(InWorld);
 }
 
 void FLevelViewportLayout::DestroyAllCameras()
 {
+	UWorld* World = Editor ? Editor->GetWorld() : nullptr;
 	for (FEditorViewportClient* VC : AllViewportClients)
 	{
 		VC->DestroyCamera();
 	}
+	RefreshWorldCameras(World);
 }
 
 void FLevelViewportLayout::DisableWorldAxisForPIE()
@@ -323,6 +346,8 @@ void FLevelViewportLayout::ShrinkViewportSlots(int32 RequiredCount)
 		delete ViewportWindows[Idx];
 		ViewportWindows[Idx] = nullptr;
 	}
+
+	RefreshWorldCameras(Editor ? Editor->GetWorld() : nullptr);
 }
 
 // ─── SSplitter 트리 빌드 ─────────────────────────────────────
@@ -512,6 +537,9 @@ void FLevelViewportLayout::SetLayout(EViewportLayout NewLayout)
 			LevelViewportClients[i]->SetViewportType(DefaultTypes[i - 1]);
 		}
 	}
+	//For Fixing Cameras Culling Effects other View
+	UWorld* World = Editor->GetWorld();
+	RefreshWorldCameras(World);
 
 	// 새 트리 빌드
 	RootSplitter = BuildSplitterTree(NewLayout);
@@ -792,126 +820,126 @@ void FLevelViewportLayout::RenderPaneToolbar(int32 SlotIndex)
 		// ViewportType + Settings 팝업
 		if (SlotIndex < static_cast<int32>(LevelViewportClients.size()))
 		{
-		FLevelEditorViewportClient* VC = LevelViewportClients[SlotIndex];
-		FViewportRenderOptions& Opts = VC->GetRenderOptions();
+			FLevelEditorViewportClient* VC = LevelViewportClients[SlotIndex];
+			FViewportRenderOptions& Opts = VC->GetRenderOptions();
 
-		// ── Viewport Type 드롭다운 (Perspective / Ortho 방향) ──
-		ImGui::SameLine();
-
-		static const char* ViewportTypeNames[] = {
-			"Perspective", "Top", "Bottom", "Left", "Right", "Front", "Back", "Free Orthographic"
-		};
-		constexpr int32 ViewportTypeCount = sizeof(ViewportTypeNames) / sizeof(ViewportTypeNames[0]);
-		int32 CurrentTypeIdx = static_cast<int32>(Opts.ViewportType);
-		const char* CurrentTypeName = ViewportTypeNames[CurrentTypeIdx];
-
-		char VTPopupID[64];
-		snprintf(VTPopupID, sizeof(VTPopupID), "ViewportTypePopup_%d", SlotIndex);
-
-		if (ImGui::Button(CurrentTypeName))
-		{
-			ImGui::OpenPopup(VTPopupID);
-		}
-
-		if (ImGui::BeginPopup(VTPopupID))
-		{
-			for (int32 t = 0; t < ViewportTypeCount; ++t)
-			{
-				bool bSelected = (t == CurrentTypeIdx);
-				if (ImGui::Selectable(ViewportTypeNames[t], bSelected))
-				{
-					VC->SetViewportType(static_cast<ELevelViewportType>(t));
-				}
-			}
-			ImGui::EndPopup();
-		}
-
-		// ── Gizmo Mode 팝업 ──
-		UGizmoComponent* Gizmo = Editor->GetGizmo();
-		if (Gizmo)
-		{
+			// ── Viewport Type 드롭다운 (Perspective / Ortho 방향) ──
 			ImGui::SameLine();
 
-			static const char* GizmoModeNames[] = { "Translate", "Rotate", "Scale" };
-			const char* CurrentModeName = GizmoModeNames[static_cast<int32>(Gizmo->GetMode())];
+			static const char* ViewportTypeNames[] = {
+				"Perspective", "Top", "Bottom", "Left", "Right", "Front", "Back", "Free Orthographic"
+			};
+			constexpr int32 ViewportTypeCount = sizeof(ViewportTypeNames) / sizeof(ViewportTypeNames[0]);
+			int32 CurrentTypeIdx = static_cast<int32>(Opts.ViewportType);
+			const char* CurrentTypeName = ViewportTypeNames[CurrentTypeIdx];
 
-			char GizmoPopupID[64];
-			snprintf(GizmoPopupID, sizeof(GizmoPopupID), "GizmoModePopup_%d", SlotIndex);
+			char VTPopupID[64];
+			snprintf(VTPopupID, sizeof(VTPopupID), "ViewportTypePopup_%d", SlotIndex);
 
-			if (ImGui::Button(CurrentModeName))
+			if (ImGui::Button(CurrentTypeName))
 			{
-				ImGui::OpenPopup(GizmoPopupID);
+				ImGui::OpenPopup(VTPopupID);
 			}
 
-			if (ImGui::BeginPopup(GizmoPopupID))
+			if (ImGui::BeginPopup(VTPopupID))
 			{
-				int32 CurrentGizmoMode = static_cast<int32>(Gizmo->GetMode());
-				if (ImGui::RadioButton("Translate", &CurrentGizmoMode, static_cast<int32>(EGizmoMode::Translate)))
-					Gizmo->SetTranslateMode();
-				if (ImGui::RadioButton("Rotate", &CurrentGizmoMode, static_cast<int32>(EGizmoMode::Rotate)))
-					Gizmo->SetRotateMode();
-				if (ImGui::RadioButton("Scale", &CurrentGizmoMode, static_cast<int32>(EGizmoMode::Scale)))
-					Gizmo->SetScaleMode();
+				for (int32 t = 0; t < ViewportTypeCount; ++t)
+				{
+					bool bSelected = (t == CurrentTypeIdx);
+					if (ImGui::Selectable(ViewportTypeNames[t], bSelected))
+					{
+						VC->SetViewportType(static_cast<ELevelViewportType>(t));
+					}
+				}
 				ImGui::EndPopup();
 			}
-		}
 
-		// ── Settings 팝업 ──
-		ImGui::SameLine();
+			// ── Gizmo Mode 팝업 ──
+			UGizmoComponent* Gizmo = Editor->GetGizmo();
+			if (Gizmo)
+			{
+				ImGui::SameLine();
 
-		char SettingsPopupID[64];
-		snprintf(SettingsPopupID, sizeof(SettingsPopupID), "SettingsPopup_%d", SlotIndex);
+				static const char* GizmoModeNames[] = { "Translate", "Rotate", "Scale" };
+				const char* CurrentModeName = GizmoModeNames[static_cast<int32>(Gizmo->GetMode())];
 
-		if (ImGui::Button("Settings"))
-		{
-			ImGui::OpenPopup(SettingsPopupID);
-		}
+				char GizmoPopupID[64];
+				snprintf(GizmoPopupID, sizeof(GizmoPopupID), "GizmoModePopup_%d", SlotIndex);
 
-		if (ImGui::BeginPopup(SettingsPopupID))
-		{
-			// View Mode
-			ImGui::Text("View Mode");
-			int32 CurrentMode = static_cast<int32>(Opts.ViewMode);
-			ImGui::RadioButton("Lit", &CurrentMode, static_cast<int32>(EViewMode::Lit));
+				if (ImGui::Button(CurrentModeName))
+				{
+					ImGui::OpenPopup(GizmoPopupID);
+				}
+
+				if (ImGui::BeginPopup(GizmoPopupID))
+				{
+					int32 CurrentGizmoMode = static_cast<int32>(Gizmo->GetMode());
+					if (ImGui::RadioButton("Translate", &CurrentGizmoMode, static_cast<int32>(EGizmoMode::Translate)))
+						Gizmo->SetTranslateMode();
+					if (ImGui::RadioButton("Rotate", &CurrentGizmoMode, static_cast<int32>(EGizmoMode::Rotate)))
+						Gizmo->SetRotateMode();
+					if (ImGui::RadioButton("Scale", &CurrentGizmoMode, static_cast<int32>(EGizmoMode::Scale)))
+						Gizmo->SetScaleMode();
+					ImGui::EndPopup();
+				}
+			}
+
+			// ── Settings 팝업 ──
 			ImGui::SameLine();
-			ImGui::RadioButton("Unlit", &CurrentMode, static_cast<int32>(EViewMode::Unlit));
-			ImGui::SameLine();
-			ImGui::RadioButton("Wireframe", &CurrentMode, static_cast<int32>(EViewMode::Wireframe));
-			ImGui::SameLine();
-			ImGui::RadioButton("SceneDepth", &CurrentMode, static_cast<int32>(EViewMode::SceneDepth));
-			Opts.ViewMode = static_cast<EViewMode>(CurrentMode);
 
-			ImGui::Separator();
+			char SettingsPopupID[64];
+			snprintf(SettingsPopupID, sizeof(SettingsPopupID), "SettingsPopup_%d", SlotIndex);
 
-			// Show Flags
-			ImGui::Text("Show");
-			ImGui::Checkbox("Primitives", &Opts.ShowFlags.bPrimitives);
-			ImGui::Checkbox("BillboardText", &Opts.ShowFlags.bBillboardText);
-			ImGui::Checkbox("Grid", &Opts.ShowFlags.bGrid);
-			ImGui::Checkbox("World Axis", &Opts.ShowFlags.bWorldAxis);
-			ImGui::Checkbox("Gizmo", &Opts.ShowFlags.bGizmo);
-			ImGui::Checkbox("Bounding Volume", &Opts.ShowFlags.bBoundingVolume);
-			ImGui::Checkbox("Debug Draw", &Opts.ShowFlags.bDebugDraw);
-			ImGui::Checkbox("Octree", &Opts.ShowFlags.bOctree);
-			ImGui::Checkbox("Decal", &Opts.ShowFlags.bDecal);
-			ImGui::Checkbox("Fog", &Opts.ShowFlags.bFog);
+			if (ImGui::Button("Settings"))
+			{
+				ImGui::OpenPopup(SettingsPopupID);
+			}
 
-			ImGui::Separator();
+			if (ImGui::BeginPopup(SettingsPopupID))
+			{
+				// View Mode
+				ImGui::Text("View Mode");
+				int32 CurrentMode = static_cast<int32>(Opts.ViewMode);
+				ImGui::RadioButton("Lit", &CurrentMode, static_cast<int32>(EViewMode::Lit));
+				ImGui::SameLine();
+				ImGui::RadioButton("Unlit", &CurrentMode, static_cast<int32>(EViewMode::Unlit));
+				ImGui::SameLine();
+				ImGui::RadioButton("Wireframe", &CurrentMode, static_cast<int32>(EViewMode::Wireframe));
+				ImGui::SameLine();
+				ImGui::RadioButton("SceneDepth", &CurrentMode, static_cast<int32>(EViewMode::SceneDepth));
+				Opts.ViewMode = static_cast<EViewMode>(CurrentMode);
 
-			// Grid Settings
-			ImGui::Text("Grid");
-			ImGui::SliderFloat("Spacing", &Opts.GridSpacing, 0.1f, 10.0f, "%.1f");
-			ImGui::SliderInt("Half Line Count", &Opts.GridHalfLineCount, 10, 500);
+				ImGui::Separator();
 
-			ImGui::Separator();
+				// Show Flags
+				ImGui::Text("Show");
+				ImGui::Checkbox("Primitives", &Opts.ShowFlags.bPrimitives);
+				ImGui::Checkbox("BillboardText", &Opts.ShowFlags.bBillboardText);
+				ImGui::Checkbox("Grid", &Opts.ShowFlags.bGrid);
+				ImGui::Checkbox("World Axis", &Opts.ShowFlags.bWorldAxis);
+				ImGui::Checkbox("Gizmo", &Opts.ShowFlags.bGizmo);
+				ImGui::Checkbox("Bounding Volume", &Opts.ShowFlags.bBoundingVolume);
+				ImGui::Checkbox("Debug Draw", &Opts.ShowFlags.bDebugDraw);
+				ImGui::Checkbox("Octree", &Opts.ShowFlags.bOctree);
+				ImGui::Checkbox("Decal", &Opts.ShowFlags.bDecal);
+				ImGui::Checkbox("Fog", &Opts.ShowFlags.bFog);
 
-			// Camera Sensitivity
-			ImGui::Text("Camera");
-			ImGui::SliderFloat("Move Sensitivity", &Opts.CameraMoveSensitivity, 0.1f, 5.0f, "%.1f");
-			ImGui::SliderFloat("Rotate Sensitivity", &Opts.CameraRotateSensitivity, 0.1f, 5.0f, "%.1f");
+				ImGui::Separator();
 
-			ImGui::EndPopup();
-		}
+				// Grid Settings
+				ImGui::Text("Grid");
+				ImGui::SliderFloat("Spacing", &Opts.GridSpacing, 0.1f, 10.0f, "%.1f");
+				ImGui::SliderInt("Half Line Count", &Opts.GridHalfLineCount, 10, 500);
+
+				ImGui::Separator();
+
+				// Camera Sensitivity
+				ImGui::Text("Camera");
+				ImGui::SliderFloat("Move Sensitivity", &Opts.CameraMoveSensitivity, 0.1f, 5.0f, "%.1f");
+				ImGui::SliderFloat("Rotate Sensitivity", &Opts.CameraRotateSensitivity, 0.1f, 5.0f, "%.1f");
+
+				ImGui::EndPopup();
+			}
 		} // SlotIndex guard
 
 		ImGui::PopID();

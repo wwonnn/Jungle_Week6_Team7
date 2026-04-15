@@ -60,6 +60,9 @@ public:
 	void SetActiveCamera(UCameraComponent* InCamera) { ActiveCamera = InCamera; }
 	UCameraComponent* GetActiveCamera() const { return ActiveCamera; }
 
+	void SetAllCameras(const TArray<UCameraComponent*> InCameras) { AllCameras = InCameras; }
+	const TArray<UCameraComponent*>& GetAllCameras() const { return AllCameras; }
+
 	// FScene — 렌더 프록시 관리자
 	FScene& GetScene() { return Scene; }
 	const FScene& GetScene() const { return Scene; }
@@ -84,6 +87,7 @@ private:
 	ULevel* PersistentLevel;
 
 	UCameraComponent* ActiveCamera = nullptr;
+	TArray<UCameraComponent*> AllCameras;
 	UCameraComponent* LastLODUpdateCamera = nullptr;
 	bool bHasBegunPlay = false;
 	bool bHasLastFullLODUpdateCameraPos = false;
@@ -92,9 +96,9 @@ private:
 	bool bDeferredPickingBVHDirty = false;
 	bool bHasVisibleCameraState = false;
 	uint32 VisibleProxyBuildFrame = 0;
-	FVector LastVisibleCameraPos = FVector(0, 0, 0);
-	FVector LastVisibleCameraForward = FVector(1, 0, 0);
-	FCameraState LastVisibleCameraState = {};
+	TArray<FVector> LastVisibleCameraPos;
+	TArray<FVector> LastVisibleCameraForwards;
+	TArray<FCameraState> LastVisibleCameraStates;
 	FVector LastFullLODUpdateCameraForward = FVector(1, 0, 0);
 	FVector LastFullLODUpdateCameraPos = FVector(0, 0, 0);
 	FScene Scene;
