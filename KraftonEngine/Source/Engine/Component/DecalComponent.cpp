@@ -3,8 +3,20 @@
 #include "Serialization/Archive.h"
 #include "Resource/ResourceManager.h"
 #include "Core/ResourceTypes.h"
+#include "Component/ArrowComponent.h"
+#include "GameFramework/AActor.h"
 
 IMPLEMENT_CLASS(UDecalComponent, UPrimitiveComponent)
+
+void UDecalComponent::InitializeComponent()
+{
+	if (Owner != nullptr && ArrowComponent == nullptr)
+	{
+		ArrowComponent = Owner->AddComponent<UArrowComponent>();
+		ArrowComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+		ArrowComponent->AttachToComponent(this);
+	}
+}
 
 FMeshBuffer* UDecalComponent::GetMeshBuffer() const
 {
@@ -14,8 +26,9 @@ FMeshBuffer* UDecalComponent::GetMeshBuffer() const
 
 FPrimitiveSceneProxy* UDecalComponent::CreateSceneProxy()
 {
+	// 렌더링 프록시 생성 직전에 리소스를 다시 한 번 갱신하여 누락을 방지합니다.
 	SetTexture(TextureName);
-	return new FDecalSceneProxy(this);;
+	return new FDecalSceneProxy(this);
 }
 
 void UDecalComponent::Serialize(FArchive& Ar)
@@ -25,31 +38,59 @@ void UDecalComponent::Serialize(FArchive& Ar)
 	Ar << bHasFade;
 	Ar << FadeInner;
 	Ar << FadeOuter;
+
+	if (Ar.IsLoading())
+	{
+		// 로드 완료 후 리소스 포인터 재연결
+		SetTexture(TextureName);
+	}
 }
 
 void UDecalComponent::PostDuplicate()
 {
 	UPrimitiveComponent::PostDuplicate();
-	// 텍스처 SRV 재바인딩
+	// 복제 직후에도 리소스를 재연결합니다.
 	SetTexture(TextureName);
 }
 
 void UDecalComponent::SetTexture(const FName& InTextureName)
 {
+	// 이름이 같더라도 강제로 갱신을 시도하여 초기화 시점의 누락을 방지합니다.
 	TextureName = InTextureName;
 	CachedTexture = FResourceManager::Get().FindTexture(InTextureName);
-	// FMeshSectionDraw 갱신
+	
+	// 프록시가 이미 존재한다면 즉시 리소스를 갱신합니다.
+	if (SceneProxy)
+	{
+		static_cast<FDecalSceneProxy*>(SceneProxy)->UpdateMaterial();
+	}
 	MarkProxyDirty(EDirtyFlag::Material);
+}
+
+void UDecalComponent::SetFade(bool bEnable, float Inner, float Outer)
+{
+	bHasFade = bEnable;
+	FadeInner = Inner;
+	FadeOuter = Outer;
+	
+	// 페이드 값 변경 시 프록시의 상수 버퍼 데이터를 갱신해야 함을 알립니다.
+	MarkProxyDirty(EDirtyFlag::Transform); // Transform 플래그를 이용해 PerObject 데이터를 갱신하도록 유도
 }
 
 void UDecalComponent::SetFadeConstants(FDecalConstants& OutDecalConstants) const
 {
 	OutDecalConstants.FadeInner = bHasFade ? FadeInner : 1.0f;
 	OutDecalConstants.FadeOuter = bHasFade ? FadeOuter : 1.0f;
+	OutDecalConstants.bUseFade = bHasFade ? 1 : 0;
 }
 
 ID3D11ShaderResourceView* UDecalComponent::GetSRV() const
 {
+	// 만약 이름은 있는데 캐시된 리소스가 없다면 여기서 한 번 더 시도합니다. (Lazy Loading)
+	if (!CachedTexture && TextureName != "None")
+	{
+		const_cast<UDecalComponent*>(this)->SetTexture(TextureName);
+	}
 	return CachedTexture ? CachedTexture->SRV : nullptr;
 }
 

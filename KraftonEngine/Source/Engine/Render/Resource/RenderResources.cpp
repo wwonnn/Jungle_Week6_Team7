@@ -14,6 +14,14 @@ void FRenderResources::Create(ID3D11Device* InDevice)
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	InDevice->CreateSamplerState(&sampDesc, &DefaultSampler);
+
+	// Anisotropic Sampler (For Decals and sharp angles)
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDesc.MaxAnisotropy = 8;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	InDevice->CreateSamplerState(&sampDesc, &AnisotropicSampler);
 }
 
 void FRenderResources::Release()
@@ -21,4 +29,5 @@ void FRenderResources::Release()
 	FrameBuffer.Release();
 	PerObjectConstantBuffer.Release();
 	if (DefaultSampler) { DefaultSampler->Release(); DefaultSampler = nullptr; }
+	if (AnisotropicSampler) { AnisotropicSampler->Release(); AnisotropicSampler = nullptr; }
 }

@@ -1,4 +1,4 @@
-#include "Resource/ResourceManager.h"
+﻿#include "Resource/ResourceManager.h"
 #include "Platform/Paths.h"
 #include "SimpleJSON/json.hpp"
 
@@ -20,7 +20,7 @@ namespace ResourceKey
 	constexpr const char* Rows     = "Rows";
 }
 
-void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
+void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice, ID3D11DeviceContext* InContext)
 {
 	using namespace json;
 
@@ -86,9 +86,9 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 		}
 	}
 
-	if (LoadGPUResources(InDevice))
+	if (LoadGPUResources(InDevice, InContext))
 	{
-		ScanTextureAssets(InDevice);
+		ScanTextureAssets(InDevice, InContext);
 		UE_LOG("Complete Load Resources!");
 	}
 	else
@@ -97,29 +97,29 @@ void FResourceManager::LoadFromFile(const FString& Path, ID3D11Device* InDevice)
 	}
 }
 
-bool FResourceManager::LoadGPUResources(ID3D11Device* Device)
+bool FResourceManager::LoadGPUResources(ID3D11Device* Device, ID3D11DeviceContext* Context)
 {
 	if (!Device) return false;
 
 	for (auto& [Key, Resource] : FontResources)
 	{
-		if (!LoadSingleGPUResource(Resource, Device)) return false;
+		if (!LoadSingleGPUResource(Resource, Device, Context)) return false;
 	}
 
 	for (auto& [Key, Resource] : ParticleResources)
 	{
-		if (!LoadSingleGPUResource(Resource, Device)) return false;
+		if (!LoadSingleGPUResource(Resource, Device, Context)) return false;
 	}
 
 	for (auto& [Key, Resource] : TextureResources)
 	{
-		if (!LoadSingleGPUResource(Resource, Device)) return false;
+		if (!LoadSingleGPUResource(Resource, Device, Context)) return false;
 	}
 
 	return true;
 }
 
-bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID3D11Device* Device)
+bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID3D11Device* Device, ID3D11DeviceContext* Context)
 {
 	if (Resource.SRV)
 	{
@@ -130,6 +130,7 @@ bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID
 		}
 		Resource.SRV->Release();
 		Resource.SRV = nullptr;
+		Resource.PixelData.clear();
 	}
 
 	std::wstring FullPath = FPaths::Combine(FPaths::RootDir(), FPaths::ToWide(Resource.Path));
@@ -160,6 +161,7 @@ bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID
 	}
 	else
 	{
+		// 1. GPU 리소스 생성
 		hr = DirectX::CreateWICTextureFromFileEx(
 			Device,
 			FullPath.c_str(),
@@ -171,6 +173,56 @@ bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID
 			nullptr,
 			&Resource.SRV
 		);
+
+		// 2. CPU용 픽셀 데이터 추출 (피킹용)
+		if (SUCCEEDED(hr) && Context)
+		{
+			ID3D11Resource* TexRes = nullptr;
+			Resource.SRV->GetResource(&TexRes);
+			if (TexRes)
+			{
+				ID3D11Texture2D* Tex2D = nullptr;
+				if (SUCCEEDED(TexRes->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&Tex2D)))
+				{
+					D3D11_TEXTURE2D_DESC Desc;
+					Tex2D->GetDesc(&Desc);
+					Resource.Width = Desc.Width;
+					Resource.Height = Desc.Height;
+
+					// Staging Texture 생성 (CPU 읽기용)
+					D3D11_TEXTURE2D_DESC StagingDesc = Desc;
+					StagingDesc.Usage = D3D11_USAGE_STAGING;
+					StagingDesc.BindFlags = 0;
+					StagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+					StagingDesc.MiscFlags = 0;
+
+					ID3D11Texture2D* StagingTex = nullptr;
+					if (SUCCEEDED(Device->CreateTexture2D(&StagingDesc, nullptr, &StagingTex)))
+					{
+						// GPU -> Staging 복사
+						Context->CopyResource(StagingTex, Tex2D);
+
+						// Map & Copy to CPU buffer
+						D3D11_MAPPED_SUBRESOURCE Mapped;
+						if (SUCCEEDED(Context->Map(StagingTex, 0, D3D11_MAP_READ, 0, &Mapped)))
+						{
+							Resource.PixelData.resize(Resource.Width * Resource.Height * 4);
+							uint8_t* Dest = Resource.PixelData.data();
+							uint8_t* Src = static_cast<uint8_t*>(Mapped.pData);
+
+							for (uint32_t y = 0; y < Resource.Height; ++y)
+							{
+								memcpy(Dest + (y * Resource.Width * 4), Src + (y * Mapped.RowPitch), Resource.Width * 4);
+							}
+							Context->Unmap(StagingTex, 0);
+						}
+						StagingTex->Release();
+					}
+					Tex2D->Release();
+				}
+				TexRes->Release();
+			}
+		}
 	}
 
 	if (FAILED(hr) || !Resource.SRV)
@@ -194,18 +246,18 @@ bool FResourceManager::LoadSingleGPUResource(FTextureAtlasResource& Resource, ID
 	return true;
 }
 
-void FResourceManager::ScanTextureAssets(ID3D11Device* InDevice)
+void FResourceManager::ScanTextureAssets(ID3D11Device* InDevice, ID3D11DeviceContext* InContext)
 {
 	std::filesystem::path RootPath = FPaths::RootDir();
 	
 	// Asset 폴더
-	ScanDirectory(RootPath / L"Asset", InDevice);
+	ScanDirectory(RootPath / L"Asset", InDevice, InContext);
 
 	// Data 폴더
-	ScanDirectory(RootPath / L"Data", InDevice);
+	ScanDirectory(RootPath / L"Data", InDevice, InContext);
 }
 
-void FResourceManager::ScanDirectory(const std::filesystem::path& DirPath, ID3D11Device* InDevice)
+void FResourceManager::ScanDirectory(const std::filesystem::path& DirPath, ID3D11Device* InDevice, ID3D11DeviceContext* InContext)
 {
 	if (!std::filesystem::exists(DirPath)) return;
 
@@ -236,7 +288,7 @@ void FResourceManager::ScanDirectory(const std::filesystem::path& DirPath, ID3D1
 			Resource.Rows = 1;
 			Resource.SRV = nullptr;
 
-			if (LoadSingleGPUResource(Resource, InDevice))
+			if (LoadSingleGPUResource(Resource, InDevice, InContext))
 			{
 				TextureResources[FileName] = Resource;
 			}

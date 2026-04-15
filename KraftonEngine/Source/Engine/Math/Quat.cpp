@@ -16,6 +16,7 @@ FQuat FQuat::FromRotator(const FRotator& Rot)
 	float SY = sinf(YawRad),   CY = cosf(YawRad);
 
 	// Qz(Yaw) * Qy(Pitch) * Qx(Roll)
+	// 모든 축에서 양수 입력 시 시계 방향(오른손 법칙) 회전을 보장하기 위해 부호 조정
 	FQuat Q;
 	Q.X =  SR * CP * CY - CR * SP * SY;
 	Q.Y =  CR * SP * CY + SR * CP * SY;
@@ -30,7 +31,7 @@ FRotator FQuat::ToRotator() const
 	const float Rad2Deg = RAD_TO_DEG;
 
 	// Pitch (Y축)
-	float SinPitch = -2.0f * (X * Z - W * Y);
+	float SinPitch = 2.0f * (W * Y - X * Z);
 	SinPitch = Clamp(SinPitch, -1.0f, 1.0f);
 	Rot.Pitch = asinf(SinPitch) * Rad2Deg;
 
@@ -38,12 +39,12 @@ FRotator FQuat::ToRotator() const
 	if (fabsf(SinPitch) > 0.9999f)
 	{
 		Rot.Roll = 0.0f;
-		Rot.Yaw = atan2f(-2.0f * (X * Y - W * Z), 1.0f - 2.0f * (Y * Y + Z * Z)) * Rad2Deg;
+		Rot.Yaw = atan2f(2.0f * (W * Z - X * Y), 1.0f - 2.0f * (Y * Y + Z * Z)) * Rad2Deg;
 	}
 	else
 	{
-		Rot.Yaw  = atan2f(2.0f * (X * Y + W * Z), 1.0f - 2.0f * (Y * Y + Z * Z)) * Rad2Deg;
-		Rot.Roll = atan2f(2.0f * (Y * Z + W * X), 1.0f - 2.0f * (X * X + Y * Y)) * Rad2Deg;
+		Rot.Yaw  = atan2f(2.0f * (W * Z + X * Y), 1.0f - 2.0f * (Y * Y + Z * Z)) * Rad2Deg;
+		Rot.Roll = atan2f(2.0f * (W * X + Y * Z), 1.0f - 2.0f * (X * X + Y * Y)) * Rad2Deg;
 	}
 
 	return Rot;

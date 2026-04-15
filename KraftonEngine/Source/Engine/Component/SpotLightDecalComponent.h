@@ -5,7 +5,7 @@
 #include "Math/Vector.h"
 
 class FPrimitiveSceneProxy;
-
+  
 // UE5 SpotLight + Projection Decal 방식의 Fake SpotLight
 // Cube 볼륨을 X축 Forward로 투영, Additive 블렌딩으로 빛 누적
 class USpotLightDecalComponent : public UPrimitiveComponent

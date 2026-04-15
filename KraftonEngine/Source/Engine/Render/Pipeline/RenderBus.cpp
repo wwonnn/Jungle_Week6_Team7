@@ -17,13 +17,19 @@ void FRenderBus::Clear()
 	OBBEntries.clear();
 	GridEntries.clear();
 	DebugLineEntries.clear();
+	FireBallEntries.clear();
 
 	ViewportRTV = nullptr;
 	ViewportDSV = nullptr;
 	ViewportStencilSRV = nullptr;
-	PostProcessRTV = nullptr;
-	BaseColorSRV = nullptr;
-
+	PostProcessRTV1 = nullptr;
+	PostProcessRTV2 = nullptr;
+	PostProcessSRV1 = nullptr;
+	PostProcessSRV2 = nullptr;
+	BaseSRV = nullptr;
+	CurrentRTV = nullptr;
+	CurrentSRV = nullptr;
+	bHasPostProcessOutput = false;
 
 	bHasFog = false;
 	FogParams = {};
@@ -79,6 +85,11 @@ void FRenderBus::AddDebugLineEntry(FDebugLineEntry&& Entry)
 	DebugLineEntries.push_back(std::move(Entry));
 }
 
+void FRenderBus::AddFireBallEntry(FFireBallEntry& Entry)
+{
+	FireBallEntries.push_back(Entry);
+}
+
 void FRenderBus::SetCameraInfo(const UCameraComponent* Camera)
 {
 	View = Camera->GetViewMatrix();
@@ -95,12 +106,18 @@ void FRenderBus::SetViewportInfo(const FViewport* VP)
 {
 	viewportWidth = static_cast<float>(VP->GetWidth());
 	viewportHeight = static_cast<float>(VP->GetHeight());
-	ViewportRTV = VP->GetRTV();
+	ViewportRTV = VP->GetBaseRTV();
 	ViewportDSV = VP->GetDSV();
 	ViewportStencilSRV = VP->GetStencilSRV();
-	PostProcessRTV = VP->GetPostProcessRTV();
-	BaseColorSRV = VP->GetBaseSRV();
+	PostProcessRTV1 = VP->GetPostProcessRTV1();
+	PostProcessRTV2 = VP->GetPostProcessRTV2();
+	PostProcessSRV1 = VP->GetPostProcessSRV1();
+	PostProcessSRV2 = VP->GetPostProcessSRV2();
+	BaseSRV = VP->GetBaseSRV();
 	ViewportDepthSRV = VP->GetDepthSRV();
+	CurrentRTV = ViewportRTV;
+	CurrentSRV = BaseSRV;
+	bHasPostProcessOutput = false;
 }
 
 void FRenderBus::SetRenderSettings(const EViewMode NewViewMode, const FShowFlags NewShowFlags)

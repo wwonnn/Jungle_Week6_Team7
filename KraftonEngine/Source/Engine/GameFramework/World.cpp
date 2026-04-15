@@ -184,6 +184,12 @@ void UWorld::UpdateActorInOctree(AActor* Actor)
 	InvalidateVisibleSet();
 }
 
+TArray<UPrimitiveComponent*> UWorld::QueryOBB(const FOBB& OBB)
+{
+	WorldPrimitivePickingBVH.EnsureBuilt(GetActors());
+	return WorldPrimitivePickingBVH.QueryOBB(OBB);
+}
+
 // LOD 상수 및 SelectLOD는 LODContext.h에 정의
 
 static float DistanceSquared(const FVector& A, const FVector& B)
@@ -192,45 +198,101 @@ static float DistanceSquared(const FVector& A, const FVector& B)
 	return D.X * D.X + D.Y * D.Y + D.Z * D.Z;
 }
 
+namespace
+{
+	static TArray<UCameraComponent*> BuildVisibleCameraList(const UWorld& World)
+	{
+		TArray<UCameraComponent*> Cameras = World.GetAllCameras();
+		UCameraComponent* ActiveCamera = World.GetActiveCamera();
+		if (ActiveCamera)
+		{
+			const bool bHasActiveCamera =
+				std::find(Cameras.begin(), Cameras.end(), ActiveCamera) != Cameras.end();
+			if (!bHasActiveCamera)
+			{
+				Cameras.push_back(ActiveCamera);
+			}
+		}
+
+		return Cameras;
+	}
+}
+
 bool UWorld::NeedsVisibleProxyRebuild() const
 {
-	if (Scene.IsVisibleSetDirty() || !bHasVisibleCameraState || !ActiveCamera)
+	const TArray<UCameraComponent*> Cameras = BuildVisibleCameraList(*this);
+	if (Scene.IsVisibleSetDirty() || !bHasVisibleCameraState || Cameras.empty())
 	{
 		return true;
 	}
 
-	const FVector CameraPos = ActiveCamera->GetWorldLocation();
-	if (DistanceSquared(CameraPos, LastVisibleCameraPos) >= VisibleCameraMoveThresholdSq)
+	if (LastVisibleCameraPos.size() != Cameras.size()
+		|| LastVisibleCameraForwards.size() != Cameras.size()
+		|| LastVisibleCameraStates.size() != Cameras.size())
 	{
 		return true;
 	}
 
-	const FVector CameraForward = ActiveCamera->GetForwardVector();
-	if (CameraForward.Dot(LastVisibleCameraForward) < VisibleCameraRotationDotThreshold)
+	for (int i = 0; i < Cameras.size(); ++i)
 	{
-		return true;
+		UCameraComponent* Camera = Cameras[i];
+		if (!Camera)
+		{
+			return true;
+		}
+
+		const FVector CameraPos = Camera->GetWorldLocation();
+		if (DistanceSquared(CameraPos, LastVisibleCameraPos[i]) >= VisibleCameraMoveThresholdSq)
+		{
+			return true;
+		}
+
+		const FVector CameraForward = Camera->GetForwardVector();
+		if (CameraForward.Dot(LastVisibleCameraForwards[i]) < VisibleCameraRotationDotThreshold)
+		{
+			return true;
+		}
+
+		const FCameraState& CameraState = Camera->GetCameraState();
+		const FCameraState& LastCameraState = LastVisibleCameraStates[i];
+		if (!NearlyEqual(CameraState.FOV, LastCameraState.FOV)
+			|| !NearlyEqual(CameraState.AspectRatio, LastCameraState.AspectRatio)
+			|| !NearlyEqual(CameraState.NearZ, LastCameraState.NearZ)
+			|| !NearlyEqual(CameraState.FarZ, LastCameraState.FarZ)
+			|| !NearlyEqual(CameraState.OrthoWidth, LastCameraState.OrthoWidth)
+			|| CameraState.bIsOrthogonal != LastCameraState.bIsOrthogonal)
+		{
+			return true;
+		}
 	}
 
-	const FCameraState& CameraState = ActiveCamera->GetCameraState();
-	return !NearlyEqual(CameraState.FOV, LastVisibleCameraState.FOV)
-		|| !NearlyEqual(CameraState.AspectRatio, LastVisibleCameraState.AspectRatio)
-		|| !NearlyEqual(CameraState.NearZ, LastVisibleCameraState.NearZ)
-		|| !NearlyEqual(CameraState.FarZ, LastVisibleCameraState.FarZ)
-		|| !NearlyEqual(CameraState.OrthoWidth, LastVisibleCameraState.OrthoWidth)
-		|| CameraState.bIsOrthogonal != LastVisibleCameraState.bIsOrthogonal;
+	return false;
 }
 
 void UWorld::CacheVisibleCameraState()
 {
-	if (!ActiveCamera)
+	const TArray<UCameraComponent*> Cameras = BuildVisibleCameraList(*this);
+	if (Cameras.empty())
 	{
 		bHasVisibleCameraState = false;
+		LastVisibleCameraPos.clear();
+		LastVisibleCameraForwards.clear();
+		LastVisibleCameraStates.clear();
 		return;
 	}
 
-	LastVisibleCameraPos = ActiveCamera->GetWorldLocation();
-	LastVisibleCameraForward = ActiveCamera->GetForwardVector();
-	LastVisibleCameraState = ActiveCamera->GetCameraState();
+	LastVisibleCameraPos.resize(Cameras.size());
+	LastVisibleCameraForwards.resize(Cameras.size());
+	LastVisibleCameraStates.resize(Cameras.size());
+
+	for (int i = 0; i < Cameras.size(); ++i)
+	{
+		UCameraComponent* Camera = Cameras[i];
+		LastVisibleCameraPos[i] = Camera->GetWorldLocation();
+		LastVisibleCameraForwards[i] = Camera->GetForwardVector();
+		LastVisibleCameraStates[i] = Camera->GetCameraState();
+	}
+
 	bHasVisibleCameraState = true;
 }
 
@@ -255,8 +317,9 @@ void UWorld::RemoveVisibleProxy(FPrimitiveSceneProxy* Proxy, uint32 Index)
 void UWorld::UpdateVisibleProxies()
 {
 	TArray<FPrimitiveSceneProxy*>& VisibleProxies = Scene.GetVisibleProxiesMutable();
+	const TArray<UCameraComponent*> Cameras = BuildVisibleCameraList(*this);
 
-	if (!ActiveCamera)
+	if (Cameras.empty())
 	{
 		for (FPrimitiveSceneProxy* Proxy : VisibleProxies)
 		{
@@ -308,8 +371,22 @@ void UWorld::UpdateVisibleProxies()
 
 	{
 		SCOPE_STAT_CAT("FrustumCulling", "1_WorldTick");
-		FConvexVolume ConvexVolume = ActiveCamera->GetConvexVolume();
-		Partition.QueryFrustumAllProxies(ConvexVolume, VisibleProxies);
+		TSet<FPrimitiveSceneProxy*> UniqueVisibleProxies;
+		for (int i = 0; i < Cameras.size(); ++i)
+		{
+			TArray<FPrimitiveSceneProxy*> TempProxies;
+			FConvexVolume ConvexVolume = Cameras[i]->GetConvexVolume();
+			Partition.QueryFrustumAllProxies(ConvexVolume, TempProxies);
+			for (int j = 0; j < TempProxies.size(); ++j)
+			{
+				FPrimitiveSceneProxy* Proxy = TempProxies[j];
+				if (Proxy && UniqueVisibleProxies.find(Proxy) == UniqueVisibleProxies.end())
+				{
+					UniqueVisibleProxies.insert(Proxy);
+					VisibleProxies.push_back(Proxy);
+				}
+			}
+		}
 	}
 
 	for (uint32 Index = 0; Index < static_cast<uint32>(VisibleProxies.size()); ++Index)

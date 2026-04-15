@@ -6,18 +6,18 @@
 struct FQuat;
 struct FMatrix;
 
-// 오일러 각도 회전 (도 단위). UE 컨벤션: Pitch=Y축, Yaw=Z축, Roll=X축
+// 오일러 각도 회전 (도 단위). UE 컨벤션: Roll=X축, Pitch=Y축, Yaw=Z축
 struct FRotator
 {
+	float Roll;		// X축 회전 (도)
 	float Pitch;	// Y축 회전 (도)
 	float Yaw;		// Z축 회전 (도)
-	float Roll;		// X축 회전 (도)
 
-	FRotator() : Pitch(0.0f), Yaw(0.0f), Roll(0.0f) {}
-	FRotator(float InPitch, float InYaw, float InRoll) : Pitch(InPitch), Yaw(InYaw), Roll(InRoll) {}
+	FRotator() : Roll(0.0f), Pitch(0.0f), Yaw(0.0f) {}
+	FRotator(float InPitch, float InYaw, float InRoll) : Roll(InRoll), Pitch(InPitch), Yaw(InYaw) {}
 
 	// FVector 호환: FVector(X=Roll, Y=Pitch, Z=Yaw) ↔ FRotator
-	explicit FRotator(const FVector& Euler) : Pitch(Euler.Y), Yaw(Euler.Z), Roll(Euler.X) {}
+	explicit FRotator(const FVector& Euler) : Roll(Euler.X), Pitch(Euler.Y), Yaw(Euler.Z) {}
 	FVector ToVector() const { return FVector(Roll, Pitch, Yaw); }
 
 	FRotator operator+(const FRotator& Other) const
@@ -37,13 +37,13 @@ struct FRotator
 
 	FRotator& operator+=(const FRotator& Other)
 	{
-		Pitch += Other.Pitch; Yaw += Other.Yaw; Roll += Other.Roll;
+		Roll += Other.Roll; Pitch += Other.Pitch; Yaw += Other.Yaw;
 		return *this;
 	}
 
 	FRotator& operator-=(const FRotator& Other)
 	{
-		Pitch -= Other.Pitch; Yaw -= Other.Yaw; Roll -= Other.Roll;
+		Roll -= Other.Roll; Pitch -= Other.Pitch; Yaw -= Other.Yaw;
 		return *this;
 	}
 

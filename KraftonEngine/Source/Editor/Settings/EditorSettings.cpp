@@ -25,7 +25,8 @@ namespace Key
 	constexpr const char* bWorldAxis = "bWorldAxis";
 	constexpr const char* bGizmo = "bGizmo";
 	constexpr const char* bBillboardText = "bBillboardText";
-	constexpr const char* bBoundingVolume = "bBoundingVolume";
+	constexpr const char* bAABB = "bAABB";
+	constexpr const char* bOBB = "bOBB";
 	constexpr const char* bDebugDraw = "bDebugDraw";
 	constexpr const char* bOctree = "bOctree";
 	constexpr const char* bFog = "bFog";
@@ -103,7 +104,8 @@ void FEditorSettings::SaveToFile(const FString& Path) const
 		SlotObj[Key::bWorldAxis] = Opts.ShowFlags.bWorldAxis;
 		SlotObj[Key::bGizmo] = Opts.ShowFlags.bGizmo;
 		SlotObj[Key::bBillboardText] = Opts.ShowFlags.bBillboardText;
-		SlotObj[Key::bBoundingVolume] = Opts.ShowFlags.bBoundingVolume;
+		SlotObj[Key::bAABB] = Opts.ShowFlags.bAABB;
+		SlotObj[Key::bOBB] = Opts.ShowFlags.bOBB;
 		SlotObj[Key::bDebugDraw] = Opts.ShowFlags.bDebugDraw;
 		SlotObj[Key::bOctree] = Opts.ShowFlags.bOctree;
 		SlotObj[Key::bFog] = Opts.ShowFlags.bFog;
@@ -239,8 +241,10 @@ void FEditorSettings::LoadFromFile(const FString& Path)
 					Opts.ShowFlags.bGizmo = S[Key::bGizmo].ToBool();
 				if (S.hasKey(Key::bBillboardText))
 					Opts.ShowFlags.bBillboardText = S[Key::bBillboardText].ToBool();
-				if (S.hasKey(Key::bBoundingVolume))
-					Opts.ShowFlags.bBoundingVolume = S[Key::bBoundingVolume].ToBool();
+				if (S.hasKey(Key::bAABB))
+					Opts.ShowFlags.bAABB = S[Key::bAABB].ToBool();
+				if (S.hasKey(Key::bOBB))
+					Opts.ShowFlags.bOBB = S[Key::bOBB].ToBool();
 				if (S.hasKey(Key::bDebugDraw))
 					Opts.ShowFlags.bDebugDraw = S[Key::bDebugDraw].ToBool();
 				if (S.hasKey(Key::bOctree))

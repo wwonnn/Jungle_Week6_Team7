@@ -414,7 +414,7 @@ FVector UGizmoComponent::GetVectorForAxis(int32 Axis) const
 
 void UGizmoComponent::SetTarget(USceneComponent* NewTargetComponent)
 {
-	if (!NewTargetComponent)
+	if (!NewTargetComponent || !NewTargetComponent->IsGizmoActive())
 	{
 		return;
 	}

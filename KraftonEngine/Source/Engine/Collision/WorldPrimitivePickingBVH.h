@@ -4,6 +4,7 @@
 #include "Core/RayTypes.h"
 #include "Core/CollisionTypes.h"
 #include "Core/EngineTypes.h"
+#include "OBB.h"
 
 class AActor;
 class UPrimitiveComponent;
@@ -20,6 +21,8 @@ public:
 	void EnsureBuilt(const TArray<AActor*>& Actors);
 	//트리를 순회해 가장 가까운 primitive hit 결과를 찾습니다.
 	bool Raycast(const FRay& Ray, FHitResult& OutHitResult, AActor*& OutActor) const;
+	bool IntersectOBB(const FOBB& A, const FOBB& B);
+	TArray<UPrimitiveComponent*> QueryOBB(const FOBB& OBB);
 
 private:
 	struct FLeaf

@@ -21,7 +21,7 @@
 // 패스별 Batcher DrawBatch 바인딩
 struct FPassBatcherBinding
 {
-	std::function<void(ERenderPass, const FRenderBus&, ID3D11DeviceContext*)> DrawBatch;
+	std::function<void(ERenderPass, FRenderBus&, ID3D11DeviceContext*)> DrawBatch;
 	std::function<bool()> IsEmpty;		// true면 이 패스 skip (렌더 상태 적용도 생략)
 
 	explicit operator bool() const { return DrawBatch != nullptr; }
@@ -30,10 +30,10 @@ struct FPassBatcherBinding
 // 패스별 기본 렌더 상태 — Single Source of Truth
 struct FPassRenderState
 {
-	EDepthStencilState       DepthStencil   = EDepthStencilState::Default;
-	EBlendState              Blend          = EBlendState::Opaque;
-	ERasterizerState         Rasterizer     = ERasterizerState::SolidBackCull;
-	D3D11_PRIMITIVE_TOPOLOGY Topology       = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	EDepthStencilState       DepthStencil = EDepthStencilState::Default;
+	EBlendState              Blend = EBlendState::Opaque;
+	ERasterizerState         Rasterizer = ERasterizerState::SolidBackCull;
+	D3D11_PRIMITIVE_TOPOLOGY Topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	bool                     bWireframeAware = false;  // Wireframe 모드 시 래스터라이저 전환
 };
 
@@ -45,7 +45,7 @@ public:
 
 	void PrepareBatchers(const FRenderBus& InRenderBus);
 	void BeginFrame();
-	void Render(const FRenderBus& InRenderBus);
+	void Render(FRenderBus& InRenderBus);
 	void EndFrame();
 
 	FD3DDevice& GetFD3DDevice() { return Device; }
@@ -60,20 +60,21 @@ private:
 
 	// 프록시 패스 실행기 — FPrimitiveSceneProxy* 순회, 필드 직접 접근
 	void ExecutePass(const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
-	void ExecuteDecalPass(const FRenderBus& InRenderBus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
+	void ExecuteDecalPass(FRenderBus& InRenderBus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context);
+	void ExecuteFireBallPass(FRenderBus& InRenderBus, ID3D11DeviceContext* Context);
 
 	// ExecutePass 내부 헬퍼
 	struct FDrawState
 	{
-		FShader*     LastShader     = nullptr;
+		FShader* LastShader = nullptr;
 		FMeshBuffer* LastMeshBuffer = nullptr;
 		ID3D11ShaderResourceView* LastSRV = reinterpret_cast<ID3D11ShaderResourceView*>(~0ull);
 		ID3D11Buffer* LastPerObjectCB = nullptr;
-		int32        LastUVScroll   = -1;
+		int32        LastUVScroll = -1;
 		FVector4     LastSectionColor = { -1.0f, -1.0f, -1.0f, -1.0f }; // 초기값: 불일치 보장
 
-		bool         bSamplerBound  = false;
-		bool         bMaterialBound  = false;
+		bool         bSamplerBound = false;
+		bool         bMaterialBound = false;
 
 		bool HasBoundSRV() const { return LastSRV != reinterpret_cast<ID3D11ShaderResourceView*>(~0ull); }
 	};
@@ -94,12 +95,12 @@ private:
 	void DrawLineBatcher(FLineBatcher& Batcher, ID3D11DeviceContext* Context);
 
 	// PostProcess Outline — StencilSRV 읽어 edge detection 후 fullscreen draw
-	void DrawPostProcessOutline(const FRenderBus& Bus, ID3D11DeviceContext* Context);
+	void DrawPostProcessOutline(FRenderBus& Bus, ID3D11DeviceContext* Context);
 
 	void DrawSceneDepth(const FRenderBus& Bus, ID3D11DeviceContext* Context);
 
 	// PostProcess FXAA — BaseColorSRV 읽어 안티앨리어싱 후 PostProcessRTV에 draw
-	void DrawFXAA(const FRenderBus& Bus, ID3D11DeviceContext* Context);
+	void DrawFXAA(FRenderBus& Bus, ID3D11DeviceContext* Context);
 
 	// Height Fog — DepthSRV 읽어 exponential height fog + SceneDepth 시각화
 	void DrawHeightFog(const FRenderBus& Bus, ID3D11DeviceContext* Context);
@@ -122,6 +123,7 @@ private:
 	FPassRenderState    PassRenderStates[(uint32)ERenderPass::MAX];
 	FPassBatcherBinding PassBatchers[(uint32)ERenderPass::MAX];
 
-	// Fog 패스 IsEmpty 판정용 — Render() 시작 시 설정
+	// 패스 IsEmpty 판정용 — Render() 시작 시 설정
 	bool bShouldRenderFog = false;
+	bool bShouldRenderSceneDepth = false;
 };

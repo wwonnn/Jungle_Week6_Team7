@@ -22,6 +22,7 @@ enum class EBlendState
 	Opaque,
 	AlphaBlend,
 	AlphaBlendKeepAlpha,	// RGB: SrcAlpha blend, Alpha: 목적지 보존 (Fog용)
+	Additive, //light(Fake)
 	NoColor
 };
 

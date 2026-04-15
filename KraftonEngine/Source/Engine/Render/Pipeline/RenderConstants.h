@@ -24,7 +24,11 @@ namespace ECBSlot
 	constexpr uint32 PostProcess = 3; // b3: PostProcess Outline params
 	constexpr uint32 Material = 4;    // b4: Material properties (UVScroll 등)
 	constexpr uint32 Decal = 5;    // b5: Decal properties
-	constexpr uint32 Fog = 6;         // b5: Height Fog parameters
+	constexpr uint32 Fog = 6;         // b6: Height Fog parameters
+	constexpr uint32 FireBall = 7;   // b7: FireBall properties
+	constexpr uint32 MeshDecal = 8; // b8: Mesh Decal properties
+	constexpr uint32 SpotLightDecal = 9; // b9: Mesh Decal properties
+
 }
 
 //PerObject
@@ -46,6 +50,8 @@ struct FDecalConstants
 
 	float FadeInner;
 	float FadeOuter;
+	int32 bUseFade;
+	float Padding[3];
 	float _pad[2];
 };
 
@@ -58,7 +64,8 @@ struct FFrameConstants
 	float bIsWireframe;
 	FVector WireframeColor;
 	float Time;
-	float _pad[3];
+	FVector2 InvViewportSize;
+	float _pad[1];
 };
 
 struct FMaterialConstants
@@ -158,10 +165,25 @@ struct FSubUVConstants
 struct FBillboardConstants
 {
 	const FTextureResource* Texture = nullptr;
-	float Width  = 1.0f;
+	float Width = 1.0f;
 	float Height = 1.0f;
 };
 
+struct FMeshDecalConstants
+{
+	float Opacity = 1.0f;
+	float _Offset[3];
+};
+struct FSpotLightDecalConstants
+{
+	FMatrix WorldToLight;       // World → Light Local 변환 (역행렬)
+	FVector LightColor;         // RGB
+	float   Intensity;          // 밝기 스케일
+	float   InnerConeAngleCos;  // cos(InnerAngle)
+	float   OuterConeAngleCos;  // cos(OuterAngle)
+	float   AttenuationRadius;  // 최대 도달 거리
+	float   Padding;
+};
 // ============================================================
 // Batcher Entry — 각 Batcher가 필요한 데이터만 담는 경량 구조체
 // ============================================================
@@ -204,6 +226,25 @@ struct FDebugLineEntry
 	FVector Start;
 	FVector End;
 	FColor  Color;
+};
+
+struct FFireBallEntry
+{
+	FVector Center;
+	float _Padding;
+	float Intensity;
+	float Radius;
+	float RadiusFallOff;
+	float _Padding2;
+	FVector4 Color;
+};
+
+struct FFireBallConstnats
+{
+	FMatrix InvViewProj;
+	uint32 FireBallCount;
+	float _Padding[3];
+	FFireBallEntry FireBalls[16];	// 최대 16개까지 지원
 };
 
 // 스크린 공간 텍스트 — Overlay Stats 등에서 사용
