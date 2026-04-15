@@ -890,7 +890,8 @@ void FLevelViewportLayout::RenderPaneToolbar(int32 SlotIndex)
 			ImGui::Checkbox("Grid", &Opts.ShowFlags.bGrid);
 			ImGui::Checkbox("World Axis", &Opts.ShowFlags.bWorldAxis);
 			ImGui::Checkbox("Gizmo", &Opts.ShowFlags.bGizmo);
-			ImGui::Checkbox("Bounding Volume", &Opts.ShowFlags.bBoundingVolume);
+			ImGui::Checkbox("AABB", &Opts.ShowFlags.bAABB);
+			ImGui::Checkbox("OBB", &Opts.ShowFlags.bOBB);
 			ImGui::Checkbox("Debug Draw", &Opts.ShowFlags.bDebugDraw);
 			ImGui::Checkbox("Octree", &Opts.ShowFlags.bOctree);
 			ImGui::Checkbox("Decal", &Opts.ShowFlags.bDecal);

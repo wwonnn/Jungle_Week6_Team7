@@ -198,7 +198,8 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 {
 	if (!RenderBus.GetShowFlags().bPrimitives) return;
 
-	const bool bShowBoundingVolume = RenderBus.GetShowFlags().bBoundingVolume;
+	const bool bShowAABB = RenderBus.GetShowFlags().bAABB;
+	const bool bShowOBB = RenderBus.GetShowFlags().bOBB;
 	SCOPE_STAT_CAT("CollectVisibleProxy", "3_Collect");
 
 	const FGPUOcclusionCulling* Occlusion = RenderBus.GetOcclusionCulling();
@@ -253,7 +254,7 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 			if (Proxy->bSupportsOutline)
 				RenderBus.AddProxy(ERenderPass::SelectionMask, Proxy);
 
-			if (bShowBoundingVolume && Proxy->bShowAABB)
+			if (bShowAABB && Proxy->bShowAABB)
 			{
 				if (Proxy->Owner)
 				{
@@ -269,11 +270,11 @@ void FRenderCollector::CollectVisibleProxies(const TArray<FPrimitiveSceneProxy*>
 
 			}
 
-			if (bShowBoundingVolume && Proxy->bShowOBB)
+			if (bShowOBB && Proxy->bShowOBB)
 			{
 				if (Proxy->Owner)
 				{
-					// 아직 AABB 업데이트가 안 된 새로 추가된 컴포넌트 등을 위해 확실하게 갱신
+					// 아직 OBB 업데이트가 안 된 새로 추가된 컴포넌트 등을 위해 확실하게 갱신
 					Proxy->Owner->GetWorldOBB();
 				}
 
