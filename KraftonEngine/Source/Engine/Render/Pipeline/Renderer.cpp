@@ -261,7 +261,7 @@ void FRenderer::Render(FRenderBus& InRenderBus)
 		else if (CurPass == ERenderPass::SpotLightDecal)
 		{
 			SCOPE_STAT_CAT("ExecuteSpotLightDecalPass", "4_ExecutePass");
-			ExecutePass(InRenderBus.GetProxies(CurPass), Context);
+			ExecuteDecalPass(InRenderBus, InRenderBus.GetProxies(CurPass), Context);
 		}
 		else if (CurPass == ERenderPass::FireBall)
 			ExecuteFireBallPass(InRenderBus, Context);
@@ -281,7 +281,7 @@ void FRenderer::InitializePassRenderStates()
 	//                              DepthStencil                    Blend                Rasterizer                   Topology                                WireframeAware
 	S[(uint32)E::Opaque] = { EDepthStencilState::Default,      EBlendState::Opaque,     ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::Decal]         = { EDepthStencilState::Default,      EBlendState::AlphaBlendKeepAlpha, ERasterizerState::SolidFrontCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
-	S[(uint32)E::SpotLightDecal] = { EDepthStencilState::NoDepth,      EBlendState::Additive, ERasterizerState::SolidFrontCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::SpotLightDecal] = { EDepthStencilState::NoDepth,      EBlendState::Additive, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::FireBall] = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlend, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Font] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::SubUV] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
@@ -424,7 +424,7 @@ void FRenderer::ExecutePass(const TArray<const FPrimitiveSceneProxy*>& Proxies, 
 void FRenderer::ExecuteDecalPass(FRenderBus& InRenderBus, const TArray<const FPrimitiveSceneProxy*>& Proxies, ID3D11DeviceContext* Context)
 {
 	// DSV 언바인딩 + DepthSRV 바인딩		
-	ID3D11RenderTargetView* RTV = InRenderBus.GetViewportRTV();
+	ID3D11RenderTargetView* RTV = InRenderBus.GetCurrentRTV();
 	ID3D11ShaderResourceView* DepthSRV = InRenderBus.GetViewportDepthSRV();
 	Context->OMSetRenderTargets(1, &RTV, nullptr);
 	Context->PSSetShaderResources(0, 1, &DepthSRV);
@@ -649,7 +649,14 @@ void FRenderer::DrawSections(const FPrimitiveSceneProxy& Proxy, ID3D11DeviceCont
 		if (Section.DiffuseSRV != State.LastSRV)
 		{
 			ID3D11ShaderResourceView* srv = Section.DiffuseSRV;
-			Ctx->PSSetShaderResources(0, 1, &srv);
+			if (Proxy.Pass == ERenderPass::SpotLightDecal)
+			{
+				// SpotLightDecal: t0은 DepthSRV, 텍스처 없음 → 스킵
+			}
+			else if (Proxy.Pass == ERenderPass::Decal)
+				Ctx->PSSetShaderResources(1, 1, &srv);
+			else
+				Ctx->PSSetShaderResources(0, 1, &srv);
 			State.LastSRV = Section.DiffuseSRV;
 		}
 
@@ -708,12 +715,6 @@ void FRenderer::DrawSingleSection(const FPrimitiveSceneProxy& Proxy, ID3D11Devic
 			Ctx->PSSetShaderResources(1, 1, &srv);
 		else
 			Ctx->PSSetShaderResources(0, 1, &srv);
-		if (Proxy.Pass == ERenderPass::Decal)
-			// Decal은 0: DepthSRV 1: TextureSRV
-			Ctx->PSSetShaderResources(1, 1, &srv);
-		else
-			Ctx->PSSetShaderResources(0, 1, &srv);
-
 		State.LastSRV = Section.DiffuseSRV;
 	}
 

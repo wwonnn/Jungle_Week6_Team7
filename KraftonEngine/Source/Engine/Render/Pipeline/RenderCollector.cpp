@@ -68,6 +68,7 @@ void FRenderCollector::CollectFog(UWorld* World, FRenderBus& RenderBus)
 	Params.FogCutoffDistance = FogComp->GetFogCutoffDistance();
 	Params.FogMaxOpacity = FogComp->GetFogMaxOpacity();
 	Params.FogHeight = FogComp->GetWorldLocation().Z;
+	Params.bUseLinearFog = FogComp->GetUseLinearFog() ? 1 : 0;
 	RenderBus.SetFogParams(Params);
 }
 

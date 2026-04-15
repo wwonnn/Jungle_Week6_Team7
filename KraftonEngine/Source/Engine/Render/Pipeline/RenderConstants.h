@@ -109,7 +109,8 @@ struct FHeightFogConstants
 	float FogMaxOpacity = 1.0f;
 
 	float FogHeight = 0.0f;            // 포그 컴포넌트의 월드 Z 위치
-	float Padding[3] = {};
+	int   bUseLinearFog = 0;           // 0 = Exponential, 1 = Linear
+	float Padding[2] = {};
 };
 
 struct FAABBConstants

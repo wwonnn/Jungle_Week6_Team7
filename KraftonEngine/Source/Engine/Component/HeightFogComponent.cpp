@@ -32,6 +32,7 @@ void UHeightFogComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Out
 	OutProps.push_back({ "StartDistance",         EPropertyType::Float, &StartDistance,         0.0f, 100000.0f, 10.0f });
 	OutProps.push_back({ "FogCutoffDistance",     EPropertyType::Float, &FogCutoffDistance,     0.0f, 100000.0f, 10.0f });
 	OutProps.push_back({ "FogMaxOpacity",         EPropertyType::Float, &FogMaxOpacity,         0.0f,  1.0f,   0.01f });
+	OutProps.push_back({ "UseLinearFog",          EPropertyType::Bool,  &bUseLinearFog });
 	OutProps.push_back({ "FogInscatteringColor",  EPropertyType::Vec4,  &FogInscatteringColor });
 }
 
@@ -43,5 +44,6 @@ void UHeightFogComponent::Serialize(FArchive& Ar)
 	Ar << StartDistance;
 	Ar << FogCutoffDistance;
 	Ar << FogMaxOpacity;
+	Ar << bUseLinearFog;
 	Ar << FogInscatteringColor;
 }

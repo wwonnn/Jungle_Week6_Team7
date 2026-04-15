@@ -84,7 +84,14 @@ void FSpotLightDecalProxy::UpdatePerViewport(const FRenderBus& Bus)
 		FConstantBufferPool::Get().GetBuffer(ECBSlot::SpotLightDecal, sizeof(FSpotLightDecalConstants)),
 		ECBSlot::SpotLightDecal);
 
-	CB.WorldToLight = WorldMatrix.GetInverse();  // World -> Light Local 역행렬
+	// Light의 순수 Transform (스케일 및 오프셋 미적용) 구성
+	FMatrix LightTransform;
+	LightTransform.M[0][0] = Forward.X; LightTransform.M[0][1] = Forward.Y; LightTransform.M[0][2] = Forward.Z; LightTransform.M[0][3] = 0.0f;
+	LightTransform.M[1][0] = Right.X;   LightTransform.M[1][1] = Right.Y;   LightTransform.M[1][2] = Right.Z;   LightTransform.M[1][3] = 0.0f;
+	LightTransform.M[2][0] = Up.X;      LightTransform.M[2][1] = Up.Y;      LightTransform.M[2][2] = Up.Z;      LightTransform.M[2][3] = 0.0f;
+	LightTransform.M[3][0] = Pos.X;     LightTransform.M[3][1] = Pos.Y;     LightTransform.M[3][2] = Pos.Z;     LightTransform.M[3][3] = 1.0f;
+
+	CB.WorldToLight = LightTransform.GetInverse();  // World -> Unscaled Light Local 역행렬
 	CB.LightColor = Comp->GetLightColor();
 	CB.Intensity = Comp->GetIntensity();
 	CB.InnerConeAngleCos = cosf(innerAngleRad);       // CPU에서 미리 cos 계산

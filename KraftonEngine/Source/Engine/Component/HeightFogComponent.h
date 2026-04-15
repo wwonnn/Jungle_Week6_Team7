@@ -22,6 +22,7 @@ public:
 	float GetFogCutoffDistance() const { return FogCutoffDistance; }
 	float GetFogMaxOpacity()     const { return FogMaxOpacity; }
 	FVector4 GetFogInscatteringColor() const { return FogInscatteringColor; }
+	bool  GetUseLinearFog()      const { return bUseLinearFog; }
 
 	void SetFogDensity(float InValue)        { FogDensity = InValue; }
 	void SetFogHeightFalloff(float InValue)  { FogHeightFalloff = InValue; }
@@ -35,6 +36,7 @@ protected:
 	float StartDistance = 0.0f;
 	float FogCutoffDistance = 0.0f;
 	float FogMaxOpacity = 1.0f;
+	bool  bUseLinearFog = false;              // true = 선형 높이 안개, false = 지수 높이 안개
 
 	FVector4 FogInscatteringColor = FVector4(0.45f, 0.55f, 0.7f, 1.0f);
 };

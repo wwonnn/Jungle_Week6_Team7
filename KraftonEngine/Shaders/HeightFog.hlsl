@@ -45,6 +45,80 @@ float LinearizeDepth(float hwDepth)
     return Projection[3][2] / (hwDepth - Projection[2][2]);
 }
 
+// ─── Linear Height Fog ───
+// fogTop 위 = 안개 없음, fogTop~FogHeight = 선형 증가, FogHeight 아래 = 최대 밀도(1) 유지
+// FogHeightFalloff = 안개 상단 페이드 범위 (1/falloff)
+float4 GetLinearHeightFog(float3 worldPos)
+{
+    float3 camToPixel = worldPos - CameraWorldPos;
+    float rayLength = length(camToPixel);
+
+    if (rayLength < 0.001 || isnan(rayLength) || isinf(rayLength))
+        return float4(0, 0, 0, 0);
+
+    if (FogStartDistance > 0.0 && rayLength < FogStartDistance)
+        return float4(0, 0, 0, 0);
+    if (FogCutoffDistance > 0.0 && rayLength > FogCutoffDistance)
+        return float4(0, 0, 0, 0);
+
+    // 안개 상단 경계
+    float falloff = max(FogHeightFalloff, 0.001);
+    float fogTop = FogHeight + 1.0 / falloff;
+
+    // 높이→밀도 함수: fogTop 위=0, fogTop~FogHeight=선형 0→1, FogHeight 아래=1
+    // density(z) = saturate((fogTop - z) / (fogTop - FogHeight))
+    float zA = CameraWorldPos.z;
+    float zB = worldPos.z;
+    float densityA = saturate((fogTop - zA) / (fogTop - FogHeight));
+    float densityB = saturate((fogTop - zB) / (fogTop - FogHeight));
+
+    // 둘 다 fogTop 위면 안개 없음
+    if (densityA <= 0.0 && densityB <= 0.0)
+        return float4(0, 0, 0, 0);
+
+    // 광선이 fogTop을 넘는 구간은 제외
+    float inFogFraction = 1.0;
+    float dz = zB - zA;
+    if (abs(dz) > 0.01)
+    {
+        float tAtTop = (fogTop - zA) / dz;
+        if (dz > 0.0) // 위로 가는 광선
+            inFogFraction = saturate(tAtTop);
+        else           // 아래로 가는 광선
+            inFogFraction = saturate(1.0 - tAtTop);
+
+        // 카메라가 fogTop 위에 있으면 fogTop 이하 구간만
+        if (zA > fogTop && zB < fogTop)
+            inFogFraction = saturate((fogTop - zA) / dz) * -1.0; // 음수 dz이므 양수됨
+        if (zA > fogTop && zB <= fogTop)
+            inFogFraction = saturate((zA - fogTop) / (zA - zB));
+        if (zA <= fogTop && zB > fogTop)
+            inFogFraction = saturate((fogTop - zA) / (zB - zA));
+        if (zA <= fogTop && zB <= fogTop)
+            inFogFraction = 1.0;
+    }
+    else
+    {
+        // 수평 광선 — fogTop 위면 안개 없음
+        if (zA > fogTop)
+            return float4(0, 0, 0, 0);
+    }
+
+    // 평균 밀도 × 안개 내 이동 거리
+    float avgDensity = (densityA + densityB) * 0.5;
+    float fogPathLength = rayLength * inFogFraction;
+
+    if (FogStartDistance > 0.0)
+        fogPathLength = max(fogPathLength - FogStartDistance * inFogFraction, 0.0);
+
+    float fogAmount = avgDensity * fogPathLength * FogDensity;
+    float fogOpacity = saturate(fogAmount);
+    fogOpacity = min(fogOpacity, FogMaxOpacity);
+
+    return float4(FogInscatteringColor.rgb, fogOpacity);
+}
+
+// ─── Exponential Height Fog (UE5 exp2 기반) ───
 //UE5식 Exponential Height Fog (exp2 기반)
 // UE5 HeightFogCommon.ush와 동일한 base-2 지수 사용
 float4 GetExponentialHeightFog(float3 worldPos)
@@ -112,12 +186,33 @@ float4 PS(PS_Input input) : SV_TARGET
     int2 coord = int2(input.position.xy);
     float depth = DepthTex.Load(int3(coord, 0)).r;
 
-    // Sky (depth=1)  완전 안개
+    // Sky (depth=1) — UE5 방식: 하늘은 광선 방향으로 무한 원거리 안개량 계산
+    // 위를 보면 안개 옅음, 수평~아래를 보면 안개 짙음
     if (depth >= 1.0)
-        return float4(FogInscatteringColor.rgb, FogMaxOpacity);
+    {
+        // NDC → 월드 방향만 추출 (위치가 아닌 방향)
+        float4 ndc;
+        ndc.x =  input.uv.x * 2.0 - 1.0;
+        ndc.y = -(input.uv.y * 2.0 - 1.0);
+        ndc.z = 0.5; // 임의 깊이
+        ndc.w = 1.0;
+        float4 worldH = mul(ndc, InvViewProj);
+        float3 worldDir = normalize(worldH.xyz / worldH.w - CameraWorldPos);
+
+        // 가상 거리를 매우 멀리 잡아서 안개 계산
+        float skyDist = 100000.0;
+        float3 skyWorldPos = CameraWorldPos + worldDir * skyDist;
+        float4 fogResult = bUseLinearFog ? GetLinearHeightFog(skyWorldPos) : GetExponentialHeightFog(skyWorldPos);
+
+        if (any(isnan(fogResult)) || any(isinf(fogResult)))
+            discard;
+        if (fogResult.a < 0.001)
+            discard;
+        return fogResult;
+    }
 
     float3 worldPos = ReconstructWorldPos(input.uv, depth);
-    float4 fogResult = GetExponentialHeightFog(worldPos);
+    float4 fogResult = bUseLinearFog ? GetLinearHeightFog(worldPos) : GetExponentialHeightFog(worldPos);
 
     // NaN/Inf 최종 방어
     if (any(isnan(fogResult)) || any(isinf(fogResult)))

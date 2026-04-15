@@ -83,10 +83,11 @@ cbuffer HeightFogCB : register(b6)
     float FogMaxOpacity;
 
     float FogHeight;
-    float3 _fogPad;
+    int   bUseLinearFog;
+    float2 _fogPad;
 }
 
-cbuffer SpotLightDecalCB : register(b7)
+cbuffer SpotLightDecalCB : register(b9)
 {
     float4x4 WorldToLight;
     float3 LightColor;
