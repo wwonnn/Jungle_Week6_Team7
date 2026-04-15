@@ -2,7 +2,7 @@
   "Actors" : [{
       "ClassName" : "AStaticMeshActor",
       "NonSceneComponents" : [],
-      "PrimitiveKey" : "8",
+      "PrimitiveKey" : "573",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -149,12 +149,14 @@
           }],
         "ClassName" : "UMeshDecalComponent",
         "Properties" : {
+          "Fade" : false,
           "Location" : [-1.497502, -50.170925, 5.678879],
           "Material" : {
             "Path" : "Asset/MeshCache/MatID_1.mbin",
             "UVScroll" : false
           },
-          "OpacityRate" : 1.000000,
+          "Opacity" : 1.000000,
+          "Opacity Rate" : 1.000000,
           "Rotation" : [0.000000, 0.000000, -89.780449],
           "Scale" : [1.000000, 4.454046, 4.149449],
           "Visible" : true,
@@ -174,7 +176,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "53",
+      "PrimitiveKey" : "580",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -217,7 +219,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "60",
+      "PrimitiveKey" : "584",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -277,9 +279,9 @@
           "Fade" : false,
           "Fade Inner" : 0.200000,
           "Fade Outer" : 0.600000,
-          "Location" : [30.271252, 0.000000, 10.637396],
+          "Location" : [30.271252, -39.932949, 14.084400],
           "Rotation" : [0.000000, 0.000000, 0.000000],
-          "Scale" : [1.000000, 12.122821, 14.870612],
+          "Scale" : [1.000000, 17.077026, 17.857738],
           "Texture" : "Genji_Dragon",
           "Visible" : true,
           "bTickEnable" : true
@@ -336,7 +338,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "72",
+      "PrimitiveKey" : "596",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -377,7 +379,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "76",
+      "PrimitiveKey" : "600",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -417,7 +419,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "83",
+      "PrimitiveKey" : "604",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -457,7 +459,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "87",
+      "PrimitiveKey" : "608",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -520,6 +522,120 @@
         }
       },
       "bVisible" : true
+    }, {
+      "ClassName" : "ADecalActor",
+      "NonSceneComponents" : [],
+      "RootComponent" : {
+        "Children" : [{
+            "Children" : [],
+            "ClassName" : "UArrowComponent",
+            "Properties" : {
+              "Visible" : false
+            }
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "Properties" : {
+              "Height" : 1.000000,
+              "Location" : [0.000000, 0.000000, 0.000000],
+              "Rotation" : [0.000000, 0.000000, 0.000000],
+              "Scale" : [1.000000, 1.000000, 1.000000],
+              "Texture" : "DecalActor",
+              "Visible" : true,
+              "Width" : 1.000000,
+              "bTickEnable" : true
+            }
+          }],
+        "ClassName" : "UDecalComponent",
+        "Properties" : {
+          "Fade" : false,
+          "Fade Inner" : 0.200000,
+          "Fade Outer" : 0.600000,
+          "Location" : [-18.182453, -49.934803, 13.466129],
+          "Rotation" : [0.000000, 0.000000, -89.332794],
+          "Scale" : [1.000000, 16.630341, 9.162635],
+          "Texture" : "dva_nanocola",
+          "Visible" : true,
+          "bTickEnable" : true
+        }
+      },
+      "bVisible" : true
+    }, {
+      "ClassName" : "ADecalActor",
+      "NonSceneComponents" : [],
+      "RootComponent" : {
+        "Children" : [{
+            "Children" : [],
+            "ClassName" : "UArrowComponent",
+            "Properties" : {
+              "Visible" : false
+            }
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "Properties" : {
+              "Height" : 1.000000,
+              "Location" : [0.000000, 0.000000, 0.000000],
+              "Rotation" : [0.000000, 0.000000, 0.000000],
+              "Scale" : [1.000000, 1.000000, 1.000000],
+              "Texture" : "DecalActor",
+              "Visible" : true,
+              "Width" : 1.000000,
+              "bTickEnable" : true
+            }
+          }],
+        "ClassName" : "UDecalComponent",
+        "Properties" : {
+          "Fade" : false,
+          "Fade Inner" : 0.200000,
+          "Fade Outer" : 0.600000,
+          "Location" : [17.841700, -49.934803, 13.466129],
+          "Rotation" : [0.000000, 0.000000, -89.332794],
+          "Scale" : [1.000000, 16.630341, 9.162635],
+          "Texture" : "dva_nanocola",
+          "Visible" : true,
+          "bTickEnable" : true
+        }
+      },
+      "bVisible" : true
+    }, {
+      "ClassName" : "ADecalActor",
+      "NonSceneComponents" : [],
+      "RootComponent" : {
+        "Children" : [{
+            "Children" : [],
+            "ClassName" : "UArrowComponent",
+            "Properties" : {
+              "Visible" : false
+            }
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "Properties" : {
+              "Height" : 1.000000,
+              "Location" : [0.000000, 0.000000, 0.000000],
+              "Rotation" : [0.000000, 0.000000, 0.000000],
+              "Scale" : [1.000000, 1.000000, 1.000000],
+              "Texture" : "DecalActor",
+              "Visible" : true,
+              "Width" : 1.000000,
+              "bTickEnable" : true
+            }
+          }],
+        "ClassName" : "UDecalComponent",
+        "Properties" : {
+          "Fade" : false,
+          "Fade Inner" : 0.200000,
+          "Fade Outer" : 0.600000,
+          "Location" : [-30.150507, -37.747234, 13.466129],
+          "Rotation" : [0.000000, 0.000000, 0.000000],
+          "Scale" : [1.000000, 21.040771, 12.560601],
+          "Texture" : "Laevatain_Splash_Art",
+          "Visible" : true,
+          "bTickEnable" : true
+        }
+      },
+      "bVisible" : true
     }],
   "ClassName" : "UWorld",
   "ContextHandle" : "Default",
@@ -528,54 +644,54 @@
   "PerspectiveCamera" : {
     "FOV" : 1.570795,
     "FarClip" : 100.000000,
-    "Location" : [-1.121461, -5.784582, 13.585276],
+    "Location" : [-0.779563, -7.091820, 13.016459],
     "NearClip" : 0.100000,
-    "Rotation" : [-0.000001, 10.222136, -86.826630]
+    "Rotation" : [0.000000, 9.922195, -90.576431]
   },
   "Primitives" : {
-    "53" : {
-      "Location" : [0.339486, -35.730877, 15.366512],
-      "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
-      "Rotation" : [0.000000, -0.000000, 0.000000],
-      "Scale" : [1.000000, 1.000000, 1.000000],
-      "Type" : "StaticMeshComp"
-    },
-    "60" : {
-      "Location" : [-9.293743, -35.053185, 14.826392],
-      "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
-      "Rotation" : [0.000000, -0.000000, 0.000000],
-      "Scale" : [1.000000, 1.000000, 1.000000],
-      "Type" : "StaticMeshComp"
-    },
-    "72" : {
-      "Location" : [10.416507, -35.730877, 13.945491],
-      "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
-      "Rotation" : [0.000000, -0.000000, 0.000000],
-      "Scale" : [1.000000, 1.000000, 1.000000],
-      "Type" : "StaticMeshComp"
-    },
-    "76" : {
-      "Location" : [0.422779, -34.034737, 3.383955],
-      "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
-      "Rotation" : [0.000000, 90.000000, -86.655167],
-      "Scale" : [3.200000, 3.800000, 2.900000],
-      "Type" : "StaticMeshComp"
-    },
-    "8" : {
+    "573" : {
       "Location" : [-0.145782, -0.321359, 0.000000],
       "ObjStaticMeshAsset" : "Data/Karaoke/Give me Food.x.obj",
       "Rotation" : [0.000000, 89.972015, -0.074615],
       "Scale" : [1.000000, 1.000000, 1.000000],
       "Type" : "StaticMeshComp"
     },
-    "83" : {
+    "580" : {
+      "Location" : [0.339486, -35.730877, 15.366512],
+      "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
+      "Rotation" : [0.000000, -0.000000, 0.000000],
+      "Scale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "StaticMeshComp"
+    },
+    "584" : {
+      "Location" : [-9.293743, -35.053185, 14.826392],
+      "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
+      "Rotation" : [0.000000, -0.000000, 0.000000],
+      "Scale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "StaticMeshComp"
+    },
+    "596" : {
+      "Location" : [10.416507, -35.730877, 13.945491],
+      "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
+      "Rotation" : [0.000000, -0.000000, 0.000000],
+      "Scale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "StaticMeshComp"
+    },
+    "600" : {
+      "Location" : [0.422779, -34.034737, 3.383955],
+      "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
+      "Rotation" : [0.000000, 90.000000, -86.655167],
+      "Scale" : [3.200000, 3.800000, 2.900000],
+      "Type" : "StaticMeshComp"
+    },
+    "604" : {
       "Location" : [9.281007, -32.225502, 3.383955],
       "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
       "Rotation" : [0.000000, 90.000000, -43.351673],
       "Scale" : [3.200000, 3.800000, 2.900000],
       "Type" : "StaticMeshComp"
     },
-    "87" : {
+    "608" : {
       "Location" : [-9.286839, -34.034737, 3.383955],
       "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
       "Rotation" : [0.000000, 90.000000, -116.270020],
