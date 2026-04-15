@@ -1,8 +1,40 @@
 ﻿#include "RotatingMovementComponent.h"
 
+#include "GameFramework/AActor.h"
 #include "Object/ObjectFactory.h"
+#include "Render/Pipeline/RenderBus.h"
 #include "SceneComponent.h"
 #include "Serialization/Archive.h"
+
+#include <algorithm>
+
+namespace
+{
+	void AddDebugLine(FRenderBus& RenderBus, const FVector& Start, const FVector& End, const FColor& Color)
+	{
+		FDebugLineEntry Entry = {};
+		Entry.Start = Start;
+		Entry.End = End;
+		Entry.Color = Color;
+		RenderBus.AddDebugLineEntry(std::move(Entry));
+	}
+
+	FVector ComputePivotWorldLocation(const USceneComponent* SourceComponent, const FVector& PivotTranslation)
+	{
+		if (!SourceComponent)
+		{
+			return PivotTranslation;
+		}
+
+		const USceneComponent* ParentComponent = SourceComponent->GetParent();
+		if (!ParentComponent)
+		{
+			return PivotTranslation;
+		}
+
+		return ParentComponent->GetWorldMatrix().TransformPositionWithW(PivotTranslation);
+	}
+}
 
 IMPLEMENT_CLASS(URotatingMovementComponent, UMovementComponent)
 
@@ -59,6 +91,36 @@ void URotatingMovementComponent::Serialize(FArchive& Ar)
 	Ar << PivotTranslation.Y;
 	Ar << PivotTranslation.Z;
 	Ar << bRotationInLocalSpace;
+}
+
+void URotatingMovementComponent::CollectEditorVisualizations(FRenderBus& RenderBus) const
+{
+	USceneComponent* SourceComponent = GetUpdatedComponent();
+	if (!SourceComponent)
+	{
+		AActor* OwnerActor = GetOwner();
+		SourceComponent = OwnerActor ? OwnerActor->GetRootComponent() : nullptr;
+	}
+	if (!SourceComponent)
+	{
+		return;
+	}
+
+	const FVector ComponentWorldLocation = SourceComponent->GetWorldLocation();
+	const FVector PivotWorldLocation = ComputePivotWorldLocation(SourceComponent, PivotTranslation);
+	const float PivotDistance = FVector::Distance(ComponentWorldLocation, PivotWorldLocation);
+	const float MarkerExtent = std::max(0.15f, PivotDistance * 0.12f);
+	const FColor PivotColor(255, 196, 0, 255);
+	const FColor LinkColor(255, 128, 0, 255);
+
+	AddDebugLine(RenderBus, PivotWorldLocation - FVector(MarkerExtent, 0.0f, 0.0f), PivotWorldLocation + FVector(MarkerExtent, 0.0f, 0.0f), PivotColor);
+	AddDebugLine(RenderBus, PivotWorldLocation - FVector(0.0f, MarkerExtent, 0.0f), PivotWorldLocation + FVector(0.0f, MarkerExtent, 0.0f), PivotColor);
+	AddDebugLine(RenderBus, PivotWorldLocation - FVector(0.0f, 0.0f, MarkerExtent), PivotWorldLocation + FVector(0.0f, 0.0f, MarkerExtent), PivotColor);
+
+	if (PivotDistance > EPSILON)
+	{
+		AddDebugLine(RenderBus, ComponentWorldLocation, PivotWorldLocation, LinkColor);
+	}
 }
 
 void URotatingMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

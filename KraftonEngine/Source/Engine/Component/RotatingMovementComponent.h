@@ -16,6 +16,7 @@ public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction) override;
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
 	void Serialize(FArchive& Ar) override;
+	void CollectEditorVisualizations(FRenderBus& RenderBus) const override;
 
 private:
 	// 초당 회전 속도 (Pitch, Yaw, Roll)

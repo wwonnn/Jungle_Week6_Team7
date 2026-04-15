@@ -2,7 +2,7 @@
   "Actors" : [{
       "ClassName" : "AStaticMeshActor",
       "NonSceneComponents" : [],
-      "PrimitiveKey" : "573",
+      "PrimitiveKey" : "8",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -170,13 +170,13 @@
           "ClassName" : "URotatingMovementComponent",
           "Properties" : {
             "Auto Register Updated" : true,
-            "Pivot Translation" : [2.000000, -35.730999, 15.367000],
+            "Pivot Translation" : [2.000000, -34.530998, 15.367000],
             "Rotation In Local Space" : true,
             "Rotation Rate" : [0.000000, 0.000000, 90.000000],
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "580",
+      "PrimitiveKey" : "53",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -199,7 +199,7 @@
             "Path" : "BasicShapeMaterial",
             "UVScroll" : false
           },
-          "Location" : [0.339486, -35.730877, 15.366512],
+          "Location" : [0.339486, -30.796947, 14.591094],
           "Rotation" : [0.000000, 0.000000, 0.000000],
           "Scale" : [1.000000, 1.000000, 1.000000],
           "Visible" : true,
@@ -219,7 +219,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "584",
+      "PrimitiveKey" : "60",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -242,7 +242,7 @@
             "Path" : "BasicShapeMaterial",
             "UVScroll" : false
           },
-          "Location" : [-9.293743, -35.053185, 14.826392],
+          "Location" : [-8.399218, -35.053185, 13.266411],
           "Rotation" : [0.000000, 0.000000, 0.000000],
           "Scale" : [1.000000, 1.000000, 1.000000],
           "Visible" : true,
@@ -332,13 +332,13 @@
           "ClassName" : "URotatingMovementComponent",
           "Properties" : {
             "Auto Register Updated" : true,
-            "Pivot Translation" : [8.000000, -35.730999, 13.945000],
+            "Pivot Translation" : [10.100000, -33.431000, 13.945000],
             "Rotation In Local Space" : true,
             "Rotation Rate" : [0.000000, 0.000000, 90.000000],
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "596",
+      "PrimitiveKey" : "72",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -346,7 +346,7 @@
             "Properties" : {
               "Color" : [0.388235, 0.078431, 0.329412, 0.000000],
               "Intensity" : 19.700001,
-              "Location" : [5.137444, 0.000000, 0.000000],
+              "Location" : [0.087589, 0.000000, 0.000000],
               "Radius" : 48.099998,
               "Radius FallOff" : 10.000000,
               "Rotation" : [0.000000, 0.000000, 0.000000],
@@ -361,7 +361,7 @@
             "Path" : "BasicShapeMaterial",
             "UVScroll" : false
           },
-          "Location" : [10.416507, -35.730877, 13.945491],
+          "Location" : [10.416507, -28.824867, 13.945491],
           "Rotation" : [0.000000, 0.000000, 0.000000],
           "Scale" : [1.000000, 1.000000, 1.000000],
           "Visible" : true,
@@ -379,7 +379,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "600",
+      "PrimitiveKey" : "76",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -419,7 +419,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "604",
+      "PrimitiveKey" : "83",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -459,7 +459,7 @@
             "bTickEnable" : true
           }
         }],
-      "PrimitiveKey" : "608",
+      "PrimitiveKey" : "87",
       "RootComponent" : {
         "Children" : [{
             "Children" : [],
@@ -644,54 +644,54 @@
   "PerspectiveCamera" : {
     "FOV" : 1.570795,
     "FarClip" : 100.000000,
-    "Location" : [-0.779563, -7.091820, 13.016459],
+    "Location" : [0.627607, -6.823780, 10.725915],
     "NearClip" : 0.100000,
-    "Rotation" : [0.000000, 9.922195, -90.576431]
+    "Rotation" : [0.000000, 15.771925, -87.276955]
   },
   "Primitives" : {
-    "573" : {
-      "Location" : [-0.145782, -0.321359, 0.000000],
-      "ObjStaticMeshAsset" : "Data/Karaoke/Give me Food.x.obj",
-      "Rotation" : [0.000000, 89.972015, -0.074615],
-      "Scale" : [1.000000, 1.000000, 1.000000],
-      "Type" : "StaticMeshComp"
-    },
-    "580" : {
-      "Location" : [0.339486, -35.730877, 15.366512],
+    "53" : {
+      "Location" : [0.339486, -30.796947, 14.591094],
       "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
       "Rotation" : [0.000000, -0.000000, 0.000000],
       "Scale" : [1.000000, 1.000000, 1.000000],
       "Type" : "StaticMeshComp"
     },
-    "584" : {
-      "Location" : [-9.293743, -35.053185, 14.826392],
+    "60" : {
+      "Location" : [-8.399218, -35.053185, 13.266411],
       "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
       "Rotation" : [0.000000, -0.000000, 0.000000],
       "Scale" : [1.000000, 1.000000, 1.000000],
       "Type" : "StaticMeshComp"
     },
-    "596" : {
-      "Location" : [10.416507, -35.730877, 13.945491],
+    "72" : {
+      "Location" : [10.416507, -28.824867, 13.945491],
       "ObjStaticMeshAsset" : "Data/BasicShape/Sphere.OBJ",
       "Rotation" : [0.000000, -0.000000, 0.000000],
       "Scale" : [1.000000, 1.000000, 1.000000],
       "Type" : "StaticMeshComp"
     },
-    "600" : {
+    "76" : {
       "Location" : [0.422779, -34.034737, 3.383955],
       "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
       "Rotation" : [0.000000, 90.000000, -86.655167],
       "Scale" : [3.200000, 3.800000, 2.900000],
       "Type" : "StaticMeshComp"
     },
-    "604" : {
+    "8" : {
+      "Location" : [-0.145782, -0.321359, 0.000000],
+      "ObjStaticMeshAsset" : "Data/Karaoke/Give me Food.x.obj",
+      "Rotation" : [0.000000, 89.972015, -0.074615],
+      "Scale" : [1.000000, 1.000000, 1.000000],
+      "Type" : "StaticMeshComp"
+    },
+    "83" : {
       "Location" : [9.281007, -32.225502, 3.383955],
       "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
       "Rotation" : [0.000000, 90.000000, -43.351673],
       "Scale" : [3.200000, 3.800000, 2.900000],
       "Type" : "StaticMeshComp"
     },
-    "608" : {
+    "87" : {
       "Location" : [-9.286839, -34.034737, 3.383955],
       "ObjStaticMeshAsset" : "Data/Creeper/Creeper.obj",
       "Rotation" : [0.000000, 90.000000, -116.270020],
