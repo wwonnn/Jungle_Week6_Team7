@@ -97,6 +97,8 @@ private:
 	// PostProcess Outline — StencilSRV 읽어 edge detection 후 fullscreen draw
 	void DrawPostProcessOutline(FRenderBus& Bus, ID3D11DeviceContext* Context);
 
+	void DrawSceneDepth(const FRenderBus& Bus, ID3D11DeviceContext* Context);
+
 	// PostProcess FXAA — BaseColorSRV 읽어 안티앨리어싱 후 PostProcessRTV에 draw
 	void DrawFXAA(FRenderBus& Bus, ID3D11DeviceContext* Context);
 
@@ -121,6 +123,7 @@ private:
 	FPassRenderState    PassRenderStates[(uint32)ERenderPass::MAX];
 	FPassBatcherBinding PassBatchers[(uint32)ERenderPass::MAX];
 
-	// Fog 패스 IsEmpty 판정용 — Render() 시작 시 설정
+	// 패스 IsEmpty 판정용 — Render() 시작 시 설정
 	bool bShouldRenderFog = false;
+	bool bShouldRenderSceneDepth = false;
 };

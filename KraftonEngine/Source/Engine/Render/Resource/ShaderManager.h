@@ -20,6 +20,7 @@ enum class EShaderType : uint32
 	Decal,
 	HeightFog,
 	MeshDecal,
+	SceneDepth,
 	MAX,
 };
 

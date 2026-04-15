@@ -4,6 +4,7 @@
 #include "Render/Proxy/PrimitiveSceneProxy.h"
 
 class UPrimitiveComponent;
+class UHeightFogComponent;
 
 // ============================================================
 // FScene — FPrimitiveSceneProxy의 소유자 겸 변경 추적 컨테이너
@@ -25,6 +26,11 @@ public:
 
 	// Component가 EndPlay 또는 소멸 시 호출
 	void RemovePrimitive(FPrimitiveSceneProxy* Proxy);
+
+	// --- Fog Component 등록/해제 ---
+	void AddFog(UHeightFogComponent* Fog);
+	void RemoveFog(UHeightFogComponent* Fog);
+	UHeightFogComponent* GetFog() const { return FogComponents.empty() ? nullptr : FogComponents[0]; }
 
 	// --- 프레임 갱신 ---
 	// 매 프레임 Render 직전에 호출 — DirtyList의 프록시만 갱신
@@ -73,4 +79,7 @@ private:
 	// 매 프레임 frustum culling 결과 캐시 (World::UpdateVisibleProxies가 채움)
 	TArray<FPrimitiveSceneProxy*> VisibleProxies;
 	bool bVisibleSetDirty = true;
+
+	// 등록된 Fog Component
+	TArray<UHeightFogComponent*> FogComponents;
 };
