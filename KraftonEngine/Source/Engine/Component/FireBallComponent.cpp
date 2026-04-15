@@ -9,6 +9,7 @@ void UFireBallComponent::Serialize(FArchive& Ar)
 	Ar << Radius;
 	Ar << RadiusFallOff;
 	Ar << Color;
+	Ar << RadiusOfSource;
 }
 
 void UFireBallComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

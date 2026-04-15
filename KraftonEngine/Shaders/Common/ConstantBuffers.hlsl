@@ -55,7 +55,8 @@ cbuffer MaterialBuffer : register(b4)
 cbuffer MeshDecalBuffer : register(b8)
 {
     float DecalOpacity;
-    float3 _Padding;
+    bool bFade;
+    float2 _Padding;
 }
 
 // b5: Decal 

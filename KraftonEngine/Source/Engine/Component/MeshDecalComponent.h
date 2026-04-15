@@ -4,6 +4,7 @@
 #include "Materials/Material.h"
 #include "Math/Vector.h"
 #include "Render/Resource/Buffer.h"
+#include "Core/ResourceTypes.h"
 class UMeshDecalComponent : public UPrimitiveComponent
 {
 public:
@@ -14,7 +15,6 @@ public:
 	virtual FMeshBuffer* GetMeshBuffer() const override { return const_cast<FMeshBuffer*>(&MeshBuffer); }
 	virtual const FMeshData* GetMeshData() const override { return nullptr; }
 	bool LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult) override;
-	UMaterial* GetMaterial() const { return Material; }
 
 	void UpdateDecalMeshData();
 	void ClipByDecalLocalOBB(TArray<FVertexPNCT>& OutClippedVertices, const FVertexPNCT& P0, const FVertexPNCT& P1, const FVertexPNCT& P2);
@@ -26,18 +26,23 @@ public:
 	void CollectEditorVisualizations(FRenderBus& RenderBus) const override;
 	virtual void BeginPlay() override;
 	float GetOpacity() const { return Opacity; }
+	bool IsFading() const { return bFade; }
+	void SetTexture(const FName& InTextureName);
+	ID3D11ShaderResourceView* GetSRV();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction) override;
 	void Serialize(FArchive& Ar) override;
 
 private:
-	void RefreshMaterial();
-	FMaterialSlot MaterialSlot;
-	UMaterial* Material = nullptr;
+	FName TextureName = "None";
+	FTextureResource* CachedTexture = nullptr;
+
 	TMeshData<FVertexPNCT> DecalMeshData;
 	FMeshBuffer MeshBuffer;
+
 	float OpacityRate = 1.f;
 	float Opacity = 1.f;
+	bool bFade = false;
 
 private:
 	TArray<UPrimitiveComponent*> GetCandidates() const;

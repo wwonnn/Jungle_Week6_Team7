@@ -16,7 +16,7 @@ class UPrimitiveComponent;
 
 class AActor : public UObject
 {
-    friend struct FActorTickFunction;
+	friend struct FActorTickFunction;
 public:
 	DECLARE_CLASS(AActor, UObject)
 	AActor();
@@ -95,11 +95,11 @@ public:
 	const TArray<UPrimitiveComponent*>& GetPrimitiveComponents() const;
 	bool IsQueuedForPartitionUpdate() const { return bQueuedForPartitionUpdate; }
 	void SetQueuedForPartitionUpdate(bool bQueued) { bQueuedForPartitionUpdate = bQueued; }
-	
+
 	FActorTickFunction PrimaryActorTick;
 protected:
-	virtual void TickActor( float DeltaSeconds, ELevelTick TickType, FActorTickFunction& ThisTickFunction );
-	
+	virtual void TickActor(float DeltaSeconds, ELevelTick TickType, FActorTickFunction& ThisTickFunction);
+
 	void MarkPickingDirty();
 
 	USceneComponent* RootComponent = nullptr;

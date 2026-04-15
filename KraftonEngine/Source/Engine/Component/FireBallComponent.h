@@ -15,11 +15,16 @@ public:
 
 	//Getter/Setter
 	float GetIntensity() const { return Intensity; }
+	float GetRadiusOfSource() const { return RadiusOfSource; }
 	float GetRadius() const { return Radius; }
 	float GetRadiusFallOff() const { return RadiusFallOff; }
 	FVector4 GetColor() const { return Color; }
+
+	void SetRadiusOfSource(float Rad) { if (Rad > 0.01) RadiusOfSource = Rad; }
+
 private:
 	float Intensity = 10.f;
+	float RadiusOfSource = 10.f;
 	float Radius = 10.f;
 	float RadiusFallOff = 10.f;
 	FVector4 Color;
