@@ -100,7 +100,7 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 	Bus.SetViewportInfo(VP);
 	Bus.SetViewportType(Opts.ViewportType);
 	Bus.SetOcclusionCulling(&GPUOcclusion);
-	Bus.SetLODContext(World->PrepareLODContext());
+	//Bus.SetLODContext(World->PrepareLODContext());
 
 	// 2. 프록시 + Batcher Entry를 ERenderPass별로 수집
 	{
@@ -162,19 +162,19 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 	}
 
 	// 5. GPU Occlusion — DSV 언바인딩 후 Hi-Z 생성 + Occlusion Test 디스패치
-	//if (GPUOcclusion.IsInitialized())
-	//{
-	//	SCOPE_STAT_CAT("GPUOcclusion", "4_ExecutePass");
+	if (GPUOcclusion.IsInitialized())
+	{
+		SCOPE_STAT_CAT("GPUOcclusion", "4_ExecutePass");
 
-	//	// DSV 언바인딩 (DepthSRV 읽기와 동시 바인딩 불가)
-	//	ID3D11RenderTargetView* rtv = VP->GetBaseRTV();
-	//	Ctx->OMSetRenderTargets(1, &rtv, nullptr);
+		// DSV 언바인딩 (DepthSRV 읽기와 동시 바인딩 불가)
+		ID3D11RenderTargetView* rtv = VP->GetBaseRTV();
+		Ctx->OMSetRenderTargets(1, &rtv, nullptr);
 
-	//	GPUOcclusion.DispatchOcclusionTest(
-	//		Ctx,
-	//		VP->GetDepthSRV(),
-	//		World->GetVisibleProxies(),
-	//		Bus.GetView(), Bus.GetProj(),
-	//		VP->GetWidth(), VP->GetHeight());
-	//}
+		GPUOcclusion.DispatchOcclusionTest(
+			Ctx,
+			VP->GetDepthSRV(),
+			World->GetVisibleProxies(),
+			Bus.GetView(), Bus.GetProj(),
+			VP->GetWidth(), VP->GetHeight());
+	}
 }

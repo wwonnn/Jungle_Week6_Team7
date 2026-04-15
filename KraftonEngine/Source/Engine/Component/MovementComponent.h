@@ -30,6 +30,7 @@ public:
 
 protected:
 	void TryAutoRegisterUpdatedComponent();
+	float Cos = 0.f;
 
 	USceneComponent* UpdatedComponent = nullptr; // 움직일 대상
 	bool bAutoRegisterUpdatedComponent = true;

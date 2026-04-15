@@ -28,9 +28,7 @@ void AFireBallActor::InitDefaultComponents()
 
 void AFireBallActor::TickActor(float DeltaSeconds, ELevelTick TickType, FActorTickFunction& ThisTickFunction)
 {
-	SetActorLocation(GetActorLocation() + FVector(0.0f, 1.0f, 0.0f) * DeltaSeconds);
 }
 
 
 
-    
