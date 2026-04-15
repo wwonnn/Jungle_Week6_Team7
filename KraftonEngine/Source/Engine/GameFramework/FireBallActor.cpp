@@ -11,19 +11,16 @@ AFireBallActor::AFireBallActor()
 
 void AFireBallActor::InitDefaultComponents()
 {
-	FireBallComp = AddComponent<UFireBallComponent>();
-	SetRootComponent(FireBallComp);
 	StaticMeshComp = AddComponent<UStaticMeshComponent>();
-	StaticMeshComp->AttachToComponent(FireBallComp);
-
+	SetRootComponent(StaticMeshComp);
 	ID3D11Device* Device = GEngine->GetRenderer().GetFD3DDevice().GetDevice();
 	UStaticMesh* DefaultMesh = FObjManager::LoadObjStaticMesh("Data/BasicShape/Sphere.OBJ", Device);
-	StaticMeshComp->AddWorldOffset(FVector(0.f, 0.f, 10.f));
 	if (DefaultMesh)
 	{
 		StaticMeshComp->SetStaticMesh(DefaultMesh);
 	}
-
+	FireBallComp = AddComponent<UFireBallComponent>();
+	FireBallComp->AttachToComponent(StaticMeshComp);
 }
 
 void AFireBallActor::TickActor(float DeltaSeconds, ELevelTick TickType, FActorTickFunction& ThisTickFunction)
