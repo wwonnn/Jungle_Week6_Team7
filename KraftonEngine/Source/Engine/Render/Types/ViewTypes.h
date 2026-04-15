@@ -18,7 +18,8 @@ struct FShowFlags
 	bool bWorldAxis = true;
 	bool bGizmo = true;
 	bool bBillboardText = true;
-	bool bBoundingVolume = false;
+	bool bAABB = false;
+	bool bOBB = false;
 	bool bDebugDraw = true;
 	bool bOctree = false;
 	bool bDecal = true;

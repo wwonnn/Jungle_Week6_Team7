@@ -41,9 +41,15 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	Shaders[(uint32)EShaderType::Decal].Create(InDevice, L"Shaders/ShaderDecal.hlsl",
 		"VS", "PS", FVertexInputLayout, ARRAYSIZE(FVertexInputLayout));
 
+	Shaders[(uint32)EShaderType::FireBall].Create(InDevice, L"Shaders/ShaderFireBall.hlsl",
+		"VS", "PS", FVertexInputLayout, 0);
+
 	// Height Fog: fullscreen post-process (InputLayout 없음)
 	Shaders[(uint32)EShaderType::HeightFog].Create(InDevice, L"Shaders/HeightFog.hlsl",
 		"VS", "PS", nullptr, 0);
+
+	Shaders[(uint32)EShaderType::MeshDecal].Create(InDevice, L"Shaders/MeshDecalShader.hlsl",
+		"VS", "PS", FVertexPNCTInputLayout, ARRAYSIZE(FVertexPNCTInputLayout));
 
 	Shaders[(uint32)EShaderType::SceneDepth].Create(InDevice, L"Shaders/SceneDepth.hlsl",
 		"VS", "PS", nullptr, 0);

@@ -29,7 +29,7 @@ void UBillboardComponent::PostDuplicate()
 {
 	UPrimitiveComponent::PostDuplicate();
 	// 텍스처 SRV 재바인딩
-	SetTexture(TextureName);
+	//SetTexture(TextureName);
 }
 
 void UBillboardComponent::SetTexture(const FName& InTextureName)
@@ -105,11 +105,9 @@ bool UBillboardComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHit
 	}
 
 	// 3. 실제 화면에 그려지는 크기 (BillboardBatcher의 0.25 계수 반영)
-	// Batcher: HalfW = Width * Scale.Y * 0.25f
-	// 전체 Width = 2 * HalfW = Width * Scale.Y * 0.5f
-	FVector WorldScale = GetWorldScale();
-	float VisualWidth = Width * WorldScale.Y * DistanceScale * 0.5f;
-	float VisualHeight = Height * WorldScale.Z * DistanceScale * 0.5f;
+	// 아이콘은 부모의 스케일을 무시하고 항상 1.0 비율로 유지합니다.
+	float VisualWidth = Width * DistanceScale * 0.5f;
+	float VisualHeight = Height * DistanceScale * 0.5f;
 
 	// 4. Batcher가 정점을 뻗는 실제 축 (카메라의 Right, Up)
 	FVector Right = ActiveCamera->GetRightVector();
@@ -123,13 +121,46 @@ bool UBillboardComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHit
 	if (std::abs(x) > (VisualWidth * 0.5f) * PickingMargin || std::abs(y) > (VisualHeight * 0.5f) * PickingMargin)
 		return false;
 
-	// 6. 원형 판정
-	float normX = x / (VisualWidth * 0.5f);
-	float normY = y / (VisualHeight * 0.5f);
-	if (normX * normX + normY * normY > 1.0f)
-		return false;
+	// 6. 원형 판정 (사각형 피킹이 아닐 때만 수행)
+	if (!bUseSquarePicking && !bUsePixelPerfectPicking)
+	{
+		float normX = x / (VisualWidth * 0.5f);
+		float normY = y / (VisualHeight * 0.5f);
+		if (normX * normX + normY * normY > 1.0f)
+			return false;
+	}
 
-	// 7. 히트 결과 설정
+	// 7. 픽셀 퍼펙트 판정 (알파 체크)
+	if (bUsePixelPerfectPicking && CachedTexture && !CachedTexture->PixelData.empty())
+	{
+		// -0.5 ~ 0.5 범위를 0 ~ 1 UV 범위로 변환
+		float u = (x / VisualWidth) + 0.5f;
+		float v = 0.5f - (y / VisualHeight); // V축 반전: 텍스처는 위쪽이 0, 아래쪽이 1
+
+		// 텍스처 좌표로 변환
+		int32 texX = static_cast<int32>(u * (CachedTexture->Width - 1));
+		int32 texY = static_cast<int32>(v * (CachedTexture->Height - 1));
+
+		// 범위 체크
+		if (texX >= 0 && texX < (int32)CachedTexture->Width && texY >= 0 && texY < (int32)CachedTexture->Height)
+		{
+			// RGBA8 포맷 (4바이트)
+			int32 pixelIndex = (texY * CachedTexture->Width + texX) * 4;
+			if (pixelIndex + 3 < (int32)CachedTexture->PixelData.size())
+			{
+				uint8 alpha = CachedTexture->PixelData[pixelIndex + 3];
+				// 임계값을 0보다 조금 큰 값으로 설정하여 아주 투명하지 않은 이상 모두 잡히게 함
+				if (alpha <= 0) 
+					return false;
+			}
+		}
+		else
+		{
+			return false; // 텍스처 범위를 벗어나면 히트 아님
+		}
+	}
+
+	// 8. 히트 결과 설정
 	OutHitResult.bHit = true;
 	OutHitResult.Distance = t;
 	OutHitResult.WorldHitLocation = HitPoint;
@@ -139,7 +170,7 @@ bool UBillboardComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHit
 }
 
 void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
-	
+
 {
 	if (!GetOwner() || !GetOwner()->GetWorld()) return;
 
@@ -162,7 +193,8 @@ void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(Forward, Right, Up);
 
-	CachedWorldMatrix = FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
+	// 부모의 스케일을 무시하고 (1,1,1) 사용
+	CachedWorldMatrix = RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
 
 	UpdateWorldAABB();
 	UpdateWorldOBB();
@@ -185,5 +217,6 @@ FMatrix UBillboardComponent::ComputeBillboardMatrix(const FVector& CameraForward
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(Forward, Right, Up);
 
-	return FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(GetWorldLocation());
+	// 부모의 스케일을 무시하고 (1,1,1) 사용
+	return RotMatrix * FMatrix::MakeTranslationMatrix(GetWorldLocation());
 }

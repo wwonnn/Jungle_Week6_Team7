@@ -5,6 +5,7 @@
 #include "Viewport/Viewport.h"
 #include "Component/CameraComponent.h"
 #include "Component/GizmoComponent.h"
+#include "Component/MeshDecalComponent.h"
 #include "GameFramework/World.h"
 #include "Profiling/Stats.h"
 #include "Profiling/GPUProfiler.h"
@@ -107,27 +108,34 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 		Collector.CollectWorld(World, Bus);
 		Collector.CollectFog(World, Bus);
 
+		const bool bPIE = Editor->IsPlayingInEditor();
+
 		if (UGizmoComponent* Gizmo = Editor->GetGizmo())
-			Gizmo->UpdateAxisMask(Opts.ViewportType);
-
-		Collector.CollectGrid(Opts.GridSpacing, Opts.GridHalfLineCount, Bus);
-		Collector.CollectDebugDraw(World->GetDebugDrawQueue(), Bus);
-
-		for (AActor* SelectedActor : Editor->GetSelectionManager().GetSelectedActors())
 		{
-			if (!SelectedActor || SelectedActor->GetWorld() != World)
-			{
-				continue;
-			}
+			Gizmo->UpdateAxisMask(Opts.ViewportType);
+		}
 
-			for (UActorComponent* ActorComponent : SelectedActor->GetComponents())
+		if (!bPIE)
+		{
+			Collector.CollectGrid(Opts.GridSpacing, Opts.GridHalfLineCount, Bus);
+			Collector.CollectDebugDraw(World->GetDebugDrawQueue(), Bus);
+
+			for (AActor* SelectedActor : Editor->GetSelectionManager().GetSelectedActors())
 			{
-				if (!ActorComponent)
+				if (!SelectedActor || SelectedActor->GetWorld() != World)
 				{
 					continue;
 				}
 
-				ActorComponent->CollectEditorVisualizations(Bus);
+				for (UActorComponent* ActorComponent : SelectedActor->GetComponents())
+				{
+					if (!ActorComponent)
+					{
+						continue;
+					}
+
+					ActorComponent->CollectEditorVisualizations(Bus);
+				}
 			}
 		}
 
@@ -149,24 +157,24 @@ void FEditorRenderPipeline::RenderViewport(FLevelEditorViewportClient* VC, FRend
 		SCOPE_STAT_CAT("Renderer.Render", "4_ExecutePass");
 		Renderer.Render(Bus);
 
-		// FXAA 패스가 실행되었음을 Viewport에 알림 (GetSRV가 PSRV를 반환하도록)
-		VP->SetHasPostProcessed(Opts.bFXAA);
+		VP->SetCurrentRenderTarget(Bus.GetCurrentRTV(), Bus.GetCurrentSRV());
+		VP->SetHasPostProcessed(Bus.HasPostProcessOutput());
 	}
 
 	// 5. GPU Occlusion — DSV 언바인딩 후 Hi-Z 생성 + Occlusion Test 디스패치
-	if (GPUOcclusion.IsInitialized())
-	{
-		SCOPE_STAT_CAT("GPUOcclusion", "4_ExecutePass");
+	//if (GPUOcclusion.IsInitialized())
+	//{
+	//	SCOPE_STAT_CAT("GPUOcclusion", "4_ExecutePass");
 
-		// DSV 언바인딩 (DepthSRV 읽기와 동시 바인딩 불가)
-		ID3D11RenderTargetView* rtv = VP->GetRTV();
-		Ctx->OMSetRenderTargets(1, &rtv, nullptr);
+	//	// DSV 언바인딩 (DepthSRV 읽기와 동시 바인딩 불가)
+	//	ID3D11RenderTargetView* rtv = VP->GetBaseRTV();
+	//	Ctx->OMSetRenderTargets(1, &rtv, nullptr);
 
-		GPUOcclusion.DispatchOcclusionTest(
-			Ctx,
-			VP->GetDepthSRV(),
-			World->GetVisibleProxies(),
-			Bus.GetView(), Bus.GetProj(),
-			VP->GetWidth(), VP->GetHeight());
-	}
+	//	GPUOcclusion.DispatchOcclusionTest(
+	//		Ctx,
+	//		VP->GetDepthSRV(),
+	//		World->GetVisibleProxies(),
+	//		Bus.GetView(), Bus.GetProj(),
+	//		VP->GetWidth(), VP->GetHeight());
+	//}
 }

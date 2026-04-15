@@ -8,6 +8,7 @@
 #include "Core/EngineTypes.h"
 #include "Render/Types/VertexTypes.h"
 #include "Render/Proxy/DirtyFlag.h"
+#include "Collision/OBB.h"
 
 class FPrimitiveSceneProxy;
 class FScene;
@@ -27,6 +28,7 @@ public:
 	virtual FMeshBuffer* GetMeshBuffer() const { return nullptr; }
 	virtual const FMeshData* GetMeshData() const { return nullptr; }
 
+	virtual void SetSelected(bool bNewSelected) {};
 	void SetVisibility(bool bNewVisible);
 	inline bool IsVisible() const { return bIsVisible; }
 
@@ -96,7 +98,7 @@ protected:
 
 	bool bIsVisible = true;
 	FPrimitiveSceneProxy* SceneProxy = nullptr;
-	
+
 	FOctree* OctreeNode = nullptr;
 	bool bInOctreeOverflow = false;
 };

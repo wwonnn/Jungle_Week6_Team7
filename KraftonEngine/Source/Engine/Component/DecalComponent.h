@@ -6,6 +6,7 @@
 #include "Object/FName.h"
 
 class FPrimitiveSceneProxy;
+class UArrowComponent;
 
 class UDecalComponent : public UPrimitiveComponent
 {
@@ -15,6 +16,8 @@ public:
 	UDecalComponent() = default;
 	~UDecalComponent() override = default;
 
+	void InitializeComponent() override;
+
 	FMeshBuffer* GetMeshBuffer() const override;
 	FPrimitiveSceneProxy* CreateSceneProxy() override;
 
@@ -22,6 +25,7 @@ public:
 	void PostDuplicate() override;
 
 	void SetTexture(const FName& InTextureName);
+	void SetFade(bool bEnable, float Inner = 0.2f, float Outer = 0.6f);
 	void SetFadeConstants(FDecalConstants& OutDecalConstants) const;
 	ID3D11ShaderResourceView* GetSRV() const;
 
@@ -31,11 +35,13 @@ public:
 	uint64 CalculateOBBScreenPixels(const FMatrix& ViewProj, float ViewportWidth,float ViewportHeight);
 
 private:
-	FName TextureName = "Pawn";
+	FName TextureName = "None";
 	FTextureResource* CachedTexture = nullptr;
 
 	bool bHasFade = false;
 	float FadeInner = 0.2f;
 	float FadeOuter = 0.6f;
+
+	UArrowComponent* ArrowComponent = nullptr;
 };
 

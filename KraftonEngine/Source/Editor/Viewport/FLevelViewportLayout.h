@@ -84,6 +84,7 @@ private:
 	void EnsureViewportSlots(int32 RequiredCount);
 	void ShrinkViewportSlots(int32 RequiredCount);
 	void RenderPaneToolbar(int32 SlotIndex);
+	void RefreshWorldCameras(UWorld* World) const;
 
 	// 아이콘 텍스처
 	void LoadLayoutIcons(ID3D11Device* Device);

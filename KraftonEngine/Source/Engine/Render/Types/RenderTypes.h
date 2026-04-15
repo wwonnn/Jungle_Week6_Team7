@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 //	Windows API Include
 #define NOMINMAX
@@ -28,22 +28,25 @@ enum class EMeshShape
 	TransGizmo,
 	RotGizmo,
 	ScaleGizmo,
+	Arrow,
 };
 
 enum class ERenderPass : uint32
 {
 	Opaque,
 	Decal,
+	MeshDecal,
+	FireBall,
 	Font,
 	SubUV,
 	Translucent,
 	Fog,
-	SelectionMask,
-	PostProcess,
-	FXAA,
 	Editor,
 	Grid,
+	SelectionMask,
+	PostProcess,
 	Billboard,		// 아이콘 (그리드 위, 기즈모 아래)
+	FXAA,
 	GizmoOuter,
 	GizmoInner,
 	OverlayFont,
@@ -55,16 +58,18 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 	static const char* Names[] = {
 		"RenderPass::Opaque",
 		"RenderPass::Decal",
+		"RenderPass::MeshDecal",
+		"RenderPass::FireBall",
 		"RenderPass::Font",
 		"RenderPass::SubUV",
 		"RenderPass::Translucent",
 		"RenderPass::Fog",
-		"RenderPass::SelectionMask",
-		"RenderPass::PostProcess",
-		"RenderPass::FXAA",
 		"RenderPass::Editor",
 		"RenderPass::Grid",
+		"RenderPass::SelectionMask",
+		"RenderPass::PostProcess",
 		"RenderPass::Billboard",
+		"RenderPass::FXAA",
 		"RenderPass::GizmoOuter",
 		"RenderPass::GizmoInner",
 		"RenderPass::OverlayFont",

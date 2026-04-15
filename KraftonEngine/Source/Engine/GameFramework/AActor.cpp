@@ -55,6 +55,7 @@ UActorComponent* AActor::AddComponentByClass(const FTypeInfo* Class)
 	}
 
 	Comp->SetOwner(this);
+	Comp->InitializeComponent();
 	OwnedComponents.push_back(Comp);
 	bPrimitiveCacheDirty = true;
 	Comp->CreateRenderState();

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <filesystem>
+#include <unordered_map>
 #include "Core/CoreTypes.h"
 #include "Platform/Paths.h"
 #include "GameFramework/WorldContext.h"
@@ -35,6 +36,15 @@ struct FPerspectiveCameraData
 	bool    bValid   = false;
 };
 
+struct FPrimitiveLoadData
+{
+	FString MeshPath = "None";
+	FVector Location = FVector(0, 0, 0);
+	FVector Rotation = FVector(0, 0, 0);
+	FVector Scale = FVector(1, 1, 1);
+	bool bConsumed = false;
+};
+
 class FSceneSaveManager
 {
 public:
@@ -60,7 +70,7 @@ private:
 	static void DeserializeCamera(json::JSON& CamJSON, FPerspectiveCameraData& OutCam);
 
 	// ---- Primitives ----
-	static void DeserializePrimitives(json::JSON& Primitives, UWorld* World, std::unordered_map<string, AActor*>& OutCreatedActors);
+	static void DeserializePrimitives(json::JSON& Primitives, std::unordered_map<string, FPrimitiveLoadData>& OutPrimitiveData);
 
 	// ---- Deserialization helpers ----
 	static void DeserializeSceneComponentIntoExisting(USceneComponent* Existing, json::JSON& Node, AActor* Owner);
