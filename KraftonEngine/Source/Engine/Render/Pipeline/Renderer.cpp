@@ -221,7 +221,8 @@ void FRenderer::Render(FRenderBus& InRenderBus)
 	}
 
 	// Fog 패스 IsEmpty 판정용 플래그 갱신
-	bShouldRenderFog = InRenderBus.HasFog() || (InRenderBus.GetViewMode() == EViewMode::SceneDepth);
+	bShouldRenderFog = InRenderBus.HasFog();
+	bShouldRenderSceneDepth = (InRenderBus.GetViewMode() == EViewMode::SceneDepth);
 
 	for (uint32 i = 0; i < (uint32)ERenderPass::MAX; ++i)
 	{
@@ -236,6 +237,14 @@ void FRenderer::Render(FRenderBus& InRenderBus)
 
 		// FXAA 패스 스킵 체크
 		if (CurPass == ERenderPass::FXAA && !InRenderBus.IsFXAAEnabled()) continue;
+
+		// SceneDepth 모드: Opaque/FireBall/SceneDepth/FXAA만 실행, 나머지 스킵
+		if (InRenderBus.GetViewMode() == EViewMode::SceneDepth
+			&& CurPass != ERenderPass::Opaque
+			&& CurPass != ERenderPass::FireBall
+			&& CurPass != ERenderPass::SceneDepth
+			&& CurPass != ERenderPass::FXAA)
+			continue;
 
 		SCOPE_STAT_CAT(PassName, "4_ExecutePass");
 		GPU_SCOPE_STAT(PassName);
@@ -272,6 +281,7 @@ void FRenderer::InitializePassRenderStates()
 	S[(uint32)E::SubUV] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, true };
 	S[(uint32)E::Translucent] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Fog] = { EDepthStencilState::NoDepth,      EBlendState::AlphaBlendKeepAlpha, ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
+	S[(uint32)E::SceneDepth]  = { EDepthStencilState::NoDepth,      EBlendState::Opaque,              ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
 	S[(uint32)E::Editor] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     true };
 	S[(uint32)E::Grid] = { EDepthStencilState::Default,      EBlendState::AlphaBlend, ERasterizerState::SolidBackCull,  D3D11_PRIMITIVE_TOPOLOGY_LINELIST,     false };
 	S[(uint32)E::SelectionMask] = { EDepthStencilState::StencilWrite, EBlendState::NoColor,    ERasterizerState::SolidNoCull,    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, false };
@@ -335,12 +345,16 @@ void FRenderer::InitializePassBatchers()
 
 	PassBatchers[(uint32)ERenderPass::Fog] = {
 		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
-			if (Bus.GetViewMode() == EViewMode::SceneDepth)
-				DrawSceneDepth(Bus, Ctx);
-			else
-				DrawHeightFog(Bus, Ctx);
+			DrawHeightFog(Bus, Ctx);
 		},
 		[this]() { return !bShouldRenderFog; }
+	};
+
+	PassBatchers[(uint32)ERenderPass::SceneDepth] = {
+		[this](ERenderPass Pass, const FRenderBus& Bus, ID3D11DeviceContext* Ctx) {
+			DrawSceneDepth(Bus, Ctx);
+		},
+		[this]() { return !bShouldRenderSceneDepth; }
 	};
 
 	PassBatchers[(uint32)ERenderPass::PostProcess] = {
@@ -804,7 +818,7 @@ void FRenderer::DrawSceneDepth(const FRenderBus& Bus, ID3D11DeviceContext* Conte
 {
 	ID3D11ShaderResourceView* DepthSRV = Bus.GetViewportDepthSRV();
 	ID3D11DepthStencilView* DSV = Bus.GetViewportDSV();
-	ID3D11RenderTargetView* RTV = Bus.GetViewportRTV();
+	ID3D11RenderTargetView* RTV = Bus.GetCurrentRTV();
 	if (!DepthSRV || !RTV) return;
 
 	// 1) DSV 언바인딩 (DepthSRV와 동시 바인딩 불가)
