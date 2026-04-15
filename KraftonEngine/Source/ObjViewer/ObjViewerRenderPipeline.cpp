@@ -58,7 +58,8 @@ void FObjViewerRenderPipeline::RenderPreviewViewport(FRenderer& Renderer)
 	ShowFlags.bGrid = false;
 	ShowFlags.bGizmo = false;
 	ShowFlags.bBillboardText = false;
-	ShowFlags.bBoundingVolume = false;
+	ShowFlags.bAABB = false;
+	ShowFlags.bOBB = false;
 	Bus.SetRenderSettings(EViewMode::Lit, ShowFlags);
 	Bus.SetFXAAEnabled(true);
 	Bus.SetViewportInfo(VP);

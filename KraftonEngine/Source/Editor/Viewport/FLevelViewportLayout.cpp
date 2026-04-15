@@ -911,18 +911,19 @@ void FLevelViewportLayout::RenderPaneToolbar(int32 SlotIndex)
 
 				ImGui::Separator();
 
-				// Show Flags
-				ImGui::Text("Show");
-				ImGui::Checkbox("Primitives", &Opts.ShowFlags.bPrimitives);
-				ImGui::Checkbox("BillboardText", &Opts.ShowFlags.bBillboardText);
-				ImGui::Checkbox("Grid", &Opts.ShowFlags.bGrid);
-				ImGui::Checkbox("World Axis", &Opts.ShowFlags.bWorldAxis);
-				ImGui::Checkbox("Gizmo", &Opts.ShowFlags.bGizmo);
-				ImGui::Checkbox("Bounding Volume", &Opts.ShowFlags.bBoundingVolume);
-				ImGui::Checkbox("Debug Draw", &Opts.ShowFlags.bDebugDraw);
-				ImGui::Checkbox("Octree", &Opts.ShowFlags.bOctree);
-				ImGui::Checkbox("Decal", &Opts.ShowFlags.bDecal);
-				ImGui::Checkbox("Fog", &Opts.ShowFlags.bFog);
+			// Show Flags
+			ImGui::Text("Show");
+			ImGui::Checkbox("Primitives", &Opts.ShowFlags.bPrimitives);
+			ImGui::Checkbox("BillboardText", &Opts.ShowFlags.bBillboardText);
+			ImGui::Checkbox("Grid", &Opts.ShowFlags.bGrid);
+			ImGui::Checkbox("World Axis", &Opts.ShowFlags.bWorldAxis);
+			ImGui::Checkbox("Gizmo", &Opts.ShowFlags.bGizmo);
+			ImGui::Checkbox("AABB", &Opts.ShowFlags.bAABB);
+			ImGui::Checkbox("OBB", &Opts.ShowFlags.bOBB);
+			ImGui::Checkbox("Debug Draw", &Opts.ShowFlags.bDebugDraw);
+			ImGui::Checkbox("Octree", &Opts.ShowFlags.bOctree);
+			ImGui::Checkbox("Decal", &Opts.ShowFlags.bDecal);
+			ImGui::Checkbox("Fog", &Opts.ShowFlags.bFog);
 
 				ImGui::Separator();
 
