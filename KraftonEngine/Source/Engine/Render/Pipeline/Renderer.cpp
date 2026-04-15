@@ -254,10 +254,7 @@ void FRenderer::Render(FRenderBus& InRenderBus)
 		if (bHasBatcher)
 			PassBatchers[i].DrawBatch(CurPass, InRenderBus, Context);
 		else if (CurPass == ERenderPass::Decal)
-		{
-			SCOPE_STAT_CAT("ExecuteDecalPass", "4_ExecutePass");
 			ExecuteDecalPass(InRenderBus, InRenderBus.GetProxies(CurPass), Context);
-		}
 		else if (CurPass == ERenderPass::FireBall)
 			ExecuteFireBallPass(InRenderBus, Context);
 		else
