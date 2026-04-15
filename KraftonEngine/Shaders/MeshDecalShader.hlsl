@@ -23,7 +23,7 @@ float4 PS(PS_Input_Full input) : SV_TARGET
     float4 texColor = g_txColor.Sample(g_Sample, input.texcoord);
 
     if (texColor.a < 0.001f)
-        texColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+        discard;
 
     float4 finalColor = texColor * input.color;
     if (bFade)
@@ -32,6 +32,9 @@ float4 PS(PS_Input_Full input) : SV_TARGET
             discard;
         finalColor.a = texColor.a * input.color.a * DecalOpacity;
     }
+
+    if (finalColor.a < 0.001f)
+        discard;
 
     return float4(ApplyWireframe(finalColor.rgb), finalColor.a);
 }

@@ -3,13 +3,11 @@
 #include "GameFramework/AActor.h"
 #include "GameFramework/World.h"
 #include "Engine/Runtime/Engine.h"
-#include "Mesh/ObjManager.h"
 #include "Collision/RayUtils.h"
 #include "Render/Proxy/DecalMeshSceneProxy.h"
 #include "Render/Pipeline/RenderBus.h"
-#include "Engine/Texture/Texture2D.h"
+#include "Resource/ResourceManager.h"
 #include "Editor/UI/EditorConsoleWidget.h"
-#include <cstring>
 
 IMPLEMENT_CLASS(UMeshDecalComponent, UPrimitiveComponent)
 namespace
@@ -57,6 +55,7 @@ namespace
 
 FPrimitiveSceneProxy* UMeshDecalComponent::CreateSceneProxy()
 {
+	SetTexture(TextureName);
 	SceneProxy = new FDecalMeshSceneProxy(this);
 	return SceneProxy;
 }
@@ -66,35 +65,32 @@ UMeshDecalComponent::UMeshDecalComponent()
 	LocalExtents = MeshDecalLocalExtents;
 }
 
-void UMeshDecalComponent::RefreshMaterial()
+void UMeshDecalComponent::SetTexture(const FName& InTextureName)
 {
-	if (MaterialSlot.Path.empty() || MaterialSlot.Path == "None")
-	{
-		Material = nullptr;
-		return;
-	}
+	TextureName = InTextureName;
+	CachedTexture = FResourceManager::Get().FindTexture(InTextureName);
 
-	Material = FObjManager::GetOrLoadMaterial(MaterialSlot.Path);
-	if (!Material)
+	if (SceneProxy)
 	{
-		return;
+		static_cast<FDecalMeshSceneProxy*>(SceneProxy)->UpdateMaterial();
 	}
+	MarkProxyDirty(EDirtyFlag::Material);
+}
 
-	if (!Material->DiffuseTexture && !Material->DiffuseTextureFilePath.empty() && GEngine)
+ID3D11ShaderResourceView* UMeshDecalComponent::GetSRV()
+{
+	if (!CachedTexture && TextureName != "None")
 	{
-		ID3D11Device* Device = GEngine->GetRenderer().GetFD3DDevice().GetDevice();
-		if (Device)
-		{
-			Material->DiffuseTexture = UTexture2D::LoadFromFile(Material->DiffuseTextureFilePath, Device);
-		}
+		SetTexture(TextureName);
 	}
+	return CachedTexture ? CachedTexture->SRV : nullptr;
 }
 
 void UMeshDecalComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
-	OutProps.push_back({ "Material", EPropertyType::MaterialSlot, &MaterialSlot });
-	OutProps.push_back({ "Fade", EPropertyType::Bool, &bFade });
+	OutProps.push_back({ "Texture", EPropertyType::Name, &TextureName });
+	OutProps.push_back({ "Fade", EPropertyType::ByteBool, &bFade });
 	OutProps.push_back({ "Opacity", EPropertyType::Float, &Opacity });
 	OutProps.push_back({ "Opacity Rate", EPropertyType::Float, &OpacityRate });
 }
@@ -103,10 +99,9 @@ void UMeshDecalComponent::PostEditProperty(const char* PropertyName)
 {
 	UPrimitiveComponent::PostEditProperty(PropertyName);
 
-	if (strcmp(PropertyName, "Material") == 0)
+	if (strcmp(PropertyName, "Texture") == 0)
 	{
-		RefreshMaterial();
-		MarkProxyDirty(EDirtyFlag::Mesh);
+		SetTexture(TextureName);
 	}
 }
 
@@ -114,7 +109,7 @@ void UMeshDecalComponent::PostDuplicate()
 {
 	UPrimitiveComponent::PostDuplicate();
 	LocalExtents = MeshDecalLocalExtents;
-	RefreshMaterial();
+	SetTexture(TextureName);
 	UpdateDecalMeshData();
 }
 
@@ -157,6 +152,7 @@ void UMeshDecalComponent::BeginPlay()
 	UPrimitiveComponent::BeginPlay();
 }
 
+
 void UMeshDecalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
 {
 	Opacity = std::max(0.f, Opacity - DeltaTime * OpacityRate);
@@ -175,10 +171,15 @@ static FArchive& operator<<(FArchive& Ar, FMaterialSlot& Slot)
 void UMeshDecalComponent::Serialize(FArchive& Ar)
 {
 	UPrimitiveComponent::Serialize(Ar);
-	Ar << MaterialSlot;
+	Ar << TextureName;
 	Ar << Opacity;
 	Ar << OpacityRate;
 	Ar << bFade;
+
+	if (Ar.IsLoading())
+	{
+		SetTexture(TextureName);
+	}
 }
 
 void UMeshDecalComponent::OnTransformDirty()
