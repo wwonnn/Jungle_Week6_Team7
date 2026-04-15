@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 //	Windows API Include
 #define NOMINMAX
@@ -34,6 +34,7 @@ enum class ERenderPass : uint32
 {
 	Opaque,
 	Decal,
+	SpotLightDecal,
 	Font,
 	SubUV,
 	Translucent,
@@ -55,6 +56,7 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 	static const char* Names[] = {
 		"RenderPass::Opaque",
 		"RenderPass::Decal",
+		"RenderPass::SpotLightDecal",
 		"RenderPass::Font",
 		"RenderPass::SubUV",
 		"RenderPass::Translucent",

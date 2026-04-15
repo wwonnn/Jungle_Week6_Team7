@@ -69,11 +69,6 @@ void FScene::RemoveFog(UHeightFogComponent* Fog)
 	{
 		FogComponents.erase(It);
 	}
-
-	SelectedProxies.clear();
-	NeverCullProxies.clear();
-	FreeSlots.clear();
-	VisibleProxies.clear();
 }
 
 // ============================================================
