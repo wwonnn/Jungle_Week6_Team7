@@ -26,6 +26,7 @@ public:
 	void CollectEditorVisualizations(FRenderBus& RenderBus) const override;
 	virtual void BeginPlay() override;
 	float GetOpacity() const { return Opacity; }
+	bool IsFading() const { return bFade; }
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction) override;
 	void Serialize(FArchive& Ar) override;
@@ -38,6 +39,8 @@ private:
 	FMeshBuffer MeshBuffer;
 	float OpacityRate = 1.f;
 	float Opacity = 1.f;
+
+	bool bFade = false;
 
 private:
 	TArray<UPrimitiveComponent*> GetCandidates() const;

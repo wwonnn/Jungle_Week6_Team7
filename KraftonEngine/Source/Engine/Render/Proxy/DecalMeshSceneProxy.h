@@ -15,6 +15,8 @@ public:
 	virtual void UpdateTransform() override;
 	void UpdateOpacity();
 
+	void UpdateFade();
+
 private:
 	UMeshDecalComponent* GetDecalComponent() const;
 	FMeshDecalConstants Const;

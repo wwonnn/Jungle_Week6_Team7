@@ -170,7 +170,8 @@ struct FBillboardConstants
 struct FMeshDecalConstants
 {
 	float Opacity = 1.0f;
-	float _Offset[3];
+	bool bFade = false;
+	float _Padding[2];
 };
 
 // ============================================================

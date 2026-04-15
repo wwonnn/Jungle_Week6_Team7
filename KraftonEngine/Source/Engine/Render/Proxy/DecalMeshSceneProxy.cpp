@@ -78,3 +78,8 @@ void FDecalMeshSceneProxy::UpdateOpacity()
 	ExtraCB.As<FMeshDecalConstants>().Opacity =
 		Cast<UMeshDecalComponent>(Owner)->GetOpacity();
 }
+
+void FDecalMeshSceneProxy::UpdateFade()
+{
+	ExtraCB.As<FMeshDecalConstants>().bFade = Cast<UMeshDecalComponent>(Owner)->IsFading();
+}

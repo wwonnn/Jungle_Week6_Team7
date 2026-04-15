@@ -26,9 +26,12 @@ float4 PS(PS_Input_Full input) : SV_TARGET
         texColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
     float4 finalColor = texColor * input.color;
-    if (DecalOpacity <= 0.001f)
-        discard;
-    finalColor.a = texColor.a * input.color.a * DecalOpacity;
+    if (bFade)
+    {
+        if (DecalOpacity <= 0.001f)
+            discard;
+        finalColor.a = texColor.a * input.color.a * DecalOpacity;
+    }
 
     return float4(ApplyWireframe(finalColor.rgb), finalColor.a);
 }

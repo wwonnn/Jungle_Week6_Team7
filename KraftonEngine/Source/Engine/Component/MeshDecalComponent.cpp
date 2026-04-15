@@ -94,14 +94,9 @@ void UMeshDecalComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Out
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
 	OutProps.push_back({ "Material", EPropertyType::MaterialSlot, &MaterialSlot });
-	FPropertyDescriptor Desc;
-	Desc.Name = "OpacityRate";
-	Desc.Type = EPropertyType::Float;
-	Desc.ValuePtr = &OpacityRate;
-	Desc.Min = 0.1f;
-	Desc.Max = 1.f;
-	Desc.Speed = 0.01f;
-	OutProps.push_back(Desc);
+	OutProps.push_back({ "Fade", EPropertyType::Bool, &bFade });
+	OutProps.push_back({ "Opacity", EPropertyType::Float, &Opacity });
+	OutProps.push_back({ "Opacity Rate", EPropertyType::Float, &OpacityRate });
 }
 
 void UMeshDecalComponent::PostEditProperty(const char* PropertyName)
@@ -167,6 +162,7 @@ void UMeshDecalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Opacity = std::max(0.f, Opacity - DeltaTime * OpacityRate);
 	SceneProxy->MarkPerObjectCBDirty();
 	static_cast<FDecalMeshSceneProxy*>(SceneProxy)->UpdateOpacity();
+	static_cast<FDecalMeshSceneProxy*>(SceneProxy)->UpdateFade();
 }
 
 static FArchive& operator<<(FArchive& Ar, FMaterialSlot& Slot)
@@ -181,6 +177,8 @@ void UMeshDecalComponent::Serialize(FArchive& Ar)
 	UPrimitiveComponent::Serialize(Ar);
 	Ar << MaterialSlot;
 	Ar << Opacity;
+	Ar << OpacityRate;
+	Ar << bFade;
 }
 
 void UMeshDecalComponent::OnTransformDirty()
